@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Year 11 Economics — Research Scaffold</title>
+  <meta name="description" content="Year 11 Economics 2026 Assessment Task 2: Labour and Financial Markets research scaffold."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+  <!-- SUBMISSION OVERLAY -->
+  <div class="submit-overlay" id="submit-overlay">
+    <div class="submit-modal" id="submit-modal">
+      <div class="submit-spinner" id="submit-spinner">
+        <div class="spinner"></div>
+        <p>Submitting your research…</p>
+      </div>
+      <div class="submit-success" id="submit-success" style="display:none">
+        <div class="success-icon">✅</div>
+        <h2>Research Submitted!</h2>
+        <p id="submit-success-name"></p>
+        <p class="submit-ts" id="submit-ts"></p>
+        <button class="success-btn" onclick="document.getElementById('submit-overlay').style.display='none'">Keep editing</button>
+      </div>
+      <div class="submit-fail" id="submit-fail" style="display:none">
+        <div class="fail-icon">⚠️</div>
+        <h2>Submission Issue</h2>
+        <p id="submit-fail-msg"></p>
+        <button class="fail-btn" onclick="document.getElementById('submit-overlay').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-top-row">
+        <div class="header-badge">Assessment Task 2 · 35%</div>
+        <div class="student-chip" id="student-chip">
+          <span class="student-avatar" id="student-avatar">?</span>
+          <span id="student-name-display">Loading…</span>
+          <a href="index.html?logout=1" class="logout-link" title="Switch student">✕</a>
+        </div>
+      </div>
+      <h1 class="header-title">Year 11 Economics <span class="accent">2026</span></h1>
+      <p class="header-subtitle">Labour &amp; Financial Markets — Research Scaffold</p>
+      <div class="header-meta">
+        <div class="meta-chip"><span class="meta-icon">📅</span><span>Due: 19 June 2026 · Period 2 · 9:50 am</span></div>
+        <div class="meta-chip"><span class="meta-icon">⏱</span><span>Working Time: 50 minutes</span></div>
+        <div class="meta-chip"><span class="meta-icon">📄</span><span>1 × A4 notes page permitted</span></div>
+      </div>
+      <div class="countdown-wrapper">
+        <div class="countdown-label">Time Remaining</div>
+        <div id="countdown" class="countdown-display">--d --h --m --s</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- OVERVIEW CARDS -->
+    <section class="section">
+      <h2 class="section-title">Assessment Overview</h2>
+      <div class="overview-grid">
+        <div class="overview-card card-blue">
+          <div class="ov-icon">🔬</div>
+          <div class="ov-label">Part A — Research Portfolio</div>
+          <div class="ov-marks">10 marks (10%)</div>
+          <p class="ov-desc">Independently researched at home. Compiled into a portfolio submitted on the day.</p>
+        </div>
+        <div class="overview-card card-purple">
+          <div class="ov-icon">✍️</div>
+          <div class="ov-label">Part B — Extended Response</div>
+          <div class="ov-marks">20 marks (20%)</div>
+          <p class="ov-desc">Written in-class based on your research. Your 1-page notes sheet may be used.</p>
+        </div>
+        <div class="overview-card card-green">
+          <div class="ov-icon">📋</div>
+          <div class="ov-label">Notes Page Rules</div>
+          <div class="ov-marks">1 × A4 single-sided</div>
+          <p class="ov-desc">Data, statistics &amp; brief dot points only. <strong>No pre-written essays or paragraphs.</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- OUTCOMES -->
+    <section class="section">
+      <h2 class="section-title">Outcomes Assessed</h2>
+      <div class="outcomes-grid">
+        <div class="outcome-pill"><span class="outcome-code">P1</span> Economic terms, concepts &amp; relationships</div>
+        <div class="outcome-pill"><span class="outcome-code">P2</span> Role of individuals, firms &amp; government</div>
+        <div class="outcome-pill"><span class="outcome-code">P3</span> Role &amp; operation of markets</div>
+        <div class="outcome-pill"><span class="outcome-code">P5</span> Individuals, firms, institutions &amp; government</div>
+        <div class="outcome-pill"><span class="outcome-code">P6</span> Role of government in the economy</div>
+        <div class="outcome-pill"><span class="outcome-code">P8</span> Terminology, concepts &amp; theories</div>
+        <div class="outcome-pill"><span class="outcome-code">P9</span> Information from a variety of sources</div>
+        <div class="outcome-pill"><span class="outcome-code">P11</span> Mathematical concepts in economic contexts</div>
+      </div>
+    </section>
+
+    <!-- TABS -->
+    <section class="section">
+      <h2 class="section-title">Research Scaffold</h2>
+      <p class="section-sub">Work through each section. Your answers save automatically to this device. Hit <strong>Submit</strong> when done.</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="financial" id="tab-financial">💰 Financial Markets</button>
+        <button class="tab-btn" data-tab="labour" id="tab-labour">👷 Labour Markets</button>
+        <button class="tab-btn" data-tab="media" id="tab-media">📰 Media Commentary</button>
+        <button class="tab-btn" data-tab="notes" id="tab-notes">📝 My Notes Sheet</button>
+      </div>
+
+      <!-- =================== FINANCIAL MARKETS =================== -->
+      <div class="tab-content active" id="tab-content-financial">
+        <div class="info-banner"><strong>Focus:</strong> The operation of financial markets in Australia, contemporary institutions, controls influencing market outcomes, types of markets, and the RBA's influence on interest rates.</div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">F1</span>
+            <div>
+              <h3 class="sc-title">RBA Cash Rate</h3>
+              <p class="sc-hint">Find the current cash rate on the <a href="https://www.rba.gov.au/monetary-policy/cash-rate/" target="_blank" rel="noopener">RBA website →</a></p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="cash-rate">Current Cash Rate Target (%)</label>
+            <input type="text" id="cash-rate" class="field-input" placeholder="e.g. 4.10%"/>
+          </div>
+          <div class="field-row">
+            <label for="last-change">Date of Most Recent Change</label>
+            <input type="text" id="last-change" class="field-input" placeholder="e.g. May 2025"/>
+          </div>
+          <div class="field-row">
+            <label>Direction of Recent Change</label>
+            <div class="radio-group">
+              <label class="radio-label"><input type="radio" name="direction" value="increase"/> Increase</label>
+              <label class="radio-label"><input type="radio" name="direction" value="decrease"/> Decrease</label>
+              <label class="radio-label"><input type="radio" name="direction" value="hold"/> Hold (no change)</label>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="rate-history">Rate History — last 12 months (key decisions)</label>
+            <textarea id="rate-history" class="field-textarea" rows="4" placeholder="e.g. Feb 2025 — RBA cut by 25bps to 4.10%&#10;Apr 2025 — Held at 4.10%…"></textarea>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">F2</span>
+            <div>
+              <h3 class="sc-title">Why Has the RBA Taken These Actions?</h3>
+              <p class="sc-hint">Use <a href="https://www.rba.gov.au/monetary-policy/rba-board-minutes/" target="_blank" rel="noopener">RBA Board Minutes</a> and <a href="https://www.rba.gov.au/publications/smp/" target="_blank" rel="noopener">Statement on Monetary Policy →</a></p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="inflation-rate">Current Inflation Rate (CPI) — %</label>
+            <input type="text" id="inflation-rate" class="field-input" placeholder="e.g. 2.4% (March Qtr 2025)"/>
+          </div>
+          <div class="field-row">
+            <label for="rba-target">RBA Inflation Target Band</label>
+            <input type="text" id="rba-target" class="field-input" placeholder="e.g. 2–3% on average, over time"/>
+          </div>
+          <div class="field-row">
+            <label for="rba-rationale">Key Reasons for Monetary Policy Decisions (dot points)</label>
+            <textarea id="rba-rationale" class="field-textarea" rows="5" placeholder="• Inflation returning towards target band&#10;• Labour market remains tight&#10;• Global uncertainty (US tariffs, China slowdown)&#10;• Household consumption subdued due to cost-of-living pressures"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="rba-outlook">RBA Forward Guidance / Outlook</label>
+            <textarea id="rba-outlook" class="field-textarea" rows="3" placeholder="Summarise what the RBA has said about future rate decisions…"></textarea>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">F3</span>
+            <div>
+              <h3 class="sc-title">Types of Financial Markets</h3>
+              <p class="sc-hint">Use your textbook and class notes to complete this section.</p>
+            </div>
+          </div>
+          <div class="market-types-grid">
+            <div class="market-type-card">
+              <div class="mt-icon">🏦</div>
+              <h4>Equity / Share Market</h4>
+              <textarea id="equity-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+            </div>
+            <div class="market-type-card">
+              <div class="mt-icon">📜</div>
+              <h4>Debt / Bond Market</h4>
+              <textarea id="debt-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+            </div>
+            <div class="market-type-card">
+              <div class="mt-icon">💱</div>
+              <h4>Foreign Exchange Market</h4>
+              <textarea id="forex-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+            </div>
+            <div class="market-type-card">
+              <div class="mt-icon">🏗</div>
+              <h4>Derivatives Market</h4>
+              <textarea id="derivatives-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">F4</span>
+            <div>
+              <h3 class="sc-title">Key Institutions &amp; Controls</h3>
+              <p class="sc-hint">What institutions regulate/operate financial markets?</p>
+            </div>
+          </div>
+          <div class="institutions-list">
+            <div class="institution-row">
+              <span class="inst-label">RBA</span>
+              <textarea id="inst-rba" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+            </div>
+            <div class="institution-row">
+              <span class="inst-label">ASIC</span>
+              <textarea id="inst-asic" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+            </div>
+            <div class="institution-row">
+              <span class="inst-label">APRA</span>
+              <textarea id="inst-apra" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+            </div>
+            <div class="institution-row">
+              <span class="inst-label">ASX</span>
+              <textarea id="inst-asx" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">F5</span>
+            <div>
+              <h3 class="sc-title">Transmission Mechanism — How Interest Rates Affect the Economy</h3>
+              <p class="sc-hint">Key for Part B — explain the chain from RBA decision → economic outcomes.</p>
+            </div>
+          </div>
+          <div class="chain-diagram">
+            <div class="chain-step">RBA changes cash rate</div>
+            <div class="chain-arrow">↓</div>
+            <div class="chain-step">Banks adjust mortgage &amp; business loan rates</div>
+            <div class="chain-arrow">↓</div>
+            <div class="chain-step">Effect on consumer spending &amp; business investment</div>
+            <div class="chain-arrow">↓</div>
+            <div class="chain-step">Effect on employment / labour demand</div>
+            <div class="chain-arrow">↓</div>
+            <div class="chain-step">Effect on inflation / price level</div>
+          </div>
+          <div class="field-row" style="margin-top:1.2rem;">
+            <label for="transmission-notes">Your notes on each step:</label>
+            <textarea id="transmission-notes" class="field-textarea" rows="6" placeholder="e.g. When RBA ↓ cash rate → banks pass on lower rates → businesses can borrow more cheaply → investment ↑ → labour demand ↑ → unemployment ↓…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== LABOUR MARKETS =================== -->
+      <div class="tab-content" id="tab-content-labour">
+        <div class="info-banner"><strong>Focus:</strong> The market for labour resources — contemporary institutions, unemployment, underemployment, wages, and labour market outcomes.</div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">L1</span>
+            <div>
+              <h3 class="sc-title">Key Labour Market Statistics</h3>
+              <p class="sc-hint"><a href="https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release" target="_blank" rel="noopener">ABS Labour Force →</a> &amp; <a href="https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/wage-price-index-australia/latest-release" target="_blank" rel="noopener">ABS Wage Price Index →</a></p>
+            </div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-input-card">
+              <label for="unemployment">Unemployment Rate (%)</label>
+              <input type="text" id="unemployment" class="field-input big-stat" placeholder="e.g. 4.1%"/>
+              <small>Latest ABS figure</small>
+              <input type="text" id="unemp-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+            </div>
+            <div class="stat-input-card">
+              <label for="underemployment">Underemployment Rate (%)</label>
+              <input type="text" id="underemployment" class="field-input big-stat" placeholder="e.g. 6.3%"/>
+              <small>Latest ABS figure</small>
+              <input type="text" id="underemp-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+            </div>
+            <div class="stat-input-card">
+              <label for="wpi">Wage Price Index — % annual change</label>
+              <input type="text" id="wpi" class="field-input big-stat" placeholder="e.g. 3.4%"/>
+              <small>Annual % change</small>
+              <input type="text" id="wpi-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+            </div>
+            <div class="stat-input-card">
+              <label for="participation">Participation Rate (%)</label>
+              <input type="text" id="participation" class="field-input big-stat" placeholder="e.g. 66.8%"/>
+              <small>Latest ABS figure</small>
+              <input type="text" id="part-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">L2</span>
+            <div>
+              <h3 class="sc-title">Current Trends in the Australian Workforce</h3>
+              <p class="sc-hint">What has changed over the last 12 months?</p>
+            </div>
+          </div>
+          <div class="trend-row">
+            <div class="trend-label">Unemployment</div>
+            <div class="trend-direction">
+              <label class="radio-label"><input type="radio" name="unemp-trend" value="rising"/> ↑ Rising</label>
+              <label class="radio-label"><input type="radio" name="unemp-trend" value="stable"/> → Stable</label>
+              <label class="radio-label"><input type="radio" name="unemp-trend" value="falling"/> ↓ Falling</label>
+            </div>
+            <textarea id="unemp-trend-notes" class="field-textarea" rows="2" placeholder="Brief explanation…"></textarea>
+          </div>
+          <div class="trend-row">
+            <div class="trend-label">Underemployment</div>
+            <div class="trend-direction">
+              <label class="radio-label"><input type="radio" name="underemp-trend" value="rising"/> ↑ Rising</label>
+              <label class="radio-label"><input type="radio" name="underemp-trend" value="stable"/> → Stable</label>
+              <label class="radio-label"><input type="radio" name="underemp-trend" value="falling"/> ↓ Falling</label>
+            </div>
+            <textarea id="underemp-trend-notes" class="field-textarea" rows="2" placeholder="Brief explanation…"></textarea>
+          </div>
+          <div class="trend-row">
+            <div class="trend-label">Wage Growth (WPI)</div>
+            <div class="trend-direction">
+              <label class="radio-label"><input type="radio" name="wpi-trend" value="rising"/> ↑ Rising</label>
+              <label class="radio-label"><input type="radio" name="wpi-trend" value="stable"/> → Stable</label>
+              <label class="radio-label"><input type="radio" name="wpi-trend" value="falling"/> ↓ Falling</label>
+            </div>
+            <textarea id="wpi-trend-notes" class="field-textarea" rows="2" placeholder="Brief explanation…"></textarea>
+          </div>
+          <div class="field-row" style="margin-top:1rem;">
+            <label for="workforce-summary">Overall summary of workforce trends (dot points):</label>
+            <textarea id="workforce-summary" class="field-textarea" rows="4" placeholder="• Unemployment remains low but is gradually rising from historic lows&#10;• Underemployment relatively stable&#10;• Real wage growth modest…"></textarea>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">L3</span>
+            <div>
+              <h3 class="sc-title">Labour Market Institutions &amp; Controls</h3>
+              <p class="sc-hint">Key players in the Australian labour market.</p>
+            </div>
+          </div>
+          <div class="institutions-list">
+            <div class="institution-row">
+              <span class="inst-label">Fair Work Commission</span>
+              <textarea id="fw-commission" class="field-textarea inst-area" rows="2" placeholder="Role, key decisions…"></textarea>
+            </div>
+            <div class="institution-row">
+              <span class="inst-label">Trade Unions</span>
+              <textarea id="trade-unions" class="field-textarea inst-area" rows="2" placeholder="Role, examples…"></textarea>
+            </div>
+            <div class="institution-row">
+              <span class="inst-label">Employer Associations</span>
+              <textarea id="employer-assoc" class="field-textarea inst-area" rows="2" placeholder="Role, examples…"></textarea>
+            </div>
+            <div class="institution-row">
+              <span class="inst-label">Federal Government</span>
+              <textarea id="fed-govt" class="field-textarea inst-area" rows="2" placeholder="Policies affecting the labour market…"></textarea>
+            </div>
+          </div>
+          <div class="field-row" style="margin-top:1rem;">
+            <label for="min-wage">National Minimum Wage (current):</label>
+            <input type="text" id="min-wage" class="field-input" placeholder="e.g. $24.10/hr (2025–26)"/>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">L4</span>
+            <div>
+              <h3 class="sc-title">Labour Market Supply &amp; Demand</h3>
+              <p class="sc-hint">Key concepts from textbook and class notes.</p>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="two-col-item">
+              <h4 class="mini-heading">Factors Affecting Labour Demand</h4>
+              <textarea id="labour-demand" class="field-textarea" rows="6" placeholder="• Level of economic activity / GDP&#10;• Productivity of workers&#10;• Cost of labour (wages)&#10;• Technology / automation&#10;• Business confidence…"></textarea>
+            </div>
+            <div class="two-col-item">
+              <h4 class="mini-heading">Factors Affecting Labour Supply</h4>
+              <textarea id="labour-supply" class="field-textarea" rows="6" placeholder="• Population size / demographics&#10;• Migration policy&#10;• Participation rate&#10;• Wages / incentives to work&#10;• Skills &amp; education…"></textarea>
+            </div>
+          </div>
+          <div class="field-row" style="margin-top:1rem;">
+            <label for="unemployment-types">Types of Unemployment (brief definitions):</label>
+            <textarea id="unemployment-types" class="field-textarea" rows="4" placeholder="• Cyclical — caused by economic downturn&#10;• Structural — mismatch of skills&#10;• Frictional — between jobs&#10;• Seasonal — fluctuates with seasons"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== MEDIA COMMENTARY =================== -->
+      <div class="tab-content" id="tab-content-media">
+        <div class="info-banner"><strong>Required:</strong> Find <strong>two (2)</strong> recent news or economic articles (last 12 months) discussing how interest rates are currently affecting <strong>business spending and jobs</strong>.</div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">M1</span>
+            <div>
+              <h3 class="sc-title">Article 1</h3>
+              <p class="sc-hint">Suggested: ABC News Economics, The Australian, AFR, SMH, RBA speeches</p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="art1-title">Article Title</label>
+            <input type="text" id="art1-title" class="field-input" placeholder="Article headline…"/>
+          </div>
+          <div class="article-meta-row">
+            <div class="field-row">
+              <label for="art1-source">Source / Publication</label>
+              <input type="text" id="art1-source" class="field-input" placeholder="e.g. ABC News"/>
+            </div>
+            <div class="field-row">
+              <label for="art1-date">Date Published</label>
+              <input type="text" id="art1-date" class="field-input" placeholder="e.g. 14 May 2025"/>
+            </div>
+            <div class="field-row">
+              <label for="art1-url">URL</label>
+              <input type="url" id="art1-url" class="field-input" placeholder="https://…"/>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="art1-summary">Main Argument / Summary (dot points)</label>
+            <textarea id="art1-summary" class="field-textarea" rows="4" placeholder="• What is the article about?&#10;• What does it say about interest rates and business spending/jobs?"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="art1-stats">Key Statistics / Quotes</label>
+            <textarea id="art1-stats" class="field-textarea" rows="3" placeholder="e.g. 'Business investment fell by X% in Q4 2024…' (Author, 2025)"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="art1-link">Link to Course Content</label>
+            <textarea id="art1-link" class="field-textarea" rows="3" placeholder="This article demonstrates the impact of RBA monetary policy on business investment…"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="art1-reliability">Reliability Assessment</label>
+            <textarea id="art1-reliability" class="field-textarea" rows="2" placeholder="e.g. Reliable — published by credible outlet, uses ABS data…"></textarea>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">M2</span>
+            <div>
+              <h3 class="sc-title">Article 2</h3>
+              <p class="sc-hint">Choose a <em>different angle</em> — e.g. if Article 1 focuses on investment, Article 2 could focus on hiring/employment.</p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="art2-title">Article Title</label>
+            <input type="text" id="art2-title" class="field-input" placeholder="Article headline…"/>
+          </div>
+          <div class="article-meta-row">
+            <div class="field-row">
+              <label for="art2-source">Source / Publication</label>
+              <input type="text" id="art2-source" class="field-input" placeholder="e.g. AFR"/>
+            </div>
+            <div class="field-row">
+              <label for="art2-date">Date Published</label>
+              <input type="text" id="art2-date" class="field-input" placeholder="e.g. 2 March 2025"/>
+            </div>
+            <div class="field-row">
+              <label for="art2-url">URL</label>
+              <input type="url" id="art2-url" class="field-input" placeholder="https://…"/>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="art2-summary">Main Argument / Summary (dot points)</label>
+            <textarea id="art2-summary" class="field-textarea" rows="4" placeholder="• What is the article about?&#10;• What does it say about interest rates and business spending/jobs?"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="art2-stats">Key Statistics / Quotes</label>
+            <textarea id="art2-stats" class="field-textarea" rows="3" placeholder="e.g. 'Hiring intentions fell for the third consecutive quarter…'"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="art2-link">Link to Course Content</label>
+            <textarea id="art2-link" class="field-textarea" rows="3" placeholder="This article demonstrates…"></textarea>
+          </div>
+          <div class="field-row">
+            <label for="art2-reliability">Reliability Assessment</label>
+            <textarea id="art2-reliability" class="field-textarea" rows="2" placeholder="e.g. Reliable — …"></textarea>
+          </div>
+        </div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">M3</span>
+            <div>
+              <h3 class="sc-title">Synthesis — What Do Both Articles Tell Us?</h3>
+              <p class="sc-hint">Key for your extended response — how do both articles support a single argument?</p>
+            </div>
+          </div>
+          <div class="field-row">
+            <label for="article-synthesis">Together, what do both articles show about the relationship between interest rates, business spending, and employment?</label>
+            <textarea id="article-synthesis" class="field-textarea" rows="5" placeholder="Both articles collectively demonstrate that elevated interest rates have had a dampening effect on business investment and hiring…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- =================== NOTES SHEET =================== -->
+      <div class="tab-content" id="tab-content-notes">
+        <div class="info-banner warning-banner">⚠️ <strong>Reminder:</strong> Your A4 notes page must contain <strong>data, statistics and brief dot points only</strong>. No pre-written paragraphs. Checked by teacher.</div>
+
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">📄</span>
+            <div>
+              <h3 class="sc-title">A4 Notes Page Planner</h3>
+              <p class="sc-hint">Draft what goes on your notes sheet — then transfer to Word/Google Docs in a small font.</p>
+            </div>
+          </div>
+          <div class="notes-page-layout">
+            <div class="notes-column">
+              <h4 class="notes-col-title">💰 Financial Markets</h4>
+              <textarea id="notes-financial" class="field-textarea notes-area" rows="18" placeholder="RBA Cash Rate: ___% (as at ___)
+• Last changed: ___
+• Direction: ↑ / ↓ / →
+• CPI: ___% (Qtr ___ 2025)
+• RBA target: 2–3%
+
+Key reasons:
+•
+•
+
+Market types:
+• Equity:
+• Debt:
+• Forex:
+
+Institutions:
+• RBA —
+• ASIC —
+• APRA —"></textarea>
+            </div>
+            <div class="notes-column">
+              <h4 class="notes-col-title">👷 Labour Markets</h4>
+              <textarea id="notes-labour" class="field-textarea notes-area" rows="18" placeholder="Unemployment: ___% (___)
+Underemployment: ___% (___)
+WPI: ___% annual (___)
+Participation: ___% (___)
+
+Trends:
+• Unemployment: ↑ / ↓ / →
+• Underemployment: ↑ / ↓ / →
+• Wages: ↑ / ↓ / →
+
+Institutions:
+• Fair Work Commission —
+• Min Wage: $___/hr
+
+Types of unemployment:
+• Cyclical:
+• Structural:
+• Frictional:"></textarea>
+            </div>
+          </div>
+          <div class="notes-bottom">
+            <h4 class="notes-col-title">📰 Media Articles</h4>
+            <textarea id="notes-articles" class="field-textarea" rows="10" placeholder="Article 1: [Title] — [Source] [Date]
+• Key stat/finding:
+• Link to topic:
+
+Article 2: [Title] — [Source] [Date]
+• Key stat/finding:
+• Link to topic:
+
+Both articles show: "></textarea>
+          </div>
+          <div class="print-tip">💡 <strong>Tip:</strong> Copy this content into a Word or Google Doc in 9–10pt font to fit neatly on one A4 page.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MARKING CRITERIA -->
+    <section class="section">
+      <h2 class="section-title">Marking Criteria Checklist</h2>
+      <p class="section-sub">Self-assess before submitting.</p>
+      <div class="checklist">
+        <label class="check-item"><input type="checkbox" id="chk1"/><span class="check-box"></span><div><strong>Knowledge &amp; Understanding</strong><p>I can demonstrate accurate knowledge of Labour Market and Financial Market concepts, institutions, and current data.</p></div></label>
+        <label class="check-item"><input type="checkbox" id="chk2"/><span class="check-box"></span><div><strong>Economic Terminology</strong><p>I use correct economic terms (e.g. cash rate, monetary policy, transmission mechanism, underemployment, WPI) accurately.</p></div></label>
+        <label class="check-item"><input type="checkbox" id="chk3"/><span class="check-box"></span><div><strong>Sustained, Logical &amp; Cohesive Response</strong><p>My research is well-organised and presents a clear, logical argument with supporting evidence.</p></div></label>
+        <label class="check-item"><input type="checkbox" id="chk4"/><span class="check-box"></span><div><strong>Current Data (last 12 months)</strong><p>All statistics are sourced from the last 12 months (June 2025 – June 2026).</p></div></label>
+        <label class="check-item"><input type="checkbox" id="chk5"/><span class="check-box"></span><div><strong>Credible Sources</strong><p>I have used credible sources (RBA, ABS, quality news outlets) and can justify their reliability.</p></div></label>
+        <label class="check-item"><input type="checkbox" id="chk6"/><span class="check-box"></span><div><strong>Notes Page Compliant</strong><p>My A4 notes page contains only data, statistics and dot points — no pre-written paragraphs.</p></div></label>
+      </div>
+    </section>
+
+    <!-- SUBMIT SECTION -->
+    <section class="section submit-section">
+      <div class="submit-card">
+        <div class="submit-card-left">
+          <h2 class="submit-heading">Ready to Submit?</h2>
+          <p class="submit-desc">When you've completed your research, click Submit to send your answers to your teacher. <strong>You can still edit after submitting</strong> — just submit again.</p>
+          <div class="submit-save-note" id="save-indicator">💾 Auto-saved to this device</div>
+        </div>
+        <div class="submit-card-right">
+          <button class="submit-btn" id="submit-btn" onclick="submitResearch()">
+            <span class="submit-btn-icon">📤</span>
+            Submit Research
+          </button>
+          <div class="submit-status" id="submit-status"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SOURCES -->
+    <section class="section">
+      <h2 class="section-title">Recommended Sources</h2>
+      <div class="sources-grid">
+        <a href="https://www.rba.gov.au/monetary-policy/cash-rate/" target="_blank" rel="noopener" class="source-card"><div class="source-icon">🏦</div><div class="source-name">RBA — Cash Rate</div><div class="source-url">rba.gov.au</div></a>
+        <a href="https://www.rba.gov.au/publications/smp/" target="_blank" rel="noopener" class="source-card"><div class="source-icon">📋</div><div class="source-name">RBA — Statement on Monetary Policy</div><div class="source-url">rba.gov.au</div></a>
+        <a href="https://www.abs.gov.au/statistics/labour/employment-and-unemployment/labour-force-australia/latest-release" target="_blank" rel="noopener" class="source-card"><div class="source-icon">📊</div><div class="source-name">ABS — Labour Force</div><div class="source-url">abs.gov.au</div></a>
+        <a href="https://www.abs.gov.au/statistics/economy/price-indexes-and-inflation/wage-price-index-australia/latest-release" target="_blank" rel="noopener" class="source-card"><div class="source-icon">💹</div><div class="source-name">ABS — Wage Price Index</div><div class="source-url">abs.gov.au</div></a>
+        <a href="https://www.rba.gov.au/monetary-policy/rba-board-minutes/" target="_blank" rel="noopener" class="source-card"><div class="source-icon">📝</div><div class="source-name">RBA — Board Minutes</div><div class="source-url">rba.gov.au</div></a>
+        <a href="https://www.abc.net.au/news/topic/economy" target="_blank" rel="noopener" class="source-card"><div class="source-icon">📻</div><div class="source-name">ABC News — Economy</div><div class="source-url">abc.net.au</div></a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <p>Year 11 Economics 2026 · Assessment Task 2 · Labour &amp; Financial Markets</p>
+      <p class="footer-sub">Due: 19 June 2026, Period 2 (9:50 am) · Weighting: 35%</p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
