@@ -204,3 +204,49 @@ if (prevSubmit) {
     status.style.color = 'var(--green)';
   }
 }
+
+// ===== WORD COUNT =====
+const writingArea = document.getElementById('partb-response');
+const wordCountEl = document.getElementById('word-count');
+
+function updateWordCount() {
+  if (!writingArea || !wordCountEl) return;
+  const words = writingArea.value.trim().split(/\s+/).filter(w => w.length > 0);
+  const count  = writingArea.value.trim() === '' ? 0 : words.length;
+  wordCountEl.textContent = count;
+  wordCountEl.style.color = count >= 400 && count <= 700
+    ? 'var(--green)'
+    : count > 700 ? 'var(--amber)' : 'var(--blue)';
+}
+
+if (writingArea) {
+  writingArea.addEventListener('input', updateWordCount);
+  updateWordCount();
+}
+
+// ===== KEY TERMS TRACKER =====
+function updateTerms() {
+  if (!writingArea) return;
+  const text   = writingArea.value.toLowerCase();
+  const chips  = document.querySelectorAll('.term-chip');
+  let   found  = 0;
+  const total  = chips.length;
+
+  chips.forEach(chip => {
+    const term = chip.dataset.term.toLowerCase();
+    const hit  = text.includes(term);
+    chip.classList.toggle('found', hit);
+    if (hit) found++;
+  });
+
+  const bar   = document.getElementById('terms-bar');
+  const count = document.getElementById('terms-count');
+  if (bar)   bar.style.width = (found / total * 100) + '%';
+  if (count) count.textContent = `${found} / ${total} terms used`;
+}
+
+if (writingArea) {
+  writingArea.addEventListener('input', updateTerms);
+  // Run once after data restore
+  setTimeout(updateTerms, 200);
+}

@@ -1027,3 +1027,191 @@ body {
 .tab-content.active .scaffold-card:nth-child(3) { animation-delay: 0.12s; }
 .tab-content.active .scaffold-card:nth-child(4) { animation-delay: 0.16s; }
 .tab-content.active .scaffold-card:nth-child(5) { animation-delay: 0.20s; }
+
+/* ===== MODEL ANSWER ===== */
+.model-answer { display: flex; flex-direction: column; gap: 0.8rem; }
+
+.model-para {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.mp-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding: 0.5rem 1rem;
+  color: #fff;
+}
+
+.mp-label.intro      { background: linear-gradient(90deg, #1d4ed8, #4338ca); }
+.mp-label.body1      { background: linear-gradient(90deg, #0369a1, #0891b2); }
+.mp-label.body2      { background: linear-gradient(90deg, #047857, #059669); }
+.mp-label.body3      { background: linear-gradient(90deg, #7c3aed, #9333ea); }
+.mp-label.conclusion { background: linear-gradient(90deg, #b45309, #d97706); }
+
+.mp-content {
+  padding: 1rem;
+  background: var(--bg-card2);
+}
+
+.mp-what {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 0.5rem;
+}
+
+.mp-list {
+  padding-left: 1.2rem;
+  margin-bottom: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.mp-list li { font-size: 0.88rem; color: var(--text-muted); }
+.mp-list li strong { color: var(--text); }
+
+.mp-example {
+  background: rgba(59,130,246,0.07);
+  border-left: 3px solid var(--blue);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 0.8rem 1rem;
+  font-size: 0.84rem;
+  color: #93c5fd;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+/* ===== KEY TERMS TRACKER ===== */
+.terms-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.term-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 100px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  transition: all 0.25s;
+}
+
+.term-chip.found {
+  background: rgba(34,197,94,0.12);
+  border-color: var(--green);
+  color: #86efac;
+}
+
+.term-chip.found::before {
+  content: '✓';
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.terms-progress {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tp-bar-wrap {
+  flex: 1;
+  height: 6px;
+  background: var(--border);
+  border-radius: 100px;
+  overflow: hidden;
+}
+
+.tp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #4ade80);
+  border-radius: 100px;
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+.tp-count {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ===== WRITING AREA ===== */
+.writing-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+  padding: 0.5rem 0.8rem;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.wc-display strong { color: var(--blue); font-size: 1rem; }
+.wc-target { color: var(--text-dim); }
+
+.writing-area {
+  font-size: 0.95rem !important;
+  line-height: 1.8 !important;
+  min-height: 420px;
+}
+
+/* ===== RUBRIC TABLE ===== */
+.rubric-table { display: flex; flex-direction: column; gap: 0; }
+
+.rubric-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.7rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.rubric-row:last-child { border-bottom: none; }
+
+.rubric-header {
+  background: var(--bg-card2);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.rb {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  justify-content: center;
+}
+
+.rb input[type="radio"] { accent-color: var(--green); }
+
+@media (max-width: 640px) {
+  .rubric-row { grid-template-columns: 1fr; }
+  .rubric-header { display: none; }
+}
+

@@ -112,6 +112,7 @@
         <button class="tab-btn" data-tab="labour" id="tab-labour">👷 Labour Markets</button>
         <button class="tab-btn" data-tab="media" id="tab-media">📰 Media Commentary</button>
         <button class="tab-btn" data-tab="notes" id="tab-notes">📝 My Notes Sheet</button>
+        <button class="tab-btn" data-tab="writing" id="tab-writing">✍️ Part B Writing</button>
       </div>
 
       <!-- =================== FINANCIAL MARKETS =================== -->
@@ -128,11 +129,11 @@
           </div>
           <div class="field-row">
             <label for="cash-rate">Current Cash Rate Target (%)</label>
-            <input type="text" id="cash-rate" class="field-input" placeholder="e.g. 4.10%"/>
+            <input type="text" id="cash-rate" class="field-input" placeholder="Enter %"/>
           </div>
           <div class="field-row">
             <label for="last-change">Date of Most Recent Change</label>
-            <input type="text" id="last-change" class="field-input" placeholder="e.g. May 2025"/>
+            <input type="text" id="last-change" class="field-input" placeholder="Month Year"/>
           </div>
           <div class="field-row">
             <label>Direction of Recent Change</label>
@@ -144,7 +145,7 @@
           </div>
           <div class="field-row">
             <label for="rate-history">Rate History — last 12 months (key decisions)</label>
-            <textarea id="rate-history" class="field-textarea" rows="4" placeholder="e.g. Feb 2025 — RBA cut by 25bps to 4.10%&#10;Apr 2025 — Held at 4.10%…"></textarea>
+            <textarea id="rate-history" class="field-textarea" rows="4" placeholder="List key RBA decisions over the past 12 months..."></textarea>
           </div>
         </div>
 
@@ -158,19 +159,19 @@
           </div>
           <div class="field-row">
             <label for="inflation-rate">Current Inflation Rate (CPI) — %</label>
-            <input type="text" id="inflation-rate" class="field-input" placeholder="e.g. 2.4% (March Qtr 2025)"/>
+            <input type="text" id="inflation-rate" class="field-input" placeholder="Enter % and quarter"/>
           </div>
           <div class="field-row">
             <label for="rba-target">RBA Inflation Target Band</label>
-            <input type="text" id="rba-target" class="field-input" placeholder="e.g. 2–3% on average, over time"/>
+            <input type="text" id="rba-target" class="field-input" placeholder="Enter target band"/>
           </div>
           <div class="field-row">
             <label for="rba-rationale">Key Reasons for Monetary Policy Decisions (dot points)</label>
-            <textarea id="rba-rationale" class="field-textarea" rows="5" placeholder="• Inflation returning towards target band&#10;• Labour market remains tight&#10;• Global uncertainty (US tariffs, China slowdown)&#10;• Household consumption subdued due to cost-of-living pressures"></textarea>
+            <textarea id="rba-rationale" class="field-textarea" rows="5" placeholder="Use dot points to explain why the RBA made its recent decisions..."></textarea>
           </div>
           <div class="field-row">
             <label for="rba-outlook">RBA Forward Guidance / Outlook</label>
-            <textarea id="rba-outlook" class="field-textarea" rows="3" placeholder="Summarise what the RBA has said about future rate decisions…"></textarea>
+            <textarea id="rba-outlook" class="field-textarea" rows="3" placeholder="What has the RBA indicated about future decisions?"></textarea>
           </div>
         </div>
 
@@ -186,22 +187,22 @@
             <div class="market-type-card">
               <div class="mt-icon">🏦</div>
               <h4>Equity / Share Market</h4>
-              <textarea id="equity-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+              <textarea id="equity-market" class="field-textarea" rows="3" placeholder="Definition and role..."></textarea>
             </div>
             <div class="market-type-card">
               <div class="mt-icon">📜</div>
               <h4>Debt / Bond Market</h4>
-              <textarea id="debt-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+              <textarea id="debt-market" class="field-textarea" rows="3" placeholder="Definition and role..."></textarea>
             </div>
             <div class="market-type-card">
               <div class="mt-icon">💱</div>
               <h4>Foreign Exchange Market</h4>
-              <textarea id="forex-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+              <textarea id="forex-market" class="field-textarea" rows="3" placeholder="Definition and role..."></textarea>
             </div>
             <div class="market-type-card">
               <div class="mt-icon">🏗</div>
               <h4>Derivatives Market</h4>
-              <textarea id="derivatives-market" class="field-textarea" rows="3" placeholder="Definition, role, example institution…"></textarea>
+              <textarea id="derivatives-market" class="field-textarea" rows="3" placeholder="Definition and role..."></textarea>
             </div>
           </div>
         </div>
@@ -217,19 +218,19 @@
           <div class="institutions-list">
             <div class="institution-row">
               <span class="inst-label">RBA</span>
-              <textarea id="inst-rba" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+              <textarea id="inst-rba" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
             <div class="institution-row">
               <span class="inst-label">ASIC</span>
-              <textarea id="inst-asic" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+              <textarea id="inst-asic" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
             <div class="institution-row">
               <span class="inst-label">APRA</span>
-              <textarea id="inst-apra" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+              <textarea id="inst-apra" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
             <div class="institution-row">
               <span class="inst-label">ASX</span>
-              <textarea id="inst-asx" class="field-textarea inst-area" rows="2" placeholder="Role in financial markets…"></textarea>
+              <textarea id="inst-asx" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
           </div>
         </div>
@@ -255,7 +256,7 @@
           </div>
           <div class="field-row" style="margin-top:1.2rem;">
             <label for="transmission-notes">Your notes on each step:</label>
-            <textarea id="transmission-notes" class="field-textarea" rows="6" placeholder="e.g. When RBA ↓ cash rate → banks pass on lower rates → businesses can borrow more cheaply → investment ↑ → labour demand ↑ → unemployment ↓…"></textarea>
+            <textarea id="transmission-notes" class="field-textarea" rows="6" placeholder="Explain in your own words how each step in the chain above works..."></textarea>
           </div>
         </div>
       </div>
@@ -275,27 +276,27 @@
           <div class="stats-grid">
             <div class="stat-input-card">
               <label for="unemployment">Unemployment Rate (%)</label>
-              <input type="text" id="unemployment" class="field-input big-stat" placeholder="e.g. 4.1%"/>
+              <input type="text" id="unemployment" class="field-input big-stat" placeholder="Enter %"/>
               <small>Latest ABS figure</small>
-              <input type="text" id="unemp-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+              <input type="text" id="unemp-date" class="field-input" placeholder="Date / period" style="margin-top:0.5rem;"/>
             </div>
             <div class="stat-input-card">
               <label for="underemployment">Underemployment Rate (%)</label>
-              <input type="text" id="underemployment" class="field-input big-stat" placeholder="e.g. 6.3%"/>
+              <input type="text" id="underemployment" class="field-input big-stat" placeholder="Enter %"/>
               <small>Latest ABS figure</small>
-              <input type="text" id="underemp-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+              <input type="text" id="underemp-date" class="field-input" placeholder="Date / period" style="margin-top:0.5rem;"/>
             </div>
             <div class="stat-input-card">
               <label for="wpi">Wage Price Index — % annual change</label>
-              <input type="text" id="wpi" class="field-input big-stat" placeholder="e.g. 3.4%"/>
+              <input type="text" id="wpi" class="field-input big-stat" placeholder="Enter %"/>
               <small>Annual % change</small>
-              <input type="text" id="wpi-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+              <input type="text" id="wpi-date" class="field-input" placeholder="Date / period" style="margin-top:0.5rem;"/>
             </div>
             <div class="stat-input-card">
               <label for="participation">Participation Rate (%)</label>
-              <input type="text" id="participation" class="field-input big-stat" placeholder="e.g. 66.8%"/>
+              <input type="text" id="participation" class="field-input big-stat" placeholder="Enter %"/>
               <small>Latest ABS figure</small>
-              <input type="text" id="part-date" class="field-input" placeholder="Date / period…" style="margin-top:0.5rem;"/>
+              <input type="text" id="part-date" class="field-input" placeholder="Date / period" style="margin-top:0.5rem;"/>
             </div>
           </div>
         </div>
@@ -315,7 +316,7 @@
               <label class="radio-label"><input type="radio" name="unemp-trend" value="stable"/> → Stable</label>
               <label class="radio-label"><input type="radio" name="unemp-trend" value="falling"/> ↓ Falling</label>
             </div>
-            <textarea id="unemp-trend-notes" class="field-textarea" rows="2" placeholder="Brief explanation…"></textarea>
+            <textarea id="unemp-trend-notes" class="field-textarea" rows="2" placeholder="Briefly explain this trend..."></textarea>
           </div>
           <div class="trend-row">
             <div class="trend-label">Underemployment</div>
@@ -324,7 +325,7 @@
               <label class="radio-label"><input type="radio" name="underemp-trend" value="stable"/> → Stable</label>
               <label class="radio-label"><input type="radio" name="underemp-trend" value="falling"/> ↓ Falling</label>
             </div>
-            <textarea id="underemp-trend-notes" class="field-textarea" rows="2" placeholder="Brief explanation…"></textarea>
+            <textarea id="underemp-trend-notes" class="field-textarea" rows="2" placeholder="Briefly explain this trend..."></textarea>
           </div>
           <div class="trend-row">
             <div class="trend-label">Wage Growth (WPI)</div>
@@ -333,11 +334,11 @@
               <label class="radio-label"><input type="radio" name="wpi-trend" value="stable"/> → Stable</label>
               <label class="radio-label"><input type="radio" name="wpi-trend" value="falling"/> ↓ Falling</label>
             </div>
-            <textarea id="wpi-trend-notes" class="field-textarea" rows="2" placeholder="Brief explanation…"></textarea>
+            <textarea id="wpi-trend-notes" class="field-textarea" rows="2" placeholder="Briefly explain this trend..."></textarea>
           </div>
           <div class="field-row" style="margin-top:1rem;">
             <label for="workforce-summary">Overall summary of workforce trends (dot points):</label>
-            <textarea id="workforce-summary" class="field-textarea" rows="4" placeholder="• Unemployment remains low but is gradually rising from historic lows&#10;• Underemployment relatively stable&#10;• Real wage growth modest…"></textarea>
+            <textarea id="workforce-summary" class="field-textarea" rows="4" placeholder="Summarise the key trends in dot points..."></textarea>
           </div>
         </div>
 
@@ -352,24 +353,24 @@
           <div class="institutions-list">
             <div class="institution-row">
               <span class="inst-label">Fair Work Commission</span>
-              <textarea id="fw-commission" class="field-textarea inst-area" rows="2" placeholder="Role, key decisions…"></textarea>
+              <textarea id="fw-commission" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
             <div class="institution-row">
               <span class="inst-label">Trade Unions</span>
-              <textarea id="trade-unions" class="field-textarea inst-area" rows="2" placeholder="Role, examples…"></textarea>
+              <textarea id="trade-unions" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
             <div class="institution-row">
               <span class="inst-label">Employer Associations</span>
-              <textarea id="employer-assoc" class="field-textarea inst-area" rows="2" placeholder="Role, examples…"></textarea>
+              <textarea id="employer-assoc" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
             <div class="institution-row">
               <span class="inst-label">Federal Government</span>
-              <textarea id="fed-govt" class="field-textarea inst-area" rows="2" placeholder="Policies affecting the labour market…"></textarea>
+              <textarea id="fed-govt" class="field-textarea inst-area" rows="2" placeholder="Describe their role..."></textarea>
             </div>
           </div>
           <div class="field-row" style="margin-top:1rem;">
             <label for="min-wage">National Minimum Wage (current):</label>
-            <input type="text" id="min-wage" class="field-input" placeholder="e.g. $24.10/hr (2025–26)"/>
+            <input type="text" id="min-wage" class="field-input" placeholder="Enter current rate ($/hr)"/>
           </div>
         </div>
 
@@ -384,16 +385,16 @@
           <div class="two-col">
             <div class="two-col-item">
               <h4 class="mini-heading">Factors Affecting Labour Demand</h4>
-              <textarea id="labour-demand" class="field-textarea" rows="6" placeholder="• Level of economic activity / GDP&#10;• Productivity of workers&#10;• Cost of labour (wages)&#10;• Technology / automation&#10;• Business confidence…"></textarea>
+              <textarea id="labour-demand" class="field-textarea" rows="6" placeholder="List factors using dot points..."></textarea>
             </div>
             <div class="two-col-item">
               <h4 class="mini-heading">Factors Affecting Labour Supply</h4>
-              <textarea id="labour-supply" class="field-textarea" rows="6" placeholder="• Population size / demographics&#10;• Migration policy&#10;• Participation rate&#10;• Wages / incentives to work&#10;• Skills &amp; education…"></textarea>
+              <textarea id="labour-supply" class="field-textarea" rows="6" placeholder="List factors using dot points..."></textarea>
             </div>
           </div>
           <div class="field-row" style="margin-top:1rem;">
             <label for="unemployment-types">Types of Unemployment (brief definitions):</label>
-            <textarea id="unemployment-types" class="field-textarea" rows="4" placeholder="• Cyclical — caused by economic downturn&#10;• Structural — mismatch of skills&#10;• Frictional — between jobs&#10;• Seasonal — fluctuates with seasons"></textarea>
+            <textarea id="unemployment-types" class="field-textarea" rows="4" placeholder="Define each type in dot points..."></textarea>
           </div>
         </div>
       </div>
@@ -412,37 +413,37 @@
           </div>
           <div class="field-row">
             <label for="art1-title">Article Title</label>
-            <input type="text" id="art1-title" class="field-input" placeholder="Article headline…"/>
+            <input type="text" id="art1-title" class="field-input" placeholder="Enter headline"/>
           </div>
           <div class="article-meta-row">
             <div class="field-row">
               <label for="art1-source">Source / Publication</label>
-              <input type="text" id="art1-source" class="field-input" placeholder="e.g. ABC News"/>
+              <input type="text" id="art1-source" class="field-input" placeholder="Publication name"/>
             </div>
             <div class="field-row">
               <label for="art1-date">Date Published</label>
-              <input type="text" id="art1-date" class="field-input" placeholder="e.g. 14 May 2025"/>
+              <input type="text" id="art1-date" class="field-input" placeholder="DD Month YYYY"/>
             </div>
             <div class="field-row">
               <label for="art1-url">URL</label>
-              <input type="url" id="art1-url" class="field-input" placeholder="https://…"/>
+              <input type="url" id="art1-url" class="field-input" placeholder="https://"/>
             </div>
           </div>
           <div class="field-row">
             <label for="art1-summary">Main Argument / Summary (dot points)</label>
-            <textarea id="art1-summary" class="field-textarea" rows="4" placeholder="• What is the article about?&#10;• What does it say about interest rates and business spending/jobs?"></textarea>
+            <textarea id="art1-summary" class="field-textarea" rows="4" placeholder="Summarise the main argument in dot points..."></textarea>
           </div>
           <div class="field-row">
             <label for="art1-stats">Key Statistics / Quotes</label>
-            <textarea id="art1-stats" class="field-textarea" rows="3" placeholder="e.g. 'Business investment fell by X% in Q4 2024…' (Author, 2025)"></textarea>
+            <textarea id="art1-stats" class="field-textarea" rows="3" placeholder="Include direct quotes or statistics with a reference..."></textarea>
           </div>
           <div class="field-row">
             <label for="art1-link">Link to Course Content</label>
-            <textarea id="art1-link" class="field-textarea" rows="3" placeholder="This article demonstrates the impact of RBA monetary policy on business investment…"></textarea>
+            <textarea id="art1-link" class="field-textarea" rows="3" placeholder="How does this article connect to what you have studied?"></textarea>
           </div>
           <div class="field-row">
             <label for="art1-reliability">Reliability Assessment</label>
-            <textarea id="art1-reliability" class="field-textarea" rows="2" placeholder="e.g. Reliable — published by credible outlet, uses ABS data…"></textarea>
+            <textarea id="art1-reliability" class="field-textarea" rows="2" placeholder="Is this source reliable? Why?"></textarea>
           </div>
         </div>
 
@@ -456,37 +457,37 @@
           </div>
           <div class="field-row">
             <label for="art2-title">Article Title</label>
-            <input type="text" id="art2-title" class="field-input" placeholder="Article headline…"/>
+            <input type="text" id="art2-title" class="field-input" placeholder="Enter headline"/>
           </div>
           <div class="article-meta-row">
             <div class="field-row">
               <label for="art2-source">Source / Publication</label>
-              <input type="text" id="art2-source" class="field-input" placeholder="e.g. AFR"/>
+              <input type="text" id="art2-source" class="field-input" placeholder="Publication name"/>
             </div>
             <div class="field-row">
               <label for="art2-date">Date Published</label>
-              <input type="text" id="art2-date" class="field-input" placeholder="e.g. 2 March 2025"/>
+              <input type="text" id="art2-date" class="field-input" placeholder="DD Month YYYY"/>
             </div>
             <div class="field-row">
               <label for="art2-url">URL</label>
-              <input type="url" id="art2-url" class="field-input" placeholder="https://…"/>
+              <input type="url" id="art2-url" class="field-input" placeholder="https://"/>
             </div>
           </div>
           <div class="field-row">
             <label for="art2-summary">Main Argument / Summary (dot points)</label>
-            <textarea id="art2-summary" class="field-textarea" rows="4" placeholder="• What is the article about?&#10;• What does it say about interest rates and business spending/jobs?"></textarea>
+            <textarea id="art2-summary" class="field-textarea" rows="4" placeholder="Summarise the main argument in dot points..."></textarea>
           </div>
           <div class="field-row">
             <label for="art2-stats">Key Statistics / Quotes</label>
-            <textarea id="art2-stats" class="field-textarea" rows="3" placeholder="e.g. 'Hiring intentions fell for the third consecutive quarter…'"></textarea>
+            <textarea id="art2-stats" class="field-textarea" rows="3" placeholder="Include direct quotes or statistics with a reference..."></textarea>
           </div>
           <div class="field-row">
             <label for="art2-link">Link to Course Content</label>
-            <textarea id="art2-link" class="field-textarea" rows="3" placeholder="This article demonstrates…"></textarea>
+            <textarea id="art2-link" class="field-textarea" rows="3" placeholder="How does this article connect to what you have studied?"></textarea>
           </div>
           <div class="field-row">
             <label for="art2-reliability">Reliability Assessment</label>
-            <textarea id="art2-reliability" class="field-textarea" rows="2" placeholder="e.g. Reliable — …"></textarea>
+            <textarea id="art2-reliability" class="field-textarea" rows="2" placeholder="Is this source reliable? Why?"></textarea>
           </div>
         </div>
 
@@ -500,7 +501,7 @@
           </div>
           <div class="field-row">
             <label for="article-synthesis">Together, what do both articles show about the relationship between interest rates, business spending, and employment?</label>
-            <textarea id="article-synthesis" class="field-textarea" rows="5" placeholder="Both articles collectively demonstrate that elevated interest rates have had a dampening effect on business investment and hiring…"></textarea>
+            <textarea id="article-synthesis" class="field-textarea" rows="5" placeholder="What do both articles together reveal? Write in your own words..."></textarea>
           </div>
         </div>
       </div>
@@ -577,6 +578,190 @@ Both articles show: "></textarea>
           <div class="print-tip">💡 <strong>Tip:</strong> Copy this content into a Word or Google Doc in 9–10pt font to fit neatly on one A4 page.</div>
         </div>
       </div>
+    </section>
+
+      <!-- =================== PART B WRITING =================== -->
+      <div class="tab-content" id="tab-content-writing">
+        <div class="info-banner">✍️ <strong>Part B — Extended Response (20 marks).</strong> Use your research and notes sheet to plan and draft your response here before the exam. Your draft will be submitted to your teacher.</div>
+
+        <!-- MODEL ANSWER STRUCTURE -->
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">📖</span>
+            <div>
+              <h3 class="sc-title">Model Answer Structure</h3>
+              <p class="sc-hint">A strong extended response follows this structure. Each paragraph has a job.</p>
+            </div>
+          </div>
+          <div class="model-answer">
+            <div class="model-para">
+              <div class="mp-label intro">Introduction</div>
+              <div class="mp-content">
+                <div class="mp-what">What to do:</div>
+                <ul class="mp-list">
+                  <li>Define key terms from the question (e.g. financial markets, interest rates, labour market)</li>
+                  <li>State your argument — what will your response show?</li>
+                  <li>Briefly outline what each paragraph will cover</li>
+                </ul>
+                <div class="mp-example">📝 "Financial markets play a central role in allocating resources within the Australian economy. The Reserve Bank of Australia (RBA) uses the cash rate as its primary monetary policy tool to influence interest rates across the economy. This response will examine how recent changes to the cash rate have affected business spending and employment outcomes, drawing on current data and media commentary."</div>
+              </div>
+            </div>
+            <div class="model-para">
+              <div class="mp-label body1">Body ¶1 — Financial Markets &amp; RBA</div>
+              <div class="mp-content">
+                <div class="mp-what">What to do:</div>
+                <ul class="mp-list">
+                  <li><strong>Point:</strong> State the RBA's current monetary policy stance with data</li>
+                  <li><strong>Evidence:</strong> Current cash rate, CPI figure, date of last change</li>
+                  <li><strong>Explain:</strong> Why did the RBA take this action? (inflation target, economic conditions)</li>
+                  <li><strong>Link:</strong> How does this affect business borrowing costs?</li>
+                </ul>
+                <div class="mp-example">📝 "The RBA [cut/held/raised] the cash rate to X% in [month], citing [key reason from board minutes]. With inflation [above/within/below] the 2–3% target band at X%, the RBA's decision aimed to [stimulate/cool] economic activity. This directly affects the cost of borrowing for businesses across Australia's debt and equity markets..."</div>
+              </div>
+            </div>
+            <div class="model-para">
+              <div class="mp-label body2">Body ¶2 — Impact on Business Spending</div>
+              <div class="mp-content">
+                <div class="mp-what">What to do:</div>
+                <ul class="mp-list">
+                  <li><strong>Point:</strong> Explain the transmission mechanism to business investment</li>
+                  <li><strong>Evidence:</strong> Data / quote from one of your articles</li>
+                  <li><strong>Explain:</strong> Analyse how lower/higher rates affect business confidence and spending</li>
+                  <li><strong>Link:</strong> Connect to labour demand and job creation</li>
+                </ul>
+                <div class="mp-example">📝 "Lower interest rates reduce the cost of capital for firms, incentivising business investment. According to [Article 1 source], '[direct quote or stat]'. This illustrates that changes in monetary policy directly influence business confidence and investment decisions, which in turn affects the demand for labour..."</div>
+              </div>
+            </div>
+            <div class="model-para">
+              <div class="mp-label body3">Body ¶3 — Labour Market Outcomes</div>
+              <div class="mp-content">
+                <div class="mp-what">What to do:</div>
+                <ul class="mp-list">
+                  <li><strong>Point:</strong> Link financial market conditions to labour market data</li>
+                  <li><strong>Evidence:</strong> Current unemployment, underemployment, WPI figures (ABS)</li>
+                  <li><strong>Explain:</strong> How do current labour market trends reflect monetary policy?</li>
+                  <li><strong>Link:</strong> Reference Article 2 and Fair Work Commission / institutions</li>
+                </ul>
+                <div class="mp-example">📝 "The impact of monetary policy on business spending is reflected in current labour market data. The ABS reported an unemployment rate of X% in [period], while the Wage Price Index grew by X% annually. [Article 2 source] notes that '[quote]', demonstrating that [link to course content]..."</div>
+              </div>
+            </div>
+            <div class="model-para">
+              <div class="mp-label conclusion">Conclusion</div>
+              <div class="mp-content">
+                <div class="mp-what">What to do:</div>
+                <ul class="mp-list">
+                  <li>Restate your argument — what has your response shown?</li>
+                  <li>Synthesise: how do financial markets and labour markets connect?</li>
+                  <li>Evaluate: is the current policy approach effective?</li>
+                </ul>
+                <div class="mp-example">📝 "In conclusion, the RBA's recent monetary policy decisions have had significant implications for both financial markets and labour market outcomes in Australia. The transmission mechanism from cash rate changes through to business investment and employment demonstrates the interconnected nature of these markets. While current data suggests [evaluation], the effectiveness of monetary policy ultimately depends on [nuanced point]..."</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KEY TERMS TRACKER -->
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">🔑</span>
+            <div>
+              <h3 class="sc-title">Key Terms Tracker</h3>
+              <p class="sc-hint">These terms should appear in your response. They'll tick off automatically as you type below.</p>
+            </div>
+          </div>
+          <div class="terms-grid" id="terms-grid">
+            <span class="term-chip" data-term="cash rate">cash rate</span>
+            <span class="term-chip" data-term="monetary policy">monetary policy</span>
+            <span class="term-chip" data-term="inflation">inflation</span>
+            <span class="term-chip" data-term="transmission">transmission mechanism</span>
+            <span class="term-chip" data-term="interest rate">interest rates</span>
+            <span class="term-chip" data-term="financial market">financial markets</span>
+            <span class="term-chip" data-term="labour market">labour market</span>
+            <span class="term-chip" data-term="unemployment">unemployment</span>
+            <span class="term-chip" data-term="underemployment">underemployment</span>
+            <span class="term-chip" data-term="wage">wage price index</span>
+            <span class="term-chip" data-term="business investment">business investment</span>
+            <span class="term-chip" data-term="RBA">RBA</span>
+            <span class="term-chip" data-term="equity">equity market</span>
+            <span class="term-chip" data-term="debt market">debt market</span>
+            <span class="term-chip" data-term="participation">participation rate</span>
+            <span class="term-chip" data-term="aggregate demand">aggregate demand</span>
+          </div>
+          <div class="terms-progress">
+            <div class="tp-bar-wrap"><div class="tp-bar" id="terms-bar"></div></div>
+            <div class="tp-count" id="terms-count">0 / 16 terms used</div>
+          </div>
+        </div>
+
+        <!-- STUDENT WRITING AREA -->
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">W1</span>
+            <div>
+              <h3 class="sc-title">Your Draft Response</h3>
+              <p class="sc-hint">Write your extended response here. Aim for 4–5 paragraphs. Word count updates as you type.</p>
+            </div>
+          </div>
+          <div class="writing-toolbar">
+            <span class="wc-display">Words: <strong id="word-count">0</strong></span>
+            <span class="wc-target">Target: ~400–600 words</span>
+          </div>
+          <textarea id="partb-response" class="field-textarea writing-area" rows="24" placeholder="Start writing your extended response here. Use the model structure above as your guide..."></textarea>
+        </div>
+
+        <!-- SELF-MARK RUBRIC -->
+        <div class="scaffold-card">
+          <div class="sc-header">
+            <span class="sc-num">✅</span>
+            <div>
+              <h3 class="sc-title">Self-Assessment Rubric</h3>
+              <p class="sc-hint">Check your draft against the marking criteria before submitting.</p>
+            </div>
+          </div>
+          <div class="rubric-table">
+            <div class="rubric-row rubric-header">
+              <span>Criteria</span><span>Not yet</span><span>Developing</span><span>Strong</span>
+            </div>
+            <div class="rubric-row">
+              <span>Uses correct economic terminology throughout</span>
+              <label class="rb"><input type="radio" name="rb1" value="1"/> 1–5</label>
+              <label class="rb"><input type="radio" name="rb1" value="2"/> 6–12</label>
+              <label class="rb"><input type="radio" name="rb1" value="3"/> 13–16</label>
+            </div>
+            <div class="rubric-row">
+              <span>Explains the transmission mechanism clearly</span>
+              <label class="rb"><input type="radio" name="rb2" value="1"/> Unclear</label>
+              <label class="rb"><input type="radio" name="rb2" value="2"/> Partial</label>
+              <label class="rb"><input type="radio" name="rb2" value="3"/> Clear</label>
+            </div>
+            <div class="rubric-row">
+              <span>Uses current data / statistics as evidence</span>
+              <label class="rb"><input type="radio" name="rb3" value="1"/> None</label>
+              <label class="rb"><input type="radio" name="rb3" value="2"/> Some</label>
+              <label class="rb"><input type="radio" name="rb3" value="3"/> Thorough</label>
+            </div>
+            <div class="rubric-row">
+              <span>References both media articles with quotes</span>
+              <label class="rb"><input type="radio" name="rb4" value="1"/> Neither</label>
+              <label class="rb"><input type="radio" name="rb4" value="2"/> One</label>
+              <label class="rb"><input type="radio" name="rb4" value="3"/> Both</label>
+            </div>
+            <div class="rubric-row">
+              <span>Links financial markets to labour market outcomes</span>
+              <label class="rb"><input type="radio" name="rb5" value="1"/> Missing</label>
+              <label class="rb"><input type="radio" name="rb5" value="2"/> Basic</label>
+              <label class="rb"><input type="radio" name="rb5" value="3"/> Developed</label>
+            </div>
+            <div class="rubric-row">
+              <span>Response is structured (intro, body, conclusion)</span>
+              <label class="rb"><input type="radio" name="rb6" value="1"/> No structure</label>
+              <label class="rb"><input type="radio" name="rb6" value="2"/> Partial</label>
+              <label class="rb"><input type="radio" name="rb6" value="3"/> Clear structure</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </section>
 
     <!-- MARKING CRITERIA -->
