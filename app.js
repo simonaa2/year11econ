@@ -250,3 +250,70 @@ if (writingArea) {
   // Run once after data restore
   setTimeout(updateTerms, 200);
 }
+
+// ===== QUESTION SELECTOR =====
+const QUESTIONS = {
+  '1': "With reference to current economic data and media commentary, examine how recent changes to the RBA's cash rate have influenced financial markets and labour market outcomes in Australia.",
+  '2': "Using current data and two media sources, analyse the transmission mechanism of monetary policy and evaluate its effectiveness in achieving the RBA's macroeconomic objectives.",
+  '3': "Assess the impact of current interest rate settings on business investment and employment in the Australian economy. In your response, refer to current statistical data and media commentary.",
+  '4': "Examine the role of key institutions in influencing outcomes in Australia's financial and labour markets. Refer to current data and explain how these institutions interact to shape market outcomes.",
+  '5': "To what extent has the RBA's recent monetary policy been effective in managing inflation while supporting employment outcomes? Justify your answer with reference to current data and sources.",
+  '6': "Compare the operation of financial markets and labour markets in Australia. In your answer, discuss the role of key institutions and refer to current economic conditions."
+};
+
+function selectQuestion(val) {
+  // Style the options
+  document.querySelectorAll('.question-option').forEach(opt => {
+    opt.classList.remove('selected');
+  });
+  const chosen = document.getElementById(`qopt-${val}`);
+  if (chosen) chosen.classList.add('selected');
+
+  // Show the pinned banner
+  const banner = document.getElementById('selected-q-banner');
+  const sqText = document.getElementById('sq-text');
+  if (banner && sqText && QUESTIONS[val]) {
+    sqText.textContent = QUESTIONS[val];
+    banner.style.display = 'block';
+  }
+}
+
+function restoreQuestion(val) {
+  if (!val) return;
+  const radio = document.querySelector(`input[name="selected-question"][value="${val}"]`);
+  if (radio) radio.checked = true;
+  selectQuestion(val);
+}
+
+// Wire up radio buttons
+document.querySelectorAll('input[name="selected-question"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    selectQuestion(radio.value);
+    triggerSave();
+  });
+});
+
+// Add selected-question to collectAllData
+const _origCollect = collectAllData;
+collectAllData = function() {
+  const data = _origCollect();
+  const checked = document.querySelector('input[name="selected-question"]:checked');
+  data['selected-question'] = checked ? checked.value : '';
+  data['selected-question-text'] = checked ? (QUESTIONS[checked.value] || '') : '';
+  return data;
+};
+
+// Restore on load (after data restore runs)
+setTimeout(() => {
+  try {
+    const saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+      const d = JSON.parse(saved);
+      if (d['selected-question']) restoreQuestion(d['selected-question']);
+    }
+  } catch(e) {}
+  // Also update terms & word count after restore
+  updateWordCount();
+  updateTerms();
+}, 300);
+

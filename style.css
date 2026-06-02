@@ -1215,3 +1215,102 @@ body {
   .rubric-header { display: none; }
 }
 
+/* ===== QUESTION SELECTOR ===== */
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.question-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.question-option:hover { border-color: var(--blue); }
+
+.question-option input[type="radio"] { display: none; }
+
+.question-option.selected {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+  background: rgba(59,130,246,0.04);
+}
+
+.qopt-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  width: 100%;
+}
+
+.qopt-num {
+  font-family: var(--font-head);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #93c5fd;
+  background: rgba(59,130,246,0.12);
+  border-right: 1px solid var(--border);
+  padding: 0.9rem 1rem;
+  min-width: 3rem;
+  text-align: center;
+  flex-shrink: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.question-option.selected .qopt-num {
+  background: linear-gradient(135deg, var(--blue-dim), var(--purple-dim));
+  border-right-color: rgba(59,130,246,0.3);
+}
+
+.qopt-text {
+  padding: 0.85rem 1rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.question-option.selected .qopt-text { color: var(--text); }
+
+/* Selected question banner */
+.selected-q-banner {
+  background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(168,85,247,0.08));
+  border: 1px solid rgba(59,130,246,0.35);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--radius);
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.2rem;
+  animation: fadeInUp 0.25s ease both;
+}
+
+.sq-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--blue);
+  margin-bottom: 0.5rem;
+}
+
+.sq-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.55;
+  margin-bottom: 0.6rem;
+}
+
+.sq-marks {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+

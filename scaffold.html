@@ -584,6 +584,68 @@ Both articles show: "></textarea>
       <div class="tab-content" id="tab-content-writing">
         <div class="info-banner">✍️ <strong>Part B — Extended Response (20 marks).</strong> Use your research and notes sheet to plan and draft your response here before the exam. Your draft will be submitted to your teacher.</div>
 
+        <!-- QUESTION SELECTOR -->
+        <div class="scaffold-card" id="question-selector-card">
+          <div class="sc-header">
+            <span class="sc-num">❓</span>
+            <div>
+              <h3 class="sc-title">Select Your Question</h3>
+              <p class="sc-hint">Your teacher will tell you which question to answer on the day. Practise with any question below.</p>
+            </div>
+          </div>
+          <div class="question-list">
+            <label class="question-option" id="qopt-1">
+              <input type="radio" name="selected-question" value="1"/>
+              <div class="qopt-body">
+                <div class="qopt-num">Q1</div>
+                <div class="qopt-text">With reference to current economic data and media commentary, examine how recent changes to the RBA's cash rate have influenced financial markets and labour market outcomes in Australia.</div>
+              </div>
+            </label>
+            <label class="question-option" id="qopt-2">
+              <input type="radio" name="selected-question" value="2"/>
+              <div class="qopt-body">
+                <div class="qopt-num">Q2</div>
+                <div class="qopt-text">Using current data and two media sources, analyse the transmission mechanism of monetary policy and evaluate its effectiveness in achieving the RBA's macroeconomic objectives.</div>
+              </div>
+            </label>
+            <label class="question-option" id="qopt-3">
+              <input type="radio" name="selected-question" value="3"/>
+              <div class="qopt-body">
+                <div class="qopt-num">Q3</div>
+                <div class="qopt-text">Assess the impact of current interest rate settings on business investment and employment in the Australian economy. In your response, refer to current statistical data and media commentary.</div>
+              </div>
+            </label>
+            <label class="question-option" id="qopt-4">
+              <input type="radio" name="selected-question" value="4"/>
+              <div class="qopt-body">
+                <div class="qopt-num">Q4</div>
+                <div class="qopt-text">Examine the role of key institutions in influencing outcomes in Australia's financial and labour markets. Refer to current data and explain how these institutions interact to shape market outcomes.</div>
+              </div>
+            </label>
+            <label class="question-option" id="qopt-5">
+              <input type="radio" name="selected-question" value="5"/>
+              <div class="qopt-body">
+                <div class="qopt-num">Q5</div>
+                <div class="qopt-text">To what extent has the RBA's recent monetary policy been effective in managing inflation while supporting employment outcomes? Justify your answer with reference to current data and sources.</div>
+              </div>
+            </label>
+            <label class="question-option" id="qopt-6">
+              <input type="radio" name="selected-question" value="6"/>
+              <div class="qopt-body">
+                <div class="qopt-num">Q6</div>
+                <div class="qopt-text">Compare the operation of financial markets and labour markets in Australia. In your answer, discuss the role of key institutions and refer to current economic conditions.</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- SELECTED QUESTION DISPLAY -->
+        <div class="selected-q-banner" id="selected-q-banner" style="display:none">
+          <div class="sq-label">Your Question</div>
+          <div class="sq-text" id="sq-text"></div>
+          <div class="sq-marks">20 marks · ~400–600 words · 50 minutes · 1× A4 notes page permitted</div>
+        </div>
+
         <!-- MODEL ANSWER STRUCTURE -->
         <div class="scaffold-card">
           <div class="sc-header">
