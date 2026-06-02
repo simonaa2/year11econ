@@ -19,13 +19,13 @@ const CONFIG = {
   // Leave the array empty [] to use the old class-code system instead.
   // -----------------------------------------------
   STUDENTS: [
-    { name: 'Simon Anderson',            password: 'simon01'    },
-    { name: 'Cooper McMahon',            password: 'cooper01'   },
-    { name: 'Alessandro Moretto Martins',password: 'alex01'     },
-    { name: 'Noah Scully',               password: 'noah01'     },
-    { name: 'William Falconer',          password: 'william01'  },
-    { name: 'Jake Ianni',                password: 'jake01'     },
-    { name: 'Zac McGrath',               password: 'zac01'      },
+    { name: 'Simon Anderson',            password: 'simon47'   },
+    { name: 'Cooper McMahon',            password: 'cooper83'  },
+    { name: 'Alessandro Moretto Martins',password: 'alex29'    },
+    { name: 'Noah Scully',               password: 'noah61'    },
+    { name: 'William Falconer',          password: 'william35' },
+    { name: 'Jake Ianni',                password: 'jake74'    },
+    { name: 'Zac McGrath',               password: 'zac52'     },
     // Add more students here...
   ],
 
