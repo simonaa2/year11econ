@@ -1,20 +1,33 @@
 // ===================================================
 // ECONOMICS SCAFFOLD — CONFIGURATION
 // ===================================================
-// After completing the Google Apps Script setup,
-// paste your Web App URL below as SCRIPT_URL.
-// Change CLASS_CODE to whatever you give students.
-// ===================================================
 
 const CONFIG = {
-  // Paste your Google Apps Script Web App URL here after setup:
+  // Google Apps Script Web App URL (from your setup):
   SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwGMpiAOYdTLbsAmidzndnrWdUz-dPgsD62VlLutFeOdQDrA5oFDP9kuAhho_NiX3to/exec',
 
-  // The code students must enter to access the scaffold:
+  // App details:
+  APP_TITLE:    'Year 11 Economics 2026',
+  APP_SUBTITLE: 'Labour & Financial Markets — Research Scaffold',
+  DUE_DATE:     '2026-06-19T09:50:00+10:00',
+
+  // -----------------------------------------------
+  // STUDENT ROSTER
+  // Add each student as: { name: 'Full Name', password: 'password' }
+  // Name must match exactly what they type on the login page.
+  // Passwords can be anything — e.g. first name + last 2 digits of DOB.
+  // Leave the array empty [] to use the old class-code system instead.
+  // -----------------------------------------------
+  STUDENTS: [
+    { name: 'Student One',   password: 'pass01' },
+    { name: 'Student Two',   password: 'pass02' },
+    { name: 'Student Three', password: 'pass03' },
+    // Add more students here...
+  ],
+
+  // Fallback class code (only used if STUDENTS list is empty):
   CLASS_CODE: 'ECON2026',
 
-  // App title (shown on login page):
-  APP_TITLE: 'Year 11 Economics 2026',
-  APP_SUBTITLE: 'Labour & Financial Markets — Research Scaffold',
-  DUE_DATE: '2026-06-19T09:50:00+10:00',
+  // Teacher dashboard password:
+  TEACHER_PASSWORD: 'teacher2026',
 };

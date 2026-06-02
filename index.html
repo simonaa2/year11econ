@@ -179,8 +179,8 @@
         <input type="text" id="login-name" class="login-input" placeholder="e.g. Jessica Thompson" autocomplete="name" autocapitalize="words"/>
       </div>
       <div class="login-field">
-        <label for="login-code">Class Code <span style="color:var(--text-dim);font-weight:400;text-transform:none">(given by your teacher)</span></label>
-        <input type="text" id="login-code" class="login-input" placeholder="e.g. ECON2026" autocapitalize="characters" spellcheck="false"/>
+        <label for="login-password">Password <span style="color:var(--text-dim);font-weight:400;text-transform:none">(given by your teacher)</span></label>
+        <input type="password" id="login-password" class="login-input" placeholder="Enter your password"/>
       </div>
 
       <button class="login-btn" id="login-btn" onclick="attemptLogin()">
@@ -218,20 +218,38 @@
 
     // Login
     function attemptLogin() {
-      const name = document.getElementById('login-name').value.trim();
-      const code = document.getElementById('login-code').value.trim().toUpperCase();
-      const errorEl = document.getElementById('login-error');
+      const name     = document.getElementById('login-name').value.trim();
+      const password = document.getElementById('login-password').value.trim();
 
-      if (!name) { showError('Please enter your full name.'); return; }
-      if (name.length < 2) { showError('Please enter your full name.'); return; }
-      if (!code) { showError('Please enter the class code from your teacher.'); return; }
-      if (code !== CONFIG.CLASS_CODE) {
-        showError('Incorrect class code. Check with your teacher and try again.');
-        return;
+      if (!name)     { showError('Please enter your full name.'); return; }
+      if (!password) { showError('Please enter your password.'); return; }
+
+      const useRoster = CONFIG.STUDENTS && CONFIG.STUDENTS.length > 0;
+
+      if (useRoster) {
+        // Check against student roster (case-insensitive name, exact password)
+        const match = CONFIG.STUDENTS.find(s =>
+          s.name.toLowerCase() === name.toLowerCase() &&
+          s.password === password
+        );
+        if (!match) {
+          showError('Name or password not recognised. Check your details and try again.');
+          return;
+        }
+        // Use the exact name from the roster for consistency
+        sessionStorage.setItem('studentName', match.name);
+        sessionStorage.setItem('classCode', CONFIG.CLASS_CODE || 'ECON2026');
+      } else {
+        // Fallback: class code mode
+        const code = password.toUpperCase();
+        if (code !== CONFIG.CLASS_CODE) {
+          showError('Incorrect class code. Check with your teacher and try again.');
+          return;
+        }
+        sessionStorage.setItem('studentName', name);
+        sessionStorage.setItem('classCode', code);
       }
 
-      sessionStorage.setItem('studentName', name);
-      sessionStorage.setItem('classCode', code);
       window.location.href = 'scaffold.html';
     }
 
