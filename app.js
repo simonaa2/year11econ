@@ -254,7 +254,7 @@ if (writingArea) {
 // ===== QUESTION SELECTOR =====
 const QUESTIONS = {
   '1': "With reference to current economic data and media commentary, examine how recent changes to the RBA's cash rate have influenced financial markets and labour market outcomes in Australia.",
-  '2': "Using current data and two media sources, analyse the transmission mechanism of monetary policy and evaluate its effectiveness in achieving the RBA's macroeconomic objectives.",
+  '2': "Using current data and two media sources, analyse how changes to the RBA's cash rate affect borrowing costs, business investment and labour market outcomes in Australia.",
   '3': "Assess the impact of current interest rate settings on business investment and employment in the Australian economy. In your response, refer to current statistical data and media commentary.",
   '4': "Examine the role of key institutions in influencing outcomes in Australia's financial and labour markets. Refer to current data and explain how these institutions interact to shape market outcomes.",
   '5': "To what extent has the RBA's recent monetary policy been effective in managing inflation while supporting employment outcomes? Justify your answer with reference to current data and sources.",
