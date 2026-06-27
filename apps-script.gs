@@ -90,6 +90,8 @@ function readSubmissions() {
   }
 
   var headers = values[0];
+  var nameMap = {};
+  var studentCounter = 2;
   var submissions = values.slice(1).map(function(row) {
     var obj = {};
     headers.forEach(function(h, i) {
@@ -97,7 +99,15 @@ function readSubmissions() {
         ? row[i].toISOString()
         : String(row[i]);
     });
-    obj.studentName = obj['studentName'] || '';
+    var name = (obj.studentName || '').trim();
+    if (name && name !== 'Simon Anderson') {
+      if (!nameMap[name]) {
+        nameMap[name] = 'Student ' + studentCounter++;
+      }
+      obj.studentName = nameMap[name];
+    } else if (!name) {
+      obj.studentName = 'Unknown Student';
+    }
     obj.timestamp   = obj['timestamp']   || '';
     return obj;
   });

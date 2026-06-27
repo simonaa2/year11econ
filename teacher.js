@@ -63,7 +63,18 @@ async function loadSubmissions() {
       return;
     }
 
-    allSubmissions = result.submissions || [];
+    // Anonymise student names for privacy (except Simon Anderson)
+    const nameMap = {};
+    let studentCounter = 2;
+    allSubmissions = (result.submissions || []).map(s => {
+      const name = (s.studentName || '').trim();
+      if (!name) return { ...s, studentName: 'Unknown Student' };
+      if (name === 'Simon Anderson') return s;
+      if (!nameMap[name]) {
+        nameMap[name] = `Student ${studentCounter++}`;
+      }
+      return { ...s, studentName: nameMap[name] };
+    });
     renderDashboard();
 
   } catch (err) {
