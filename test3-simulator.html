@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Test 3 FNB Stadium Tactical Simulator & Monte Carlo Predictor | DATATRENDS</title>
+<meta name="description" content="10,000-iteration Monte Carlo tactical match predictor for Test 3: Springboks vs All Blacks at FNB Stadium, Johannesburg (1,753m altitude).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #060411;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #f1f5f9;
+    min-height: 100vh;
+    padding: 1rem 1rem 2.5rem;
+    overflow-x: hidden;
+  }
+
+  .wrapper {
+    width: 100%;
+    max-width: 1540px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* Nav */
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.65rem 1.1rem;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.85rem;
+    backdrop-filter: blur(12px);
+  }
+  .brand {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: #38bdf8;
+  }
+  .nav-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .nav-btn {
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #cbd5e1;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; transform: translateY(-1px); }
+  .nav-btn.active {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff;
+    border-color: #a78bfa;
+    box-shadow: 0 0 14px rgba(139, 92, 246, 0.4);
+  }
+
+  /* Header */
+  .header { text-align: center; margin: 0.35rem 0; }
+  .badge {
+    display: inline-block;
+    background: rgba(168, 85, 247, 0.15);
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    border-radius: 999px;
+    padding: 0.25rem 0.9rem;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #c084fc;
+    margin-bottom: 0.4rem;
+  }
+  h1 { font-family: 'Outfit', sans-serif; font-size: clamp(1.2rem, 2.6vw, 1.85rem); font-weight: 900; color: #f8fafc; }
+  .sub { font-size: 0.78rem; color: #94a3b8; margin-top: 0.25rem; }
+
+  /* Grid Layout */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  @media (min-width: 1120px) {
+    .main-grid {
+      grid-template-columns: 460px minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  /* Cards */
+  .card {
+    background: rgba(18, 14, 38, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 1.1rem;
+    padding: 1.35rem;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6);
+  }
+  .card-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #c084fc;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  /* Parameter Controls */
+  .param-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+  .param-box {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+  }
+  .param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+  }
+  .param-val {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 900;
+    color: #38bdf8;
+    font-size: 0.82rem;
+  }
+  .param-slider {
+    width: 100%;
+    accent-color: #c084fc;
+    cursor: pointer;
+  }
+  .param-desc {
+    font-size: 0.66rem;
+    color: #94a3b8;
+    margin-top: 0.35rem;
+    line-height: 1.35;
+  }
+
+  /* Run Sim Button */
+  .btn-sim {
+    width: 100%;
+    background: linear-gradient(135deg, #9333ea, #6366f1);
+    color: #ffffff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 900;
+    padding: 0.85rem;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.45);
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+  }
+  .btn-sim:hover { transform: translateY(-2px); box-shadow: 0 0 28px rgba(147, 51, 234, 0.65); }
+
+  /* Output Dashboard */
+  .output-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* Probability Bar */
+  .prob-card {
+    background: rgba(18, 14, 38, 0.9);
+    border: 1px solid rgba(192, 132, 252, 0.3);
+    border-radius: 1.1rem;
+    padding: 1.25rem;
+  }
+  .prob-bar-wrap {
+    height: 36px;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 0.6rem;
+    overflow: hidden;
+    display: flex;
+    margin: 0.75rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  .pb-sa {
+    background: linear-gradient(90deg, #059669, #34d399);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 0.85rem;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    transition: width 0.4s ease;
+  }
+  .pb-draw {
+    background: #64748b;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.65rem;
+    color: #ffffff;
+    transition: width 0.4s ease;
+  }
+  .pb-nz {
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 0.85rem;
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    transition: width 0.4s ease;
+  }
+  .prob-legend {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    font-weight: 800;
+  }
+
+  /* Metric Mini Cards */
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+  }
+  .mini-box {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.75rem;
+    padding: 0.85rem 1rem;
+    text-align: center;
+  }
+  .mb-title { font-size: 0.65rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+  .mb-score { font-family: 'Outfit', sans-serif; font-size: 1.4rem; font-weight: 900; color: #f8fafc; margin: 0.2rem 0; }
+  .mb-sub { font-size: 0.68rem; color: #cbd5e1; }
+
+  /* Charts */
+  .chart-box {
+    position: relative;
+    height: 270px;
+    margin-top: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- Navigation -->
+  <div class="nav-bar">
+    <div class="brand">DATATRENDS TACTICAL LAB</div>
+    <div class="nav-links">
+      <a href="test1-field-map.html" class="nav-btn">📍 Test 1 Map</a>
+      <a href="test2-field-map.html" class="nav-btn">📍 Test 2 Map</a>
+      <a href="test2-momentum.html" class="nav-btn">🎮 3D Momentum</a>
+      <a href="sentiment.html" class="nav-btn">💬 Social NLP</a>
+      <a href="test3-simulator.html" class="nav-btn active">🔮 Test 3 Simulator (FNB)</a>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <div class="header">
+    <span class="badge">10,000-Iteration Monte Carlo Simulation</span>
+    <h1>🏉 Test 3 — FNB Stadium (FINAL: 🇿🇦 SA 29 — 24 NZ 🇳🇿)</h1>
+    <p class="sub">MATCH CONCLUDED: 🇿🇦 South Africa 29 — 24 New Zealand 🇳🇿 · SA Leads Series 2–1 · Highveld Oxygen Density, Breakdown Ruck Speed &amp; Bomb Squad Sensitivity Engine</p>
+  </div>
+
+    <!-- COMPLETED MATCH BANNER & CTA TO TEST 4 -->
+  <div style="background:linear-gradient(135deg,rgba(52,211,153,0.15),rgba(239,68,68,0.15));border:1.5px solid rgba(52,211,153,0.4);border-radius:1rem;padding:1.25rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <div style="font-size:0.75rem;font-weight:900;text-transform:uppercase;color:#34d399;letter-spacing:0.08em;">✅ MATCH COMPLETED · OFFICIAL RESULT</div>
+      <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#f8fafc;margin:0.2rem 0;">🇿🇦 South Africa 29 — 24 New Zealand 🇳🇿</div>
+      <div style="font-size:0.8rem;color:#cbd5e1;">South Africa took the 2–1 series lead at FNB Stadium! The pre-match model successfully projected a high-scoring Springbok victory (Actual: 29–24 vs Projected: 28–24).</div>
+    </div>
+    <a href="test4-simulator.html" style="text-decoration:none;background:linear-gradient(135deg,#ef4444,#f59e0b);color:#fff;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:900;padding:0.75rem 1.25rem;border-radius:0.6rem;box-shadow:0 0 15px rgba(239,68,68,0.4);display:inline-flex;align-items:center;gap:0.4rem;">
+      🇺🇸 Open Test 4 USA Decider Simulator →
+    </a>
+  </div>
+
+  <!-- Main Grid -->
+  <div class="main-grid">
+
+    <!-- LEFT: Tactical Parameter Controls -->
+    <div class="card">
+      <div class="card-title">
+        <span>⚙️ Tactical Model Parameters</span>
+        <span style="color:#94a3b8;font-size:0.68rem;">10,000 Iterations</span>
+      </div>
+
+      <div class="param-group">
+
+        <!-- 1. Altitude Decay -->
+        <div class="param-box">
+          <div class="param-header">
+            <span>🏔️ Altitude Fatigue (1,753m Highveld)</span>
+            <span id="valAlt" class="param-val">+14% Fatigue Deficit</span>
+          </div>
+          <input type="range" id="paramAlt" class="param-slider" min="0" max="30" value="14" oninput="runSimulation()">
+          <p class="param-desc">Simulates the oxygen decay on New Zealand in minutes 55'–80' compared to altitude-adapted Springboks.</p>
+        </div>
+
+        <!-- 2. Bomb Squad Entry Minute -->
+        <div class="param-box">
+          <div class="param-header">
+            <span>💣 Bomb Squad Deployment Minute</span>
+            <span id="valBench" class="param-val">50' Minute Mark</span>
+          </div>
+          <input type="range" id="paramBench" class="param-slider" min="40" max="65" value="50" oninput="runSimulation()">
+          <p class="param-desc">Timing the fresh front row & back row injection against a fatiguing opposition pack.</p>
+        </div>
+
+        <!-- 3. NZ Ruck Speed -->
+        <div class="param-box">
+          <div class="param-header">
+            <span>⚡ All Blacks Ruck Speed (sec)</span>
+            <span id="valRuck" class="param-val">2.8s Rapid Ball</span>
+          </div>
+          <input type="range" id="paramRuck" class="param-slider" min="20" max="42" value="28" oninput="runSimulation()">
+          <p class="param-desc">Sub-2.8s ruck speed unlocks NZ strike running; &gt;3.4s allows Bok defensive wall to set.</p>
+        </div>
+
+        <!-- 4. Goal Kicking Accuracy -->
+        <div class="param-box">
+          <div class="param-header">
+            <span>🎯 Springbok Goal Kicking (Kolbe)</span>
+            <span id="valKick" class="param-val">90% Off The Tee</span>
+          </div>
+          <input type="range" id="paramKick" class="param-slider" min="65" max="100" value="90" oninput="runSimulation()">
+          <p class="param-desc">Altitude adds +8% kicking distance at FNB Stadium; penalty conversion efficiency.</p>
+        </div>
+
+        <!-- 5. Discipline Level -->
+        <div class="param-box">
+          <div class="param-header">
+            <span>🛑 Match Penalty Count</span>
+            <span id="valPen" class="param-val">12 Penalties / Match</span>
+          </div>
+          <input type="range" id="paramPen" class="param-slider" min="8" max="20" value="12" oninput="runSimulation()">
+          <p class="param-desc">Breakdown holding-on and offside penalties awarded by the referee.</p>
+        </div>
+
+        <button class="btn-sim" onclick="runSimulation()">⚡ Re-Calculate 10,000 Monte Carlo Iterations</button>
+      </div>
+    </div>
+
+    <!-- RIGHT: Simulation Outputs & Charts -->
+    <div class="output-stack">
+
+      <!-- Win Probability Bar -->
+      <div class="prob-card">
+        <div class="card-title">
+          <span>🏆 10,000 Monte Carlo Win Probability</span>
+          <span style="color:#34d399;font-size:0.75rem;">FNB Stadium Decider</span>
+        </div>
+
+        <div class="prob-bar-wrap">
+          <div id="barSA" class="pb-sa" style="width: 58%;">🇿🇦 RSA 58.0%</div>
+          <div id="barDraw" class="pb-draw" style="width: 3%;">2%</div>
+          <div id="barNZ" class="pb-nz" style="width: 39%;">🇳🇿 NZL 39.0%</div>
+        </div>
+
+        <div class="prob-legend">
+          <span style="color:#34d399;">🇿🇦 South Africa: <strong id="txtProbSA">58.0%</strong></span>
+          <span style="color:#94a3b8;">Draw: <strong id="txtProbDraw">3.0%</strong></span>
+          <span style="color:#38bdf8;">🇳🇿 New Zealand: <strong id="txtProbNZ">39.0%</strong></span>
+        </div>
+      </div>
+
+      <!-- Mini KPI Metrics -->
+      <div class="mini-grid">
+        <div class="mini-box">
+          <div class="mb-title">Most Likely Scoreline</div>
+          <div id="kpiScore" class="mb-score" style="color:#c084fc;">RSA 28 — 24 NZL</div>
+          <div class="mb-sub">Median Expected Outcome</div>
+        </div>
+        <div class="mini-box">
+          <div class="mb-title">Expected Total Points</div>
+          <div id="kpiTotal" class="mb-score">52.4 Pts</div>
+          <div class="mb-sub">High-scoring Altitude Fixture</div>
+        </div>
+        <div class="mini-box">
+          <div class="mb-title">Bok Altitude Leverage</div>
+          <div id="kpiLeverage" class="mb-score" style="color:#34d399;">+6.2 Pts</div>
+          <div class="mb-sub">Minutes 55'–80' Split</div>
+        </div>
+      </div>
+
+      <!-- Score Distribution Bell Curve -->
+      <div class="card">
+        <div class="card-title">
+          <span>📊 Predicted Score Distribution (Bell Curves)</span>
+          <span style="font-size:0.68rem;color:#94a3b8;">Density of 10,000 Simulated Matches</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="scoreDistChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Tactical Sensitivity Bar -->
+      <div class="card">
+        <div class="card-title">
+          <span>🔬 Tactical Sensitivity & Leverage (Points per Factor)</span>
+          <span style="font-size:0.68rem;color:#94a3b8;">Impact on Win Probability</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="sensitivityChart"></canvas>
+        </div>
+      </div>
+
+    </div><!-- /output-stack -->
+
+  </div><!-- /main-grid -->
+
+</div><!-- /wrapper -->
+
+<script>
+let scoreChartInstance = null;
+let sensChartInstance = null;
+
+// Normal distribution random generator (Box-Muller)
+function randomGaussian(mean, stdev) {
+  let u = 1 - Math.random();
+  let v = Math.random();
+  let z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
+  return mean + z * stdev;
+}
+
+function runSimulation() {
+  const altVal = parseFloat(document.getElementById('paramAlt').value);
+  const benchVal = parseFloat(document.getElementById('paramBench').value);
+  const ruckVal = parseFloat(document.getElementById('paramRuck').value) / 10.0;
+  const kickVal = parseFloat(document.getElementById('paramKick').value) / 100.0;
+  const penVal = parseFloat(document.getElementById('paramPen').value);
+
+  // Update labels
+  document.getElementById('valAlt').textContent = `+${altVal}% Fatigue Deficit`;
+  document.getElementById('valBench').textContent = `${benchVal}' Minute Mark`;
+  document.getElementById('valRuck').textContent = `${ruckVal.toFixed(1)}s Rapid Ball`;
+  document.getElementById('valKick').textContent = `${(kickVal*100).toFixed(0)}% Off The Tee`;
+  document.getElementById('valPen').textContent = `${penVal} Penalties / Match`;
+
+  // 10,000 Monte Carlo Runs
+  const N = 10000;
+  let saWins = 0, nzWins = 0, draws = 0;
+  let saScores = [], nzScores = [];
+
+  // Base scoring parameters for FNB Stadium
+  // Altitude baseline: South Africa base ~27 pts; New Zealand base ~25 pts
+  const saMeanBase = 25.5 + (altVal * 0.22) + ((60 - benchVal) * 0.15) + (kickVal * 4.0) + (penVal * 0.35);
+  const nzMeanBase = 26.0 - (altVal * 0.18) + ((3.4 - ruckVal) * 4.5) + (penVal * 0.2);
+
+  for (let i = 0; i < N; i++) {
+    const saScore = Math.max(9, Math.round(randomGaussian(saMeanBase, 6.2)));
+    const nzScore = Math.max(9, Math.round(randomGaussian(nzMeanBase, 5.8)));
+
+    saScores.push(saScore);
+    nzScores.push(nzScore);
+
+    if (saScore > nzScore) saWins++;
+    else if (nzScore > saScore) nzWins++;
+    else draws++;
+  }
+
+  const pSA = (saWins / N * 100).toFixed(1);
+  const pNZ = (nzWins / N * 100).toFixed(1);
+  const pDraw = (draws / N * 100).toFixed(1);
+
+  // Update Probability Bar
+  document.getElementById('barSA').style.width = pSA + '%';
+  document.getElementById('barSA').textContent = `🇿🇦 RSA ${pSA}%`;
+  document.getElementById('barNZ').style.width = pNZ + '%';
+  document.getElementById('barNZ').textContent = `🇳🇿 NZL ${pNZ}%`;
+  document.getElementById('barDraw').style.width = pDraw + '%';
+  document.getElementById('barDraw').textContent = `${pDraw}%`;
+
+  document.getElementById('txtProbSA').textContent = pSA + '%';
+  document.getElementById('txtProbNZ').textContent = pNZ + '%';
+  document.getElementById('txtProbDraw').textContent = pDraw + '%';
+
+  // KPI calculations
+  const avgSA = (saScores.reduce((a, b) => a + b, 0) / N).toFixed(0);
+  const avgNZ = (nzScores.reduce((a, b) => a + b, 0) / N).toFixed(0);
+  document.getElementById('kpiScore').textContent = `RSA ${avgSA} — ${avgNZ} NZL`;
+  document.getElementById('kpiTotal').textContent = `${(parseFloat(avgSA) + parseFloat(avgNZ)).toFixed(1)} Pts`;
+  document.getElementById('kpiLeverage').textContent = `+${(altVal * 0.44).toFixed(1)} Pts`;
+
+  updateDistributionChart(saScores, nzScores);
+  updateSensitivityChart(altVal, ruckVal, kickVal, benchVal);
+}
+
+function updateDistributionChart(saScores, nzScores) {
+  // Compute histogram bins (10 to 50 pts)
+  const bins = [];
+  const saFreq = [];
+  const nzFreq = [];
+
+  for (let pt = 10; pt <= 48; pt += 2) {
+    bins.push(`${pt}`);
+    saFreq.push(saScores.filter(s => s >= pt && s < pt + 2).length);
+    nzFreq.push(nzScores.filter(s => s >= pt && s < pt + 2).length);
+  }
+
+  if (!scoreChartInstance) {
+    const ctx = document.getElementById('scoreDistChart').getContext('2d');
+    scoreChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: bins,
+        datasets: [
+          {
+            label: '🇿🇦 South Africa Projected Score Distribution',
+            data: saFreq,
+            borderColor: '#34d399',
+            backgroundColor: 'rgba(52, 211, 153, 0.15)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 3
+          },
+          {
+            label: '🇳🇿 New Zealand Projected Score Distribution',
+            data: nzFreq,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.15)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#f8fafc', font: { family: 'Inter', weight: 'bold' } } } },
+        scales: {
+          x: { title: { display: true, text: 'Total Points Scored', color: '#94a3b8' }, ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { title: { display: true, text: 'Simulated Match Frequency', color: '#94a3b8' }, ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  } else {
+    scoreChartInstance.data.datasets[0].data = saFreq;
+    scoreChartInstance.data.datasets[1].data = nzFreq;
+    scoreChartInstance.update();
+  }
+}
+
+function updateSensitivityChart(alt, ruck, kick, bench) {
+  const factors = ['Altitude Oxygen Fatigue (1,753m)', 'NZ Ruck Speed (<2.8s)', 'Kolbe Goal Kicking %', 'Bomb Squad Entry (50m)', 'Breakdown Offside Penalties'];
+  const impacts = [
+    (alt * 0.35).toFixed(1),
+    ((3.5 - ruck) * 3.2).toFixed(1),
+    (kick * 4.5).toFixed(1),
+    ((60 - bench) * 0.28).toFixed(1),
+    2.8
+  ];
+
+  if (!sensChartInstance) {
+    const ctx = document.getElementById('sensitivityChart').getContext('2d');
+    sensChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: factors,
+        datasets: [{
+          label: 'Net Point Differential Shift (+/- Points)',
+          data: impacts,
+          backgroundColor: ['#c084fc', '#38bdf8', '#34d399', '#fbbf24', '#f87171'],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { title: { display: true, text: 'Point Swing Leverage', color: '#94a3b8' }, ticks: { color: '#cbd5e1' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+          y: { ticks: { color: '#f8fafc', font: { weight: 'bold' } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        }
+      }
+    });
+  } else {
+    sensChartInstance.data.datasets[0].data = impacts;
+    sensChartInstance.update();
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  runSimulation();
+});
+</script>
+
+</body>
+</html>

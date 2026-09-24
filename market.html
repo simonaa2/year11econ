@@ -1,0 +1,2222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkyMarket Live — Airfare Market Simulation</title>
+  <meta name="description" content="Real-time classroom airfare market simulation grounded in microeconomic theory. Students play airlines and passengers in a live competitive market.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:#05040f; --bg-card:rgba(255,255,255,0.03); --bg-card-hover:rgba(255,255,255,0.055);
+  --border:rgba(255,255,255,0.08); --border-strong:rgba(255,255,255,0.14);
+  --text-primary:#f1f5f9; --text-secondary:#94a3b8; --text-muted:#64748b;
+  --primary:#818cf8; --primary-dark:#6366f1; --primary-glow:rgba(129,140,248,0.18);
+  --secondary:#c084fc; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+  --blue:#38bdf8; --orange:#fb923c;
+  --radius-sm:8px; --radius-md:16px; --radius-lg:24px; --radius-full:9999px;
+  --shadow:0 8px 32px rgba(0,0,0,0.45); --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;line-height:1.5;overflow-x:hidden;}
+.hidden{display:none!important;}
+a{color:var(--primary);text-decoration:none;}
+
+/* ── LAYOUT ── */
+.screen{min-height:100vh;padding:1.5rem 1rem;}
+.container{max-width:1100px;margin:0 auto;}
+.container-wide{max-width:1400px;margin:0 auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;}
+@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr;}}
+
+/* ── NAV BAR ── */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem;}
+.top-bar-title{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.back-btn{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-full);padding:0.4rem 1rem;font-size:0.82rem;color:var(--text-secondary);cursor:pointer;transition:var(--transition);}
+.back-btn:hover{background:rgba(255,255,255,0.1);color:var(--text-primary);}
+.hub-btn{background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:var(--radius-full);padding:0.4rem 1rem;font-size:0.82rem;color:var(--primary);cursor:pointer;transition:var(--transition);font-weight:600;}
+.hub-btn:hover{background:rgba(129,140,248,0.2);}
+.nav-btns{display:flex;align-items:center;gap:0.6rem;}
+/* Submit flash */
+@keyframes flashFade{0%{opacity:1;transform:scale(1.05);}100%{opacity:0;transform:scale(1);}}
+.submit-flash{animation:flashFade 2s ease forwards;}
+
+/* ── CARDS ── */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;transition:var(--transition);}
+.card-sm{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;}
+.card-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:1rem;}
+.card-subtitle{font-size:0.9rem;color:var(--text-secondary);margin-bottom:1.5rem;}
+
+/* ── PHASE PILL ── */
+.phase-pill{display:inline-flex;align-items:center;gap:0.5rem;padding:0.35rem 1rem;border-radius:var(--radius-full);font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;}
+.phase-pill.lobby{background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.3);color:#94a3b8;}
+.phase-pill.pricing{background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;}
+.phase-pill.booking{background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34d399;}
+.phase-pill.clearing{background:rgba(129,140,248,0.12);border:1px solid rgba(129,140,248,0.35);color:#818cf8;}
+.phase-pill.results{background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.35);color:#c084fc;}
+.phase-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulseDot 1.5s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;border:none;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-weight:700;cursor:pointer;transition:var(--transition);white-space:nowrap;}
+.btn-primary{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;padding:0.75rem 1.75rem;font-size:0.9rem;box-shadow:0 4px 20px rgba(99,102,241,0.3);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 28px rgba(99,102,241,0.45);}
+.btn-secondary{background:rgba(255,255,255,0.07);border:1px solid var(--border);color:var(--text-primary);padding:0.75rem 1.5rem;font-size:0.9rem;}
+.btn-secondary:hover{background:rgba(255,255,255,0.12);}
+.btn-success{background:linear-gradient(135deg,#059669,#34d399);color:#fff;padding:0.75rem 1.75rem;font-size:0.9rem;}
+.btn-success:hover{transform:translateY(-2px);}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#f87171);color:#fff;padding:0.65rem 1.25rem;font-size:0.85rem;}
+.btn-danger:hover{opacity:0.85;}
+.btn-warn{background:linear-gradient(135deg,#d97706,#fbbf24);color:#1a1a1a;padding:0.65rem 1.25rem;font-size:0.85rem;font-weight:800;}
+.btn-warn:hover{opacity:0.85;}
+.btn-wide{width:100%;}
+.btn:disabled{opacity:0.45;cursor:not-allowed;transform:none!important;}
+
+/* ── FORM ELEMENTS ── */
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.45rem;text-transform:uppercase;letter-spacing:0.04em;}
+.text-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.7rem 1rem;font-size:0.92rem;font-family:'Inter',sans-serif;transition:var(--transition);}
+.text-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+.select-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.7rem 1rem;font-size:0.88rem;font-family:'Inter',sans-serif;cursor:pointer;}
+.select-input:focus{outline:none;border-color:var(--primary);}
+.range-slider{width:100%;-webkit-appearance:none;appearance:none;height:5px;border-radius:3px;background:linear-gradient(to right,var(--primary) 0%,var(--primary) var(--pct,30%),rgba(255,255,255,0.1) var(--pct,30%));cursor:pointer;}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--primary);box-shadow:0 0 8px var(--primary-glow);cursor:pointer;}
+.slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;}
+.slider-val{font-weight:700;font-size:0.95rem;color:var(--primary);}
+
+/* ── STATS BAR ── */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;}
+@media(max-width:700px){.stats-bar{grid-template-columns:repeat(2,1fr);}}
+.stat-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;text-align:center;}
+.stat-number{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.2rem;}
+.stat-label{font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;}
+
+/* ── LIVE TABLE ── */
+.live-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+.live-table th{padding:0.6rem 0.85rem;text-align:left;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);border-bottom:1px solid var(--border);}
+.live-table td{padding:0.7rem 0.85rem;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle;}
+.live-table tr:last-child td{border-bottom:none;}
+.live-table tr:hover td{background:rgba(255,255,255,0.025);}
+
+/* ── BOOKING BOARD ── */
+.booking-board{display:grid;gap:0.85rem;}
+.flight-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.25rem;display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:1rem;transition:var(--transition);}
+.flight-card:hover{border-color:var(--border-strong);background:var(--bg-card-hover);}
+.flight-card.booked{border-color:rgba(52,211,153,0.4);background:rgba(52,211,153,0.05);}
+.flight-card.sold-out{opacity:0.5;}
+.flight-airline{font-weight:700;font-size:1rem;}
+.flight-prices{display:flex;gap:1.5rem;font-size:0.85rem;color:var(--text-secondary);}
+.flight-price-val{font-weight:700;color:var(--text-primary);}
+.seat-bar{width:80px;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;}
+.seat-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--yellow));border-radius:3px;transition:width 0.5s ease;}
+
+/* ── TRAVELLER PROFILE ── */
+.profile-card{background:linear-gradient(135deg,rgba(129,140,248,0.1),rgba(192,132,252,0.1));border:1px solid rgba(129,140,248,0.25);border-radius:var(--radius-lg);padding:1.5rem;margin-bottom:1.5rem;text-align:center;}
+.profile-emoji{font-size:3.5rem;display:block;margin-bottom:0.5rem;filter:drop-shadow(0 0 12px rgba(129,140,248,0.4));}
+.profile-type{font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:800;}
+.wtp-bar-wrapper{margin-top:1rem;}
+.wtp-bar-bg{background:rgba(255,255,255,0.08);border-radius:var(--radius-full);height:8px;overflow:hidden;margin-top:0.35rem;}
+.wtp-bar-fill{height:100%;border-radius:var(--radius-full);background:linear-gradient(90deg,var(--primary),var(--secondary));}
+
+/* ── SHOCK BANNER ── */
+.shock-banner{display:none;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(248,113,113,0.12));border:1px solid rgba(251,191,36,0.4);border-radius:var(--radius-md);padding:1rem 1.25rem;margin-bottom:1.5rem;animation:pulseGlow 2s ease-in-out infinite;}
+.shock-banner.active{display:block;}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0.2);}50%{box-shadow:0 0 20px 4px rgba(251,191,36,0.1);}}
+.shock-title{font-weight:800;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;color:#fbbf24;margin-bottom:0.3rem;}
+.shock-desc{font-size:0.9rem;color:var(--text-primary);}
+
+/* ── MARKET INTEL PANEL ── */
+.intel-row{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0;border-bottom:1px solid var(--border);font-size:0.85rem;}
+.intel-row:last-child{border-bottom:none;}
+.intel-label{color:var(--text-secondary);}
+.intel-val{font-weight:700;}
+
+/* ── COMPETITOR FEED ── */
+.competitor-row{display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:0.85rem;}
+.competitor-row:last-child{border-bottom:none;}
+.competitor-name{flex:1;color:var(--text-secondary);}
+.competitor-price{font-weight:700;color:var(--text-primary);}
+.competitor-bot{color:var(--orange);}
+
+/* ── ADVISOR PANEL ── */
+.advisor-panel{display:none;background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.2);border-radius:var(--radius-md);padding:1.1rem;margin-top:1rem;animation:fadeIn 0.3s ease;}
+.advisor-panel.visible{display:block;}
+.advisor-title{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--primary);margin-bottom:0.6rem;}
+.ped-display{display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.04);border-radius:var(--radius-sm);padding:0.6rem 0.85rem;margin-bottom:0.6rem;font-size:0.85rem;}
+.ped-value{font-weight:800;color:var(--yellow);}
+
+/* ── PHASE CONTROL TEACHER ── */
+.phase-controls{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.phase-btn{padding:0.6rem 1.1rem;border-radius:var(--radius-sm);font-size:0.82rem;font-weight:700;border:none;cursor:pointer;transition:var(--transition);}
+.phase-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 3px 12px rgba(99,102,241,0.4);}
+.phase-btn.inactive{background:rgba(255,255,255,0.06);color:var(--text-secondary);border:1px solid var(--border);}
+.phase-btn:hover:not(:disabled){opacity:0.85;}
+
+/* ── CHART CARD ── */
+.chart-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;}
+.chart-card h3{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;}
+.chart-container{position:relative;height:280px;}
+
+/* ── SCORE CARD MODAL ── */
+.scorecard-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.3s ease;}
+.scorecard-overlay.hidden{display:none;}
+.scorecard-box{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border:1px solid rgba(129,140,248,0.3);border-radius:var(--radius-lg);padding:2.5rem;max-width:460px;width:90%;text-align:center;animation:slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.scorecard-badge{font-size:3.5rem;display:block;margin-bottom:0.5rem;filter:drop-shadow(0 0 20px rgba(251,191,36,0.4));}
+.scorecard-score{font-family:'Outfit',sans-serif;font-size:4rem;font-weight:900;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.scorecard-verdict{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:1rem;font-size:0.88rem;color:var(--text-secondary);margin:1rem 0 1.5rem;line-height:1.6;}
+
+/* ── LEADERBOARD ── */
+.leaderboard-row{display:grid;grid-template-columns:36px 1fr auto auto;gap:0.75rem;align-items:center;padding:0.7rem 1rem;border-radius:var(--radius-sm);transition:var(--transition);}
+.leaderboard-row:hover{background:rgba(255,255,255,0.03);}
+.lb-rank{font-weight:800;font-size:1rem;text-align:center;}
+.lb-name{font-weight:600;}
+.lb-type{font-size:0.75rem;color:var(--text-muted);}
+.lb-score{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;color:var(--primary);}
+.lb-badge{font-size:1.1rem;}
+
+/* ── AI DEBRIEF ── */
+.debrief-box{background:linear-gradient(135deg,rgba(129,140,248,0.06),rgba(192,132,252,0.06));border:1px solid rgba(129,140,248,0.2);border-radius:var(--radius-md);padding:1.5rem;font-size:0.92rem;line-height:1.7;color:var(--text-secondary);}
+.debrief-box strong{color:var(--text-primary);}
+.concept-tag{display:inline-block;background:rgba(129,140,248,0.12);border:1px solid rgba(129,140,248,0.25);border-radius:var(--radius-full);padding:0.15rem 0.6rem;font-size:0.72rem;font-weight:600;color:var(--primary);margin:0.15rem;}
+
+/* ── ENTRY SCREEN HERO ── */
+.hero{text-align:center;padding:3rem 0 2rem;}
+.hero-badge{display:inline-flex;align-items:center;gap:0.4rem;background:rgba(129,140,248,0.1);border:1px solid rgba(129,140,248,0.25);border-radius:var(--radius-full);padding:0.3rem 0.85rem;font-size:0.78rem;font-weight:700;color:var(--primary);letter-spacing:0.04em;margin-bottom:1.25rem;}
+.hero-title{font-family:'Outfit',sans-serif;font-size:clamp(2.2rem,6vw,3.8rem);font-weight:900;line-height:1.1;margin-bottom:1rem;background:linear-gradient(135deg,#f1f5f9 30%,#818cf8 70%,#c084fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{font-size:1.05rem;color:var(--text-secondary);max-width:600px;margin:0 auto 2.5rem;}
+.concept-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:0.5rem;margin-bottom:2rem;}
+.chip{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-full);padding:0.25rem 0.75rem;font-size:0.75rem;color:var(--text-muted);}
+
+/* ── ROLE CARDS ── */
+.role-card{border-radius:var(--radius-lg);padding:2rem;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden;}
+.role-card::before{content:'';position:absolute;inset:0;opacity:0;transition:var(--transition);}
+.role-airline{background:linear-gradient(135deg,rgba(56,189,248,0.08),rgba(99,102,241,0.08));border:1px solid rgba(56,189,248,0.2);}
+.role-airline::before{background:linear-gradient(135deg,rgba(56,189,248,0.06),rgba(99,102,241,0.06));}
+.role-passenger{background:linear-gradient(135deg,rgba(52,211,153,0.08),rgba(251,191,36,0.08));border:1px solid rgba(52,211,153,0.2);}
+.role-passenger::before{background:linear-gradient(135deg,rgba(52,211,153,0.06),rgba(251,191,36,0.06));}
+.role-teacher{background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(248,113,113,0.08));border:1px solid rgba(192,132,252,0.2);}
+.role-teacher::before{background:linear-gradient(135deg,rgba(192,132,252,0.06),rgba(248,113,113,0.06));}
+.role-card:hover::before{opacity:1;}
+.role-card:hover{transform:translateY(-3px);}
+.role-icon{font-size:2.5rem;display:block;margin-bottom:0.75rem;}
+.role-title{font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:0.4rem;}
+.role-desc{font-size:0.85rem;color:var(--text-secondary);line-height:1.5;}
+.role-bullets{margin-top:0.85rem;padding-left:1.1rem;}
+.role-bullets li{font-size:0.82rem;color:var(--text-muted);margin-bottom:0.25rem;}
+
+/* ── WAITING SCREEN ── */
+.waiting-box{text-align:center;max-width:480px;margin:0 auto;padding:4rem 2rem;}
+.waiting-icon{font-size:4rem;display:block;margin-bottom:1rem;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.waiting-title{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.6rem;}
+.waiting-sub{color:var(--text-secondary);font-size:0.9rem;}
+.player-count-row{display:flex;justify-content:center;gap:2rem;margin-top:2rem;}
+.player-count{text-align:center;}
+.player-count-num{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;display:block;}
+.player-count-label{font-size:0.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;}
+
+/* ── MISC ── */
+.text-success{color:var(--green);}
+.text-danger{color:var(--red);}
+.text-warn{color:var(--yellow);}
+.text-muted{color:var(--text-muted);}
+.divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0;}
+.badge-inline{display:inline-block;padding:0.1rem 0.5rem;border-radius:var(--radius-full);font-size:0.72rem;font-weight:700;}
+.badge-green{background:rgba(52,211,153,0.12);color:var(--green);}
+.badge-red{background:rgba(248,113,113,0.12);color:var(--red);}
+.badge-blue{background:rgba(56,189,248,0.12);color:var(--blue);}
+.badge-yellow{background:rgba(251,191,36,0.12);color:var(--yellow);}
+.surplus-display{background:linear-gradient(135deg,rgba(52,211,153,0.1),rgba(56,189,248,0.1));border:1px solid rgba(52,211,153,0.25);border-radius:var(--radius-md);padding:1.25rem;text-align:center;margin-top:1rem;}
+.surplus-amount{font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:var(--green);}
+.surplus-label{font-size:0.82rem;color:var(--text-secondary);margin-top:0.25rem;}
+</style>
+</head>
+<body>
+<style>
+  body { padding-top: 52px !important; }
+  .snav{position:fixed;top:0;left:0;right:0;z-index:10000;background:rgba(8,9,18,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.07);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;font-family:'Inter',sans-serif;}
+  .snav-brand{display:flex;align-items:center;gap:0.4rem;text-decoration:none;flex-shrink:0;}
+  .snav-brand-text{font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .snav-links{display:flex;align-items:center;gap:0.1rem;}
+  .snav-link{display:flex;align-items:center;gap:0.3rem;padding:0.3rem 0.65rem;border-radius:6px;font-size:0.78rem;font-weight:500;color:rgba(255,255,255,0.5);text-decoration:none;transition:background 0.15s,color 0.15s;white-space:nowrap;}
+  .snav-link:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.88);}
+  .snav-link.snav-active{background:rgba(129,140,248,0.15);color:#a5b4fc;font-weight:700;}
+  .snav-tag{font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.2);padding-left:0.75rem;border-left:1px solid rgba(255,255,255,0.07);margin-left:0.3rem;display:flex;align-items:center;}
+  @media(max-width:640px){.snav-tag{display:none;}.snav-link .lbl{display:none;}.snav-link{padding:0.3rem 0.45rem;}}
+</style>
+<nav class="snav">
+  <a href="/" class="snav-brand"><span style="font-size:1.2rem;">🎓</span><span class="snav-brand-text">EduSims</span></a>
+  <div class="snav-links">
+    <a href="/" class="snav-link">📊 <span class="lbl">Survey</span></a>
+    <a href="/audit.html" class="snav-link">💡 <span class="lbl">Qualities Audit</span></a>
+    <a href="/simulations.html" class="snav-link">🏪 <span class="lbl">SME Simulations</span></a>
+    <a href="/market.html" class="snav-link snav-active">🛫 <span class="lbl">SkyMarket Live</span></a>
+    <div class="snav-tag">Live Market Simulation</div>
+  </div>
+</nav>
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 1: ENTRY / ROLE SELECTION
+═══════════════════════════════════════════════════════════ -->
+<div id="entryScreen" class="screen">
+  <div class="container">
+    <div class="hero">
+      <div class="hero-badge">✈️ NESA Economics &amp; Business Studies</div>
+      <h1 class="hero-title">SkyMarket Live</h1>
+      <p class="hero-sub">A real-time airfare market simulation where you compete as an <strong>airline</strong> or shop as a <strong>passenger</strong> — grounded in microeconomic theory.</p>
+      <div class="concept-chips">
+        <span class="chip">Supply &amp; Demand</span>
+        <span class="chip">Price Elasticity</span>
+        <span class="chip">Consumer Surplus</span>
+        <span class="chip">Oligopoly</span>
+        <span class="chip">Market Equilibrium</span>
+        <span class="chip">Game Theory</span>
+        <span class="chip">Economic Shocks</span>
+        <span class="chip">AI Price Advisor</span>
+      </div>
+    </div>
+
+    <div class="three-col" style="margin-bottom:2rem;">
+      <!-- Airline Role -->
+      <div class="role-card role-airline" onclick="selectRole('airline')">
+        <span class="role-icon">✈️</span>
+        <div class="role-title">I'm an Airline</div>
+        <div class="role-desc">Set economy &amp; business class prices, allocate seats, and compete against rival airlines for passengers.</div>
+        <ul class="role-bullets">
+          <li>See competitor prices live</li>
+          <li>Get AI price recommendations</li>
+          <li>Earn profit from bookings</li>
+          <li>React to economic shocks</li>
+        </ul>
+      </div>
+      <!-- Passenger Role -->
+      <div class="role-card role-passenger" onclick="selectRole('passenger')">
+        <span class="role-icon">🎒</span>
+        <div class="role-title">I'm a Passenger</div>
+        <div class="role-desc">You'll be secretly assigned a traveller type with a hidden budget. Shop the live booking board and find the best deal.</div>
+        <ul class="role-bullets">
+          <li>Get a secret traveller profile</li>
+          <li>Browse live airline prices</li>
+          <li>Earn consumer surplus</li>
+          <li>Score by saving vs your budget</li>
+        </ul>
+      </div>
+      <!-- Teacher Role -->
+      <div class="role-card role-teacher" onclick="selectRole('teacher')">
+        <span class="role-icon">📊</span>
+        <div class="role-title">I'm the Teacher</div>
+        <div class="role-desc">Create and control the market session. Advance phases, trigger economic shocks, and watch the demand/supply curve update live.</div>
+        <ul class="role-bullets">
+          <li>Create &amp; control sessions</li>
+          <li>Trigger economic shock events</li>
+          <li>Live demand/supply projector</li>
+          <li>Compare class outcomes</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Join Form (hidden until role selected) -->
+    <div id="joinForm" class="hidden" style="max-width:480px;margin:0 auto;">
+      <div class="card">
+        <h2 class="card-title" id="joinFormTitle">Join as Airline</h2>
+        <div class="form-group">
+          <label class="form-label">Your Name / Airline Name</label>
+          <input type="text" id="joinName" class="text-input" placeholder="e.g. Qantas Team or Sarah Johnson">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="joinCode" class="text-input" placeholder="e.g. 11ECO" style="text-transform:uppercase;">
+        </div>
+        <!-- Teacher only -->
+        <div id="teacherSetup" class="hidden">
+          <div class="form-group">
+            <label class="form-label">Flight Route</label>
+            <select id="routeSelect" class="select-input">
+              <option value="SYD-LAX">Sydney → Los Angeles (Long-haul, $150k cost)</option>
+              <option value="SYD-SIN">Sydney → Singapore (Medium-haul, $120k cost)</option>
+              <option value="SYD-MEL">Sydney → Melbourne (Short-haul, $80k cost)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">BotAir Competitor</label>
+            <select id="botPersonality" class="select-input">
+              <option value="undercutter">🤖 Undercutter — prices 8% below class average</option>
+              <option value="prestige">💎 Prestige — prices 15% above average</option>
+              <option value="yield">📈 Yield Manager — optimises revenue from demand model</option>
+              <option value="off">❌ Disabled — no AI competitor</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-wide" onclick="joinSession()" id="joinBtn">Join Session →</button>
+        <div id="joinError" class="hidden" style="color:var(--red);font-size:0.82rem;margin-top:0.75rem;text-align:center;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 2: WAITING LOBBY
+═══════════════════════════════════════════════════════════ -->
+<div id="waitingScreen" class="screen hidden">
+  <div class="container">
+    <div style="display:flex;justify-content:flex-end;gap:0.6rem;margin-bottom:1rem;">
+      <button class="hub-btn" onclick="goToHub()">🏠 Hub</button>
+      <button class="back-btn" onclick="leaveSession()">✕ Leave Session</button>
+    </div>
+    <div class="waiting-box" style="max-width:560px;margin:0 auto;">
+      <span class="waiting-icon" id="waitingIcon">🎒</span>
+      <div class="waiting-title" id="waitingTitle">Waiting for session to start…</div>
+      <div class="waiting-sub" id="waitingSubtitle">The teacher will open the market shortly. Get ready!</div>
+      <div id="waitingProfileBox" class="hidden" style="margin-top:1.5rem;"></div>
+      <div class="player-count-row">
+        <div class="player-count"><span class="player-count-num" id="waitAirlines">0</span><span class="player-count-label">Airlines</span></div>
+        <div class="player-count"><span class="player-count-num" id="waitPassengers">0</span><span class="player-count-label">Passengers</span></div>
+      </div>
+      <div style="margin-top:1.5rem;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.82rem;color:var(--text-muted);">
+        Session Code: <strong id="waitCode" style="color:var(--primary);">—</strong>
+        &nbsp;|&nbsp; Route: <strong id="waitRoute">—</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 3: AIRLINE PRICING DESK
+═══════════════════════════════════════════════════════════ -->
+<div id="airlineScreen" class="screen hidden">
+  <div class="container-wide">
+    <div class="top-bar">
+      <div>
+        <div class="top-bar-title">✈️ SkyMarket Live — Airline Desk</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);" id="airlineSessionInfo">Session: — | Round: 1</div>
+      </div>
+      <div class="nav-btns">
+        <div id="airlinePhasePill" class="phase-pill pricing"><span class="phase-dot"></span>Pricing Open</div>
+        <button class="hub-btn" onclick="goToHub()">🏠 Hub</button>
+        <button class="back-btn" onclick="leaveSession()">✕ Leave</button>
+      </div>
+    </div>
+
+    <!-- Shock Banner -->
+    <div class="shock-banner" id="airlineShockBanner">
+      <div class="shock-title">⚡ Market Shock — Round 2!</div>
+      <div class="shock-desc" id="airlineShockDesc">A market event has occurred. Reprice your airline for Round 2!</div>
+    </div>
+
+    <div class="two-col">
+      <!-- LEFT: Pricing Strategy -->
+      <div>
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="card-title" style="font-size:1.1rem;">🛩️ Your Pricing Strategy</div>
+
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">Economy Price</label><span class="slider-val" id="airEconPriceDisplay">$800</span></div>
+            <input type="range" id="airEconSlider" class="range-slider" min="150" max="3000" step="50" value="800" oninput="onAirEconChange(this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem;"><span>$150</span><span>$3,000</span></div>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">Economy Seats Available</label><span class="slider-val" id="airEconSeatsDisplay">8</span></div>
+            <input type="range" id="airEconSeatsSlider" class="range-slider" min="3" max="20" step="1" value="8" oninput="onAirEconSeatsChange(this.value)">
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem;">Each seat = one passenger slot in your session</div>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">Business Price</label><span class="slider-val" id="airBusPriceDisplay">$3,000</span></div>
+            <input type="range" id="airBusSlider" class="range-slider" min="500" max="12000" step="100" value="3000" oninput="onAirBusChange(this.value)">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem;"><span>$500</span><span>$12,000</span></div>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-row"><label class="form-label">Business Seats Available</label><span class="slider-val" id="airBusSeatsDisplay">3</span></div>
+            <input type="range" id="airBusSeatsSlider" class="range-slider" min="0" max="6" step="1" value="3" oninput="onAirBusSeatsChange(this.value)">
+          </div>
+
+          <!-- Live Financials -->
+          <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-top:0.5rem;">
+            <div class="intel-row"><span class="intel-label">Fixed Operating Cost</span><span class="intel-val" id="airFixedCost">$150,000</span></div>
+            <div class="intel-row"><span class="intel-label">Break-Even Economy Seats</span><span class="intel-val" id="airBreakEven">—</span></div>
+            <div class="intel-row"><span class="intel-label">Projected Revenue (est.)</span><span class="intel-val text-success" id="airProjRevenue">—</span></div>
+            <div class="intel-row"><span class="intel-label">Projected Profit (est.)</span><span class="intel-val" id="airProjProfit">—</span></div>
+          </div>
+
+          <!-- AI Advisor -->
+          <button class="btn btn-secondary btn-wide" style="margin-top:1rem;font-size:0.85rem;" onclick="toggleAdvisor()">💡 AI Price Advisor</button>
+          <div class="advisor-panel" id="advisorPanel">
+            <div class="advisor-title">💡 AI Price Recommendation</div>
+            <div class="ped-display"><span>Price Elasticity of Demand (PED)</span><span class="ped-value" id="pedValue">—</span></div>
+            <div id="advisorText" style="font-size:0.85rem;color:var(--text-secondary);line-height:1.55;"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-wide" id="submitPricingBtn" onclick="submitAirlinePricing()">
+          📤 Publish Pricing
+        </button>
+        <div id="pricingSubmitted" style="text-align:center;margin-top:0.75rem;min-height:1.5rem;">
+          <span id="pricingFlash" style="font-size:0.82rem;"></span>
+        </div>
+      </div>
+
+      <!-- RIGHT: Market Intelligence -->
+      <div>
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="card-title" style="font-size:1.1rem;">📡 Live Market Intelligence</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.05em;">Competitor Economy Prices</div>
+          <div id="competitorFeed">
+            <div style="font-size:0.85rem;color:var(--text-muted);font-style:italic;">Waiting for other airlines…</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1.25rem;">
+          <div class="card-title" style="font-size:1.1rem;">🎯 Your Live Bookings</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+            <div class="stat-box"><div class="stat-number text-success" id="airLiveEconSold">0</div><div class="stat-label">Economy Sold</div></div>
+            <div class="stat-box"><div class="stat-number text-success" id="airLiveBusSold">0</div><div class="stat-label">Business Sold</div></div>
+            <div class="stat-box"><div class="stat-number" id="airLiveLoad">0%</div><div class="stat-label">Load Factor</div></div>
+            <div class="stat-box"><div class="stat-number" id="airLiveRevenue">$0</div><div class="stat-label">Revenue</div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="font-size:1.1rem;">📚 Microeconomics Concepts</div>
+          <div style="font-size:0.83rem;color:var(--text-secondary);line-height:1.65;">
+            <p style="margin-bottom:0.6rem;"><strong style="color:var(--text-primary);">Price Elasticity:</strong> If PED &lt; -1, demand is elastic — a 1% price rise causes &gt;1% drop in quantity demanded. Leisure travellers are elastic; business travellers are inelastic.</p>
+            <p style="margin-bottom:0.6rem;"><strong style="color:var(--text-primary);">Oligopoly:</strong> You can see competitor prices. This is a strategic game — if you all price high, passengers pay more. If you undercut, you win share but start a price war.</p>
+            <p><strong style="color:var(--text-primary);">Producer Surplus:</strong> Your profit per seat = price − average cost. Total producer surplus = shaded area on the supply/demand chart.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 4: PASSENGER BOOKING PORTAL
+═══════════════════════════════════════════════════════════ -->
+<div id="passengerScreen" class="screen hidden">
+  <div class="container">
+    <div class="top-bar">
+      <div>
+        <div class="top-bar-title">🎒 SkyMarket Live — Booking Portal</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);" id="passengerSessionInfo">Session: — | Round: 1</div>
+      </div>
+      <div class="nav-btns">
+        <div id="passengerPhasePill" class="phase-pill pricing"><span class="phase-dot"></span>Airlines Pricing…</div>
+        <button class="hub-btn" onclick="goToHub()">🏠 Hub</button>
+        <button class="back-btn" onclick="leaveSession()">✕ Leave</button>
+      </div>
+    </div>
+
+    <!-- Shock Banner -->
+    <div class="shock-banner" id="passengerShockBanner">
+      <div class="shock-title">⚡ Market Shock!</div>
+      <div class="shock-desc" id="passengerShockDesc">A market event has changed conditions. Watch how airlines reprice!</div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <!-- Traveller Profile -->
+        <div class="profile-card" id="passengerProfileCard">
+          <span class="profile-emoji" id="passengerEmoji">🎒</span>
+          <div class="profile-type" id="passengerTypeName">Loading profile…</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem;" id="passengerTypeDesc"></div>
+          <div class="wtp-bar-wrapper">
+            <div style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;">
+              <span>Your Max Budget (WTP)</span>
+              <span id="passengerWTPDisplay">$—</span>
+            </div>
+            <div class="wtp-bar-bg"><div class="wtp-bar-fill" id="passengerWTPBar" style="width:60%;"></div></div>
+          </div>
+          <div style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-muted);">
+            <strong style="color:var(--primary);">PED = <span id="passengerPED">—</span></strong> &nbsp;|&nbsp;
+            Higher absolute PED = more price-sensitive
+          </div>
+        </div>
+
+        <!-- Economics lesson for passengers -->
+        <div class="card">
+          <div class="card-title" style="font-size:1rem;">📚 Your Role in the Market</div>
+          <div style="font-size:0.83rem;color:var(--text-secondary);line-height:1.65;">
+            <p style="margin-bottom:0.6rem;"><strong style="color:var(--text-primary);">Consumer Surplus:</strong> The difference between what you were willing to pay and what you actually paid. A cheaper flight = higher surplus = more points!</p>
+            <p style="margin-bottom:0.6rem;"><strong style="color:var(--text-primary);">Law of Demand:</strong> The lower the price, the more likely you (and others like you) are to book. You demonstrate this law by your own choices.</p>
+            <p><strong style="color:var(--text-primary);">Market Power:</strong> When many airlines compete, you benefit. When only one airline exists (monopoly), they can charge much more — watch what happens if the teacher triggers a Merger shock!</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <!-- Pricing phase waiting -->
+        <div id="pricingWaitBox" class="card" style="text-align:center;padding:3rem 2rem;">
+          <div style="font-size:3rem;margin-bottom:1rem;">⏳</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:0.5rem;">Airlines are setting prices…</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);">The booking portal will open when the teacher starts the Booking Phase. Get ready to find the best deal!</div>
+        </div>
+
+        <!-- Booking board (shown during booking phase) -->
+        <div id="bookingBoard" class="hidden">
+          <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:0.75rem;">🛫 Available Flights — <span id="routeDisplayPassenger">SYD → LAX</span> &nbsp;<span id="passengerRoundBadge" style="font-size:0.72rem;font-weight:700;background:rgba(129,140,248,0.15);border:1px solid rgba(129,140,248,0.25);border-radius:9999px;padding:0.2rem 0.6rem;color:var(--primary);vertical-align:middle;">Round 1</span></div>
+          <!-- AI Advisor -->
+          <div id="passengerAdvisor"></div>
+          <div class="booking-board" id="flightCards"></div>
+          <div id="noFlightsMsg" class="hidden" style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.9rem;">No affordable flights found. You'll have to drive! 🚗</div>
+        </div>
+
+        <!-- Booking status banner (shown once booked, stays above board) -->
+        <div id="bookingStatusBanner" class="hidden" style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;">
+          <div>
+            <div style="font-weight:700;font-size:0.9rem;color:#34d399;">✅ Booked — <span id="bookedAirlineDisplay">—</span></div>
+            <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:0.15rem;">Consumer surplus: <strong id="surplusAmount" style="color:#34d399;">$0</strong> &nbsp;·&nbsp; Switch anytime before the round closes</div>
+          </div>
+        </div>
+
+        <div id="didNotFlyResult" class="hidden">
+          <div class="card" style="text-align:center;border-color:rgba(248,113,113,0.25);">
+            <div style="font-size:2rem;margin-bottom:0.5rem;">😔</div>
+            <div style="font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;">No Affordable Flight Found</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.5rem;">All prices exceeded your budget. This is <strong>excess demand</strong> at above-equilibrium prices. You'll score 0 points this round — airlines may need to lower prices!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 5: TEACHER DASHBOARD
+═══════════════════════════════════════════════════════════ -->
+<div id="teacherScreen" class="screen hidden">
+  <div class="container-wide">
+    <div class="top-bar">
+      <div>
+        <div class="top-bar-title">📊 SkyMarket Live — Teacher Dashboard</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);" id="teacherSessionInfo">Session: — | Phase: Lobby</div>
+      </div>
+      <div class="nav-btns">
+        <div id="teacherPhasePill" class="phase-pill lobby"><span class="phase-dot"></span>Lobby</div>
+        <button class="hub-btn" onclick="goToHub()">🏠 Hub</button>
+        <button class="back-btn" onclick="leaveSession()">✕ Leave</button>
+      </div>
+    </div>
+
+    <!-- Phase Controls -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;">⚙️ Session Control</div>
+      <div class="phase-controls">
+        <button class="phase-btn" id="phaseBtn-lobby" onclick="setPhase('lobby')">1. Lobby</button>
+        <button class="phase-btn" id="phaseBtn-pricing" onclick="setPhase('pricing')">2. ✈️ Open Pricing</button>
+        <button class="phase-btn" id="phaseBtn-booking" onclick="setPhase('booking')">3. 🎟️ Open Booking</button>
+        <button class="phase-btn" id="phaseBtn-clearing" onclick="setPhase('clearing')">4. 📊 Clear Market</button>
+        <button class="phase-btn" id="phaseBtn-results" onclick="setPhase('results')">5. 🏆 Show Results</button>
+        <button class="phase-btn" onclick="resetForNewRound()" style="background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.35);color:#fbbf24;">🔄 Next Round</button>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-muted);">Current Phase: <strong id="currentPhaseDisplay" style="color:var(--primary);">Lobby</strong> &nbsp;·&nbsp; Round: <strong id="teacherRoundDisplay" style="color:var(--primary);">1</strong> &nbsp;·&nbsp; <span style="font-style:italic;">"Next Round" resets all bookings so students can re-trade</span></div>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar" style="margin-bottom:1.5rem;">
+      <div class="stat-box"><div class="stat-number" id="tStatAirlines">0</div><div class="stat-label">Airlines</div></div>
+      <div class="stat-box"><div class="stat-number" id="tStatPassengers">0</div><div class="stat-label">Passengers</div></div>
+      <div class="stat-box"><div class="stat-number" id="tStatBooked">0</div><div class="stat-label">Bookings</div></div>
+      <div class="stat-box"><div class="stat-number" id="tStatEqPrice">—</div><div class="stat-label">Avg Market Price</div></div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:1.5rem;">
+      <!-- Demand/Supply Chart -->
+      <div class="chart-card">
+        <h3>📈 Live Supply &amp; Demand</h3>
+        <div class="chart-container"><canvas id="sdChart"></canvas></div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem;">Supply = airlines' seats at their prices. Demand = passenger WTP distribution. Equilibrium = where curves intersect.</div>
+      </div>
+
+      <!-- Surplus Chart -->
+      <div class="chart-card">
+        <h3>💰 Surplus Distribution</h3>
+        <div class="chart-container"><canvas id="surplusChart"></canvas></div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.5rem;">Consumer Surplus (passengers) vs Producer Surplus (airlines). Deadweight loss = value not captured by market.</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:1.5rem;">
+      <!-- Airlines Table -->
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;">✈️ Airlines</div>
+        <div style="overflow-x:auto;">
+          <table class="live-table">
+            <thead><tr><th>Airline</th><th>Econ $</th><th>Bus $</th><th>Sold</th><th>Load</th><th>Profit</th></tr></thead>
+            <tbody id="teacherAirlinesBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No airlines yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Passengers Table -->
+      <div class="card">
+        <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;">🎒 Passengers</div>
+        <div style="overflow-x:auto;">
+          <table class="live-table">
+            <thead><tr><th>Passenger</th><th>Type</th><th>WTP</th><th>Booked</th><th>Paid</th><th>Surplus</th></tr></thead>
+            <tbody id="teacherPassengersBody"><tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No passengers yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Economic Shock Panel -->
+    <div class="card" style="background:linear-gradient(135deg,rgba(251,191,36,0.04),rgba(248,113,113,0.04));border-color:rgba(251,191,36,0.18);">
+      <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#fbbf24;margin-bottom:0.75rem;">⚡ Economic Shock Events</div>
+      <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1rem;">Trigger a real-world market event. All student screens update instantly. Students must respond in Round 2.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0.6rem;margin-bottom:1rem;" id="shockButtons"></div>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="clearShock()" style="font-size:0.82rem;padding:0.5rem 1rem;">🔄 Clear Shock</button>
+        <span style="font-size:0.8rem;color:var(--text-muted);" id="activeShockDisplay">No shock active.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCREEN 6: RESULTS
+═══════════════════════════════════════════════════════════ -->
+<div id="resultsScreen" class="screen hidden">
+  <div class="container">
+    <div class="top-bar">
+      <div class="top-bar-title">🏆 SkyMarket Live — Round Results</div>
+      <div class="nav-btns">
+        <button class="hub-btn" onclick="goToHub()">🏠 Hub</button>
+        <button class="back-btn" onclick="leaveSession()">✕ Leave</button>
+      </div>
+    </div>
+
+    <!-- Market Summary -->
+    <div class="stats-bar" style="margin-bottom:1.5rem;">
+      <div class="stat-box"><div class="stat-number" id="rTotalBooked">0</div><div class="stat-label">Seats Sold</div></div>
+      <div class="stat-box"><div class="stat-number" id="rAvgPrice">$—</div><div class="stat-label">Avg Market Price</div></div>
+      <div class="stat-box"><div class="stat-number text-success" id="rTotalCS">$—</div><div class="stat-label">Total Consumer Surplus</div></div>
+      <div class="stat-box"><div class="stat-number text-success" id="rTotalPS">$—</div><div class="stat-label">Total Producer Surplus</div></div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:1.5rem;">
+      <!-- Airline Leaderboard -->
+      <div class="card">
+        <div class="card-title">✈️ Airline Leaderboard</div>
+        <div id="airlineLeaderboard"></div>
+      </div>
+      <!-- Passenger Leaderboard -->
+      <div class="card">
+        <div class="card-title">🎒 Passenger Leaderboard</div>
+        <div id="passengerLeaderboard"></div>
+      </div>
+    </div>
+
+    <!-- AI Debrief -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title">🤖 AI Market Debrief</div>
+      <div class="debrief-box" id="aiDebriefText">Generating analysis…</div>
+      <div style="margin-top:1rem;font-size:0.78rem;color:var(--text-muted);">Key Concepts Demonstrated: <span id="debriefConcepts"></span></div>
+    </div>
+
+    <div style="text-align:center;">
+      <button class="btn btn-primary" onclick="leaveSession()">← Back to Hub</button>
+    </div>
+  </div>
+</div>
+
+<!-- Score Card Modal -->
+<div class="scorecard-overlay hidden" id="scorecardModal">
+  <div class="scorecard-box">
+    <span class="scorecard-badge" id="scEmoji">🏆</span>
+    <div class="scorecard-score" id="scScore">82</div>
+    <div style="font-size:1rem;color:var(--text-secondary);margin:0.25rem 0 0.5rem;">out of 100</div>
+    <div style="font-size:1.5rem;font-weight:800;margin-bottom:0.75rem;" id="scBadgeLabel">🥇 Gold</div>
+    <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:0.5rem;" id="scRank"></div>
+    <div class="scorecard-verdict" id="scVerdict"></div>
+    <button class="btn btn-primary btn-wide" onclick="closeScorecard()">See Full Results →</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// FIREBASE INIT
+// ═══════════════════════════════════════════════════════════
+const firebaseConfig = {
+  projectId: "maths-f3c6d",
+  appId: "1:76007634547:web:0b9773147e26dd2940dc06",
+  storageBucket: "maths-f3c6d.firebasestorage.app",
+  apiKey: "AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain: "www.datatrends.com.au",
+  messagingSenderId: "76007634547"
+};
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+} catch(e) { console.warn('Firebase offline:', e); }
+
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+const ROUTES = {
+  'SYD-LAX': { name:'Sydney → Los Angeles', fixedCost:150000, flag:'🇺🇸', short:'SYD → LAX' },
+  'SYD-SIN': { name:'Sydney → Singapore',   fixedCost:120000, flag:'🇸🇬', short:'SYD → SIN' },
+  'SYD-MEL': { name:'Sydney → Melbourne',   fixedCost:80000,  flag:'🇦🇺', short:'SYD → MEL' }
+};
+
+const TRAVELLER_TYPES = {
+  leisure:  { name:'Leisure Traveller', emoji:'🏖️', minWTP:400,  maxWTP:1400, ped:-2.5, desc:'Holiday & leisure traveller. Price-sensitive — shops around for the best deal.' },
+  business: { name:'Business Traveller', emoji:'💼', minWTP:2000, maxWTP:8000, ped:-0.7, desc:'Corporate traveller. Less price-sensitive — values comfort and reliability.' },
+  student:  { name:'Student Backpacker', emoji:'🎓', minWTP:250,  maxWTP:600,  ped:-4.2, desc:'Budget traveller. Highly price-sensitive — will only fly if the price is very low.' }
+};
+
+const SHOCK_EVENTS = {
+  fuel:        { emoji:'⛽', title:'Fuel Crisis',        desc:'Global oil prices spike. All airline fixed costs increase by $30,000.', costMod:30000 },
+  holidays:    { emoji:'🌞', title:'School Holidays',    desc:'Peak travel season! Leisure demand up 40%, students up 20%.', leisureMod:1.4, studentMod:1.2 },
+  conference:  { emoji:'💼', title:'Business Summit',    desc:'Major international conference. Business demand surges 60%, leisure down 5%.', busMod:1.6, leisureMod:0.95 },
+  recession:   { emoji:'💹', title:'Economic Recession', desc:'Consumer confidence falls. All passenger WTPs drop 25%.', wtpMod:0.75 },
+  tourism:     { emoji:'🌏', title:'Tourism Boom',       desc:'Government tourism campaign. All demand up 30%.', allDemandMod:1.3 },
+  carbon_tax:  { emoji:'🏛️', title:'Carbon Tax',        desc:'New carbon tax adds $20,000 to operating costs.', costMod:20000 },
+  weather:     { emoji:'🌪️', title:'Weather Grounding', desc:'Severe storms — all airlines lose 20% of offered economy capacity.', capacityMod:0.8 },
+  new_budget:  { emoji:'✈️', title:'Budget Airline Enters', desc:'A new ultra-budget carrier enters with prices starting at $99. BotAir goes full undercutter!', botBoost:true },
+  monopoly:    { emoji:'🏭', title:'Airline Merger',     desc:'Two airlines merge. The market is now more concentrated — watch for higher prices!', mergerNote:true },
+  transparency:{ emoji:'🔍', title:'Price Transparency Law', desc:'Passengers can now see all airline prices sorted — competition intensifies!', infoNote:true }
+};
+
+// ═══════════════════════════════════════════════════════════
+// GAME STATE
+// ═══════════════════════════════════════════════════════════
+let myRole = null;       // 'airline' | 'passenger' | 'teacher'
+let myName = '';
+let myClassCode = '';
+let mySession = null;
+let myPassengerData = null;
+let myAirlineData = null;
+let allAirlines = [];
+let allPassengers = [];
+let unsubscribers = [];
+let charts = {};
+let hasBooked = false;
+let hasPricingSubmitted = false;
+let currentRound = 1;
+let botAirInterval = null;
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION HELPERS
+// ═══════════════════════════════════════════════════════════
+function showScreen(id) {
+  ['entryScreen','waitingScreen','airlineScreen','passengerScreen','teacherScreen','resultsScreen']
+    .forEach(s => document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+function showError(msg) {
+  const el = document.getElementById('joinError');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+  setTimeout(() => el.classList.add('hidden'), 4000);
+}
+
+// ═══════════════════════════════════════════════════════════
+// ENTRY SCREEN
+// ═══════════════════════════════════════════════════════════
+let selectedRole = null;
+
+function selectRole(role) {
+  selectedRole = role;
+  const titles = { airline:'Join as Airline ✈️', passenger:'Join as Passenger 🎒', teacher:'Open Teacher Dashboard 📊' };
+  document.getElementById('joinFormTitle').textContent = titles[role];
+  document.getElementById('teacherSetup').classList.toggle('hidden', role !== 'teacher');
+  document.getElementById('joinName').placeholder = role === 'airline' ? 'e.g. Qantas Group or Sarah J.' : role === 'teacher' ? 'e.g. Mr Anderson' : 'e.g. Alex Chen';
+  document.getElementById('joinForm').classList.remove('hidden');
+  document.getElementById('joinForm').scrollIntoView({ behavior:'smooth' });
+}
+
+async function joinSession() {
+  const name = document.getElementById('joinName').value.trim();
+  const code = document.getElementById('joinCode').value.trim().toUpperCase();
+  if (!name) { showError('Please enter your name.'); return; }
+  if (!code) { showError('Please enter the class session code.'); return; }
+  if (!selectedRole) { showError('Please select a role first.'); return; }
+  if (!db) { showError('No database connection. Please check your internet.'); return; }
+
+  myName = name;
+  myClassCode = code;
+  myRole = selectedRole;
+
+  const joinBtn = document.getElementById('joinBtn');
+  joinBtn.textContent = 'Joining…';
+  joinBtn.disabled = true;
+
+  try {
+    if (myRole === 'teacher') {
+      await createOrLoadSession(code);
+    } else if (myRole === 'airline') {
+      await joinAsAirline(code, name);
+    } else {
+      await joinAsPassenger(code, name);
+    }
+    startListeners();
+  } catch(e) {
+    console.error(e);
+    showError('Failed to join: ' + e.message);
+    joinBtn.textContent = 'Join Session →';
+    joinBtn.disabled = false;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SESSION MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+async function createOrLoadSession(code) {
+  const route = document.getElementById('routeSelect').value;
+  const bot   = document.getElementById('botPersonality').value;
+  const routeData = ROUTES[route];
+
+  const sessionRef = db.collection('market_sessions').doc(code);
+  const snap = await sessionRef.get();
+
+  if (!snap.exists) {
+    await sessionRef.set({
+      phase: 'lobby', round: 1, route,
+      routeName: routeData.name, fixedCost: routeData.fixedCost,
+      botPersonality: bot, activeShock: null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+  showTeacherDashboard();
+}
+
+async function joinAsAirline(code, name) {
+  // Check session exists
+  const sessionSnap = await db.collection('market_sessions').doc(code).get();
+  if (!sessionSnap.exists) throw new Error('Session code not found. Ask your teacher for the correct code.');
+  mySession = sessionSnap.data();
+
+  const docId = `${code}_${name}`;
+  const existingSnap = await db.collection('market_airlines').doc(docId).get();
+  if (!existingSnap.exists) {
+    await db.collection('market_airlines').doc(docId).set({
+      studentName: name, classCode: code,
+      econPrice: 800, econSeats: 8,
+      businessPrice: 3000, businessSeats: 3,
+      econSold: 0, businessSold: 0,
+      revenue: 0, profit: 0, loadFactor: 0, marketShare: 0,
+      score: 0, badge: '', round: 1, submitted: false
+    });
+  }
+  myAirlineData = { econPrice:800, econSeats:8, businessPrice:3000, businessSeats:3 };
+  showWaiting();
+}
+
+async function joinAsPassenger(code, name) {
+  const sessionSnap = await db.collection('market_sessions').doc(code).get();
+  if (!sessionSnap.exists) throw new Error('Session code not found. Ask your teacher for the correct code.');
+  mySession = sessionSnap.data();
+
+  // Assign random traveller type
+  const types = ['leisure','leisure','leisure','business','business','student'];
+  const tType = types[Math.floor(Math.random() * types.length)];
+  const tData = TRAVELLER_TYPES[tType];
+  const wtp   = Math.round(tData.minWTP + Math.random() * (tData.maxWTP - tData.minWTP));
+
+  const docId = `${code}_${name}`;
+  const existingSnap = await db.collection('market_passengers').doc(docId).get();
+  if (!existingSnap.exists) {
+    await db.collection('market_passengers').doc(docId).set({
+      studentName: name, classCode: code,
+      travellerType: tType, willingnessToPay: wtp,
+      bookedAirline: null, pricePaid: null,
+      consumerSurplus: 0, didNotFly: false,
+      score: 0, badge: '', round: 1
+    });
+    myPassengerData = { travellerType:tType, willingnessToPay:wtp, bookedAirline:null, pricePaid:null };
+  } else {
+    myPassengerData = existingSnap.data();
+  }
+  renderPassengerProfile();
+  showWaiting();
+}
+
+// ═══════════════════════════════════════════════════════════
+// FIRESTORE LISTENERS
+// ═══════════════════════════════════════════════════════════
+function startListeners() {
+  // Session listener (phase changes, shocks)
+  const sessionUnsub = db.collection('market_sessions').doc(myClassCode)
+    .onSnapshot(snap => {
+      if (!snap.exists) return;
+      mySession = snap.data();
+      currentRound = mySession.round || 1;
+      onPhaseChange(mySession.phase);
+      onShockChange(mySession.activeShock);
+    });
+  unsubscribers.push(sessionUnsub);
+
+  // Airlines listener
+  const airlinesUnsub = db.collection('market_airlines')
+    .where('classCode','==', myClassCode)
+    .onSnapshot(snap => {
+      allAirlines = [];
+      // Include ALL docs (including _botair_) — filtering happens at render time
+      snap.forEach(doc => allAirlines.push({ id: doc.id, ...doc.data() }));
+      onAirlinesUpdate();
+    });
+  unsubscribers.push(airlinesUnsub);
+
+  // Passengers listener
+  const passengersUnsub = db.collection('market_passengers')
+    .where('classCode','==', myClassCode)
+    .onSnapshot(snap => {
+      allPassengers = [];
+      snap.forEach(doc => allPassengers.push({ id: doc.id, ...doc.data() }));
+      onPassengersUpdate();
+    });
+  unsubscribers.push(passengersUnsub);
+}
+
+function goToHub() {
+  // Navigate to the simulation hub without dropping the Firestore session
+  window.location.href = 'simulations.html';
+}
+
+function leaveSession() {
+  unsubscribers.forEach(u => u());
+  unsubscribers = [];
+  if (botAirInterval) { clearInterval(botAirInterval); botAirInterval = null; }
+  myRole = null; myName = ''; myClassCode = ''; selectedRole = null;
+  mySession = null; myPassengerData = null; myAirlineData = null;
+  allAirlines = []; allPassengers = []; hasBooked = false; hasPricingSubmitted = false;
+  document.getElementById('joinForm').classList.add('hidden');
+  document.getElementById('joinName').value = '';
+  document.getElementById('joinCode').value = '';
+  showScreen('entryScreen');
+}
+
+// ═══════════════════════════════════════════════════════════
+// PHASE CHANGE HANDLER
+// ═══════════════════════════════════════════════════════════
+function onPhaseChange(phase) {
+  if (!phase) return;
+
+  // Update phase pills everywhere
+  const pillConfig = {
+    lobby:    { cls:'lobby',   text:'Lobby' },
+    pricing:  { cls:'pricing', text:'Pricing Open' },
+    booking:  { cls:'booking', text:'Booking Live' },
+    clearing: { cls:'clearing',text:'Clearing' },
+    results:  { cls:'results', text:'Results' }
+  };
+  const pc = pillConfig[phase] || pillConfig.lobby;
+
+  ['airlinePhasePill','passengerPhasePill','teacherPhasePill'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.className = `phase-pill ${pc.cls}`;
+      el.innerHTML = `<span class="phase-dot"></span>${pc.text}`;
+    }
+  });
+
+  // Phase buttons for teacher
+  Object.keys(pillConfig).forEach(p => {
+    const btn = document.getElementById(`phaseBtn-${p}`);
+    if (btn) btn.className = `phase-btn ${p === phase ? 'active' : 'inactive'}`;
+  });
+
+  const cpd = document.getElementById('currentPhaseDisplay');
+  if (cpd) cpd.textContent = pc.text;
+
+  if (myRole === 'teacher') {
+    showTeacherDashboard();
+    return;
+  }
+
+  // Student routing by phase
+  if (phase === 'lobby') {
+    showWaiting();
+  } else if (phase === 'pricing') {
+    if (myRole === 'airline') showAirlineDesk();
+    else { showWaiting(); document.getElementById('waitingTitle').textContent = '⏳ Airlines are setting prices…'; document.getElementById('waitingSubtitle').textContent = 'The Booking Phase will open soon. Review your traveller profile!'; }
+  } else if (phase === 'booking') {
+    if (myRole === 'airline') {
+      showAirlineDesk();
+    } else {
+      showPassengerPortal();
+    }
+  } else if (phase === 'clearing' || phase === 'results') {
+    showResultsScreen();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHOCK CHANGE HANDLER
+// ═══════════════════════════════════════════════════════════
+function onShockChange(shock) {
+  const banners = ['airlineShockBanner','passengerShockBanner'];
+  banners.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (shock && shock.id) {
+      const s = SHOCK_EVENTS[shock.id];
+      if (s) {
+        el.classList.add('active');
+        el.querySelector('.shock-desc').textContent = `${s.emoji} ${s.title}: ${s.desc}`;
+      }
+    } else {
+      el.classList.remove('active');
+    }
+  });
+
+  const asd = document.getElementById('activeShockDisplay');
+  if (asd) {
+    asd.textContent = shock && shock.id ? `Active: ${SHOCK_EVENTS[shock.id]?.title || shock.id}` : 'No shock active.';
+  }
+
+  // Recalculate projections for airline if shock changes costs
+  if (myRole === 'airline') updateAirlineProjections();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AIRLINE UPDATE HANDLER
+// ═══════════════════════════════════════════════════════════
+function onAirlinesUpdate() {
+  // Update competitor feed for airline view
+  if (myRole === 'airline') renderCompetitorFeed();
+  if (myRole === 'airline') renderAirlineLiveBookings();
+
+  // Update teacher tables and charts
+  if (myRole === 'teacher') {
+    renderTeacherAirlinesTable();
+    renderSDChart();
+    renderSurplusChart();
+    updateTeacherStats();
+  }
+
+  // Update booking board for passengers
+  // Use DOM visibility check — more reliable than checking stale mySession.phase
+  if (myRole === 'passenger' && !hasBooked) {
+    const board = document.getElementById('bookingBoard');
+    if (board && !board.classList.contains('hidden')) {
+      renderBookingBoard();
+      renderPassengerAdvisor();
+    }
+  }
+}
+
+function onPassengersUpdate() {
+  if (myRole === 'teacher') {
+    renderTeacherPassengersTable();
+    renderSDChart();
+    renderSurplusChart();
+    updateTeacherStats();
+  }
+  if (myRole === 'passenger') {
+    // Check if my booking was recorded
+    const mine = allPassengers.find(p => p.studentName === myName);
+    if (mine) myPassengerData = mine;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHOW SCREENS
+// ═══════════════════════════════════════════════════════════
+function showWaiting() {
+  showScreen('waitingScreen');
+  document.getElementById('waitCode').textContent = myClassCode;
+  if (mySession) document.getElementById('waitRoute').textContent = mySession.routeName || '—';
+  if (myRole === 'passenger') {
+    document.getElementById('waitingIcon').textContent = '🎒';
+    if (myPassengerData) {
+      const td = TRAVELLER_TYPES[myPassengerData.travellerType];
+      document.getElementById('waitingTitle').textContent = `You are: ${td.emoji} ${td.name}`;
+      document.getElementById('waitingSubtitle').textContent = td.desc;
+    }
+  } else if (myRole === 'airline') {
+    document.getElementById('waitingIcon').textContent = '✈️';
+    document.getElementById('waitingTitle').textContent = 'Waiting for Pricing Phase…';
+    document.getElementById('waitingSubtitle').textContent = 'The teacher will open Pricing soon.';
+  }
+  // Update player counts
+  document.getElementById('waitAirlines').textContent = allAirlines.length;
+  document.getElementById('waitPassengers').textContent = allPassengers.length;
+}
+
+function showAirlineDesk() {
+  showScreen('airlineScreen');
+  const si = document.getElementById('airlineSessionInfo');
+  if (si && mySession) si.textContent = `Session: ${myClassCode} | Route: ${mySession.routeName || ''} | Round: ${currentRound}`;
+  document.getElementById('airFixedCost').textContent = `$${(getEffectiveFixedCost()).toLocaleString()}`;
+  updateAirlineProjections();
+  renderCompetitorFeed();
+  updateSliderGradients();
+}
+
+function showPassengerPortal() {
+  showScreen('passengerScreen');
+  const si = document.getElementById('passengerSessionInfo');
+  if (si && mySession) si.textContent = `Session: ${myClassCode} | Route: ${mySession.routeName || ''} | Round: ${currentRound}`;
+  const rd = document.getElementById('routeDisplayPassenger');
+  if (rd && mySession) rd.textContent = mySession.routeName || '—';
+
+  document.getElementById('pricingWaitBox').classList.add('hidden');
+  document.getElementById('bookingBoard').classList.remove('hidden');
+
+  // Restore booking banner if passenger already has a booking
+  if (myPassengerData?.bookedAirline) {
+    const banner = document.getElementById('bookingStatusBanner');
+    if (banner) {
+      banner.classList.remove('hidden');
+      document.getElementById('bookedAirlineDisplay').textContent =
+        `${myPassengerData.bookedAirline === '_botair_' ? 'BotAir (AI)' : myPassengerData.bookedAirline} — ${myPassengerData.bookedCabin || 'Economy'} — $${(myPassengerData.pricePaid||0).toLocaleString()}`;
+      document.getElementById('surplusAmount').textContent = `$${(myPassengerData.consumerSurplus||0).toLocaleString()}`;
+    }
+  }
+
+  renderBookingBoard();
+  renderPassengerAdvisor();
+}
+
+function showTeacherDashboard() {
+  showScreen('teacherScreen');
+  const si = document.getElementById('teacherSessionInfo');
+  if (si && mySession) si.textContent = `Session: ${myClassCode} | Route: ${mySession.routeName} | Round: ${currentRound} | Phase: ${mySession.phase}`;
+  renderShockButtons();
+  renderTeacherAirlinesTable();
+  renderTeacherPassengersTable();
+  updateTeacherStats();
+  renderSDChart();
+  renderSurplusChart();
+
+  // Start BotAir if enabled
+  if (mySession && mySession.botPersonality && mySession.botPersonality !== 'off') {
+    if (botAirInterval) clearInterval(botAirInterval);
+    botAirInterval = setInterval(updateBotAir, 15000);
+    updateBotAir();
+  }
+}
+
+function showResultsScreen() {
+  showScreen('resultsScreen');
+  calculateAndRenderResults();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AIRLINE PRICING DESK LOGIC
+// ═══════════════════════════════════════════════════════════
+function onAirEconChange(v) {
+  document.getElementById('airEconPriceDisplay').textContent = `$${Number(v).toLocaleString()}`;
+  myAirlineData = myAirlineData || {};
+  myAirlineData.econPrice = Number(v);
+  updateAirlineProjections();
+  updateSliderGradients();
+}
+function onAirEconSeatsChange(v) {
+  document.getElementById('airEconSeatsDisplay').textContent = v;
+  myAirlineData = myAirlineData || {};
+  myAirlineData.econSeats = Number(v);
+  updateAirlineProjections();
+}
+function onAirBusChange(v) {
+  document.getElementById('airBusPriceDisplay').textContent = `$${Number(v).toLocaleString()}`;
+  myAirlineData = myAirlineData || {};
+  myAirlineData.businessPrice = Number(v);
+  updateAirlineProjections();
+  updateSliderGradients();
+}
+function onAirBusSeatsChange(v) {
+  document.getElementById('airBusSeatsDisplay').textContent = v;
+  myAirlineData = myAirlineData || {};
+  myAirlineData.businessSeats = Number(v);
+  updateAirlineProjections();
+}
+
+function updateSliderGradients() {
+  ['airEconSlider','airBusSlider','airEconSeatsSlider','airBusSeatsSlider'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const pct = ((el.value - el.min) / (el.max - el.min) * 100).toFixed(1) + '%';
+    el.style.setProperty('--pct', pct);
+  });
+}
+
+function getEffectiveFixedCost() {
+  let cost = (mySession && mySession.fixedCost) ? mySession.fixedCost : 150000;
+  const shock = mySession && mySession.activeShock;
+  if (shock && shock.id && SHOCK_EVENTS[shock.id]) {
+    const s = SHOCK_EVENTS[shock.id];
+    if (s.costMod) cost += s.costMod;
+  }
+  return cost;
+}
+
+function updateAirlineProjections() {
+  if (!myAirlineData) return;
+  const { econPrice = 800, econSeats = 8, businessPrice = 3000, businessSeats = 3 } = myAirlineData;
+  const fixedCost = getEffectiveFixedCost();
+
+  // Estimate demand using logit-style share with competitor prices
+  const otherEconPrices = allAirlines
+    .filter(a => a.studentName !== myName && a.submitted)
+    .map(a => a.econPrice || 800);
+  const botAir = allAirlines.find(a => a.studentName === '_botair_');
+  if (botAir) otherEconPrices.push(botAir.econPrice || 800);
+
+  const myShare = otherEconPrices.length > 0
+    ? computeMarketShare(econPrice, otherEconPrices)
+    : 1.0;
+
+  // Market-level demand (sum of all traveller types)
+  const numPassengers = Math.max(allPassengers.length, 10);
+  const baseEconDemand = numPassengers * 0.75 * Math.exp(-0.0008 * econPrice);
+  const myEconDemand   = Math.round(baseEconDemand * myShare);
+  const econSold       = Math.min(econSeats, myEconDemand);
+
+  const busDemand = numPassengers * 0.2 * Math.exp(-0.0002 * businessPrice);
+  const busSold   = Math.min(businessSeats, Math.round(busDemand));
+
+  const revenue = econSold * econPrice + busSold * businessPrice;
+  const profit  = revenue - fixedCost;
+  const bEven   = fixedCost / econPrice;
+
+  document.getElementById('airFixedCost').textContent = `$${fixedCost.toLocaleString()}`;
+  document.getElementById('airBreakEven').textContent = `~${Math.ceil(bEven)} seats (you have ${econSeats} available)`;
+  document.getElementById('airProjRevenue').textContent = `$${revenue.toLocaleString()}`;
+  const profEl = document.getElementById('airProjProfit');
+  profEl.textContent = (profit >= 0 ? '+' : '') + `$${profit.toLocaleString()}`;
+  profEl.className = profit >= 0 ? 'intel-val text-success' : 'intel-val text-danger';
+}
+
+function computeMarketShare(myPrice, otherPrices) {
+  const λ = 0.001;
+  const myVal = Math.exp(-λ * myPrice);
+  const sumVal = myVal + otherPrices.reduce((s, p) => s + Math.exp(-λ * p), 0);
+  return myVal / sumVal;
+}
+
+async function submitAirlinePricing() {
+  if (!db || !myName || !myClassCode) return;
+  const btn = document.getElementById('submitPricingBtn');
+  const flash = document.getElementById('pricingFlash');
+  btn.disabled = true;
+  btn.textContent = 'Updating…';
+
+  const { econPrice=800, econSeats=8, businessPrice=3000, businessSeats=3 } = myAirlineData || {};
+  const docId = `${myClassCode}_${myName}`;
+  try {
+    await db.collection('market_airlines').doc(docId).update({
+      econPrice, econSeats, businessPrice, businessSeats, submitted: true,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    hasPricingSubmitted = true;
+    btn.disabled = false;
+    btn.textContent = '🔄 Update Pricing';
+    // Flash confirmation
+    if (flash) {
+      flash.className = 'badge-inline badge-green submit-flash';
+      flash.textContent = `✅ Published at ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'})} — passengers can see your prices now`;
+      setTimeout(() => { flash.textContent = ''; flash.className = ''; }, 3500);
+    }
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '🔄 Update Pricing';
+    if (flash) { flash.className = 'badge-inline badge-red'; flash.textContent = '❌ Update failed — try again'; setTimeout(()=>{flash.textContent='';flash.className='';},3000); }
+    console.error('Pricing update failed:', e);
+  }
+}
+
+function renderCompetitorFeed() {
+  const el = document.getElementById('competitorFeed');
+  if (!el) return;
+  const competitors = allAirlines.filter(a => a.studentName !== myName && a.studentName !== '_botair_');
+  const botAir = allAirlines.find(a => a.studentName === '_botair_');
+
+  if (competitors.length === 0 && !botAir) {
+    el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-muted);font-style:italic;">No competitors yet — you\'ll see their prices here once they submit.</div>';
+    return;
+  }
+
+  let html = '';
+  const sorted = [...competitors].sort((a,b) => (a.econPrice||9999)-(b.econPrice||9999));
+  sorted.forEach(a => {
+    const tag = a.submitted ? '' : '<span style="font-size:0.7rem;color:var(--text-muted);"> (not submitted)</span>';
+    html += `<div class="competitor-row">
+      <span class="competitor-name">✈️ ${a.studentName}</span>
+      <span class="competitor-price">$${(a.econPrice||'—').toLocaleString()} econ${tag}</span>
+    </div>`;
+  });
+  if (botAir) {
+    html += `<div class="competitor-row">
+      <span class="competitor-name competitor-bot">🤖 BotAir</span>
+      <span class="competitor-price competitor-bot">$${(botAir.econPrice||'—').toLocaleString()} econ</span>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderAirlineLiveBookings() {
+  if (myRole !== 'airline') return;
+  const mine = allPassengers.filter(p => p.bookedAirline === myName);
+  const econPassengers = allPassengers.filter(p => p.bookedAirline === myName);
+  // Split by rough price - passengers who paid econ price
+  const econSold = econPassengers.filter(p => p.pricePaid <= (myAirlineData?.econPrice || 900)).length;
+  const busSold  = econPassengers.length - econSold;
+  const revenue  = econPassengers.reduce((s, p) => s + (p.pricePaid||0), 0);
+  const totalSeats = (myAirlineData?.econSeats||8) + (myAirlineData?.businessSeats||3);
+  const load    = totalSeats > 0 ? Math.round((econPassengers.length / totalSeats) * 100) : 0;
+
+  document.getElementById('airLiveEconSold').textContent = econSold;
+  document.getElementById('airLiveBusSold').textContent  = busSold;
+  document.getElementById('airLiveLoad').textContent     = load + '%';
+  document.getElementById('airLiveRevenue').textContent  = '$' + revenue.toLocaleString();
+}
+
+// ═══════════════════════════════════════════════════════════
+// AI PRICE ADVISOR
+// ═══════════════════════════════════════════════════════════
+function toggleAdvisor() {
+  const panel = document.getElementById('advisorPanel');
+  const isVisible = panel.classList.contains('visible');
+  if (!isVisible) {
+    generateAdvisorAdvice();
+    panel.classList.add('visible');
+  } else {
+    panel.classList.remove('visible');
+  }
+}
+
+function generateAdvisorAdvice() {
+  const econPrice = Number(document.getElementById('airEconSlider').value);
+  const otherPrices = allAirlines
+    .filter(a => a.studentName !== myName && a.submitted)
+    .map(a => a.econPrice || 800);
+  const botAir = allAirlines.find(a => a.studentName === '_botair_');
+  if (botAir) otherPrices.push(botAir.econPrice || 800);
+
+  // PED at current price (leisure traveller demand model: Q = A*e^-bP, so PED = -b*P)
+  const b = 0.0008;
+  const ped = -(b * econPrice).toFixed(2);
+  document.getElementById('pedValue').textContent = ped;
+
+  const avgComp = otherPrices.length > 0
+    ? Math.round(otherPrices.reduce((s,p)=>s+p,0)/otherPrices.length)
+    : econPrice;
+
+  // Revenue-maximising price: dR/dP = 0 → P = 1/b (for monopolist)
+  const monopolyOptimal = Math.round(1 / b);
+  // With competition, optimal is lower
+  const competitiveOptimal = Math.round(Math.min(monopolyOptimal * 0.65, avgComp * 0.95));
+  const lowBound = Math.round(competitiveOptimal * 0.92);
+  const highBound = Math.round(competitiveOptimal * 1.08);
+
+  const elastLabel = Math.abs(ped) > 1 ? 'ELASTIC (sensitive to price)' : 'INELASTIC (not very price sensitive)';
+  const priceSignal = econPrice > avgComp * 1.05
+    ? '⚠️ Your price is above the class average — you risk losing price-sensitive leisure passengers to competitors.'
+    : econPrice < avgComp * 0.92
+    ? '✅ Your price is below average — you should capture strong market share, but check your profit margin.'
+    : '📊 Your price is competitive — close to the class average.';
+
+  document.getElementById('advisorText').innerHTML = `
+    <div style="margin-bottom:0.5rem;">${priceSignal}</div>
+    <div style="margin-bottom:0.5rem;">Demand is <strong style="color:var(--yellow)">${elastLabel}</strong>. At $${econPrice}, a 10% price rise will reduce quantity demanded by approximately <strong>${(Math.abs(parseFloat(ped))*10).toFixed(0)}%</strong>.</div>
+    <div style="margin-bottom:0.5rem;">Class avg economy price: <strong style="color:var(--text-primary);">$${avgComp.toLocaleString()}</strong></div>
+    <div>💡 Suggested range to maximise revenue given current competition: <strong style="color:var(--green);">$${lowBound.toLocaleString()} – $${highBound.toLocaleString()}</strong></div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PASSENGER BOOKING PORTAL LOGIC
+// ═══════════════════════════════════════════════════════════
+function renderPassengerProfile() {
+  if (!myPassengerData) return;
+  const td = TRAVELLER_TYPES[myPassengerData.travellerType];
+  if (!td) return;
+  document.getElementById('passengerEmoji').textContent      = td.emoji;
+  document.getElementById('passengerTypeName').textContent   = td.name;
+  document.getElementById('passengerTypeDesc').textContent   = td.desc;
+  document.getElementById('passengerWTPDisplay').textContent = `$${myPassengerData.willingnessToPay.toLocaleString()}`;
+  document.getElementById('passengerPED').textContent        = td.ped;
+  // WTP bar relative to max possible WTP ($8000)
+  const pct = Math.min(100, (myPassengerData.willingnessToPay / 8000) * 100);
+  document.getElementById('passengerWTPBar').style.width = pct + '%';
+}
+
+function renderBookingBoard() {
+  if (!myPassengerData) return;
+  const board = document.getElementById('flightCards');
+  if (!board) return;
+
+  const wtp = getEffectiveWTP();
+  const isBusinessType = myPassengerData.travellerType === 'business';
+  const myBookedAirline = myPassengerData.bookedAirline || null;
+
+  // Build flight list from submitted airlines
+  const submitted = allAirlines.filter(a => a.submitted && a.studentName !== '_botair_');
+  const botAir    = allAirlines.find(a => a.studentName === '_botair_');
+  if (botAir && botAir.submitted) submitted.push(botAir);
+
+  if (submitted.length === 0) {
+    board.innerHTML = '<div style="font-size:0.85rem;color:var(--text-muted);padding:1rem;text-align:center;">Airlines haven\'t submitted prices yet.</div>';
+    return;
+  }
+
+  // Sort: cheapest first, but booked airline always at top
+  const sorted = [...submitted].sort((a,b) => {
+    if (a.studentName === myBookedAirline) return -1;
+    if (b.studentName === myBookedAirline) return 1;
+    const pa = isBusinessType ? (a.businessPrice || 9999) : (a.econPrice || 9999);
+    const pb = isBusinessType ? (b.businessPrice || 9999) : (b.econPrice || 9999);
+    return pa - pb;
+  });
+
+  let html = '';
+  sorted.forEach(airline => {
+    const price     = isBusinessType ? (airline.businessPrice || airline.econPrice) : airline.econPrice;
+    const cls       = isBusinessType ? 'Business' : 'Economy';
+    const seatsLeft = isBusinessType ? (airline.businessSeats - (airline.businessSold||0)) : (airline.econSeats - (airline.econSold||0));
+    const affordable = price <= wtp;
+    const soldOut   = seatsLeft <= 0;
+    const isMyFlight = airline.studentName === myBookedAirline;
+    const fillPct   = isBusinessType
+      ? Math.round(((airline.businessSold||0) / Math.max(airline.businessSeats,1)) * 100)
+      : Math.round(((airline.econSold||0) / Math.max(airline.econSeats,1)) * 100);
+
+    const surplusEst = affordable && !soldOut ? `<span style="font-size:0.72rem;color:var(--green);">+$${(wtp-price).toLocaleString()} surplus</span>` : '';
+
+    let cardClass = 'flight-card';
+    if (isMyFlight) cardClass += ' booked';
+    else if (soldOut) cardClass += ' sold-out';
+
+    let btnHtml;
+    if (isMyFlight) {
+      btnHtml = `<div style="text-align:center">
+        <div style="font-size:0.78rem;font-weight:800;color:#34d399;margin-bottom:0.3rem;">✓ Your Flight</div>
+        <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.35rem 0.75rem;" onclick="cancelBooking()">Cancel</button>
+      </div>`;
+    } else if (soldOut) {
+      btnHtml = '<button class="btn btn-secondary" disabled>Sold Out</button>';
+    } else if (!affordable) {
+      btnHtml = '<button class="btn btn-secondary" disabled style="color:var(--red);">Over Budget</button>';
+    } else {
+      const label = myBookedAirline ? `Switch ✈️ $${price.toLocaleString()}` : `Book $${price.toLocaleString()}`;
+      btnHtml = `<button class="btn btn-success" onclick="bookFlight('${airline.studentName}',${price},'${cls}')">${label}</button>`;
+    }
+
+    html += `<div class="${cardClass}">
+      <div>
+        <div class="flight-airline">${airline.studentName === '_botair_' ? '🤖 BotAir' : '✈️ ' + airline.studentName}</div>
+        <div class="flight-prices"><span>${cls}: <span class="flight-price-val">$${price.toLocaleString()}</span></span></div>
+        <div style="margin-top:0.3rem;display:flex;align-items:center;gap:0.5rem;">
+          <div class="seat-bar"><div class="seat-fill" style="width:${fillPct}%;"></div></div>
+          <span style="font-size:0.72rem;color:var(--text-muted);">${Math.max(0,seatsLeft)} seats left</span>
+        </div>
+        ${surplusEst}
+      </div>
+      ${btnHtml}
+    </div>`;
+  });
+
+  board.innerHTML = html;
+  document.getElementById('noFlightsMsg').classList.toggle('hidden', sorted.some(a => {
+    const p = isBusinessType ? (a.businessPrice||9999) : (a.econPrice||9999);
+    return p <= wtp && (isBusinessType ? a.businessSeats-(a.businessSold||0) : a.econSeats-(a.econSold||0)) > 0;
+  }));
+}
+
+function getEffectiveWTP() {
+  let wtp = myPassengerData?.willingnessToPay || 800;
+  const shock = mySession?.activeShock;
+  if (shock?.id && SHOCK_EVENTS[shock.id]?.wtpMod) {
+    wtp = Math.round(wtp * SHOCK_EVENTS[shock.id].wtpMod);
+  }
+  return wtp;
+}
+
+async function bookFlight(airlineName, price, cabin) {
+  if (!db || !myPassengerData) return;
+  const wtp = getEffectiveWTP();
+  const surplus = Math.max(0, wtp - price);
+  const docId = `${myClassCode}_${myName}`;
+
+  // Decrement OLD airline if switching
+  const prevAirline = myPassengerData.bookedAirline;
+  const prevCabin   = myPassengerData.bookedCabin;
+  const prevPrice   = myPassengerData.pricePaid || 0;
+  if (prevAirline && prevAirline !== airlineName) {
+    const oldId = `${myClassCode}_${prevAirline}`;
+    try {
+      const oldSnap = await db.collection('market_airlines').doc(oldId).get();
+      if (oldSnap.exists) {
+        const od = oldSnap.data();
+        if (prevCabin === 'Business') {
+          await db.collection('market_airlines').doc(oldId).update({
+            businessSold: Math.max(0, (od.businessSold||0) - 1),
+            revenue: Math.max(0, (od.revenue||0) - prevPrice)
+          });
+        } else {
+          await db.collection('market_airlines').doc(oldId).update({
+            econSold: Math.max(0, (od.econSold||0) - 1),
+            revenue: Math.max(0, (od.revenue||0) - prevPrice)
+          });
+        }
+      }
+    } catch(e) { console.warn('Could not decrement old airline:', e); }
+  }
+
+  try {
+    // Write passenger record
+    await db.collection('market_passengers').doc(docId).update({
+      bookedAirline: airlineName, pricePaid: price, bookedCabin: cabin,
+      consumerSurplus: surplus, didNotFly: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Increment NEW airline sold count
+    const airlineDocId = `${myClassCode}_${airlineName}`;
+    const airlineSnap = await db.collection('market_airlines').doc(airlineDocId).get();
+    if (airlineSnap.exists) {
+      const ad = airlineSnap.data();
+      if (cabin === 'Business') {
+        await db.collection('market_airlines').doc(airlineDocId).update({
+          businessSold: (ad.businessSold || 0) + 1,
+          revenue: (ad.revenue || 0) + price
+        });
+      } else {
+        await db.collection('market_airlines').doc(airlineDocId).update({
+          econSold: (ad.econSold || 0) + 1,
+          revenue: (ad.revenue || 0) + price
+        });
+      }
+    }
+
+    // Update local state
+    myPassengerData = { ...myPassengerData, bookedAirline: airlineName, pricePaid: price, bookedCabin: cabin, consumerSurplus: surplus };
+    hasBooked = true;
+
+    // Update booking status banner
+    const banner = document.getElementById('bookingStatusBanner');
+    if (banner) {
+      banner.classList.remove('hidden');
+      document.getElementById('bookedAirlineDisplay').textContent =
+        `${airlineName === '_botair_' ? 'BotAir (AI)' : airlineName} — ${cabin} — $${price.toLocaleString()}`;
+      document.getElementById('surplusAmount').textContent = `$${surplus.toLocaleString()}`;
+    }
+
+    // Re-render board (highlights booked card, updates seat counts)
+    renderBookingBoard();
+
+  } catch(e) {
+    console.error('Booking failed:', e);
+    alert('Booking failed: ' + e.message);
+  }
+}
+
+async function cancelBooking() {
+  if (!myPassengerData?.bookedAirline || !db) return;
+  const prevAirline = myPassengerData.bookedAirline;
+  const prevCabin   = myPassengerData.bookedCabin;
+  const prevPrice   = myPassengerData.pricePaid || 0;
+  const docId = `${myClassCode}_${myName}`;
+
+  try {
+    // Decrement airline
+    const oldId = `${myClassCode}_${prevAirline}`;
+    const oldSnap = await db.collection('market_airlines').doc(oldId).get();
+    if (oldSnap.exists) {
+      const od = oldSnap.data();
+      if (prevCabin === 'Business') {
+        await db.collection('market_airlines').doc(oldId).update({
+          businessSold: Math.max(0, (od.businessSold||0) - 1),
+          revenue: Math.max(0, (od.revenue||0) - prevPrice)
+        });
+      } else {
+        await db.collection('market_airlines').doc(oldId).update({
+          econSold: Math.max(0, (od.econSold||0) - 1),
+          revenue: Math.max(0, (od.revenue||0) - prevPrice)
+        });
+      }
+    }
+    // Clear passenger booking
+    await db.collection('market_passengers').doc(docId).update({
+      bookedAirline: null, pricePaid: 0, bookedCabin: null,
+      consumerSurplus: 0, didNotFly: false,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    myPassengerData = { ...myPassengerData, bookedAirline: null, pricePaid: 0, bookedCabin: null, consumerSurplus: 0 };
+    hasBooked = false;
+    document.getElementById('bookingStatusBanner').classList.add('hidden');
+    renderBookingBoard();
+  } catch(e) {
+    alert('Could not cancel: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// TEACHER FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+async function setPhase(phase) {
+  if (!db || !myClassCode) return;
+  await db.collection('market_sessions').doc(myClassCode).update({
+    phase,
+    round: phase === 'pricing' && currentRound === 1 ? 1 : currentRound,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+function renderShockButtons() {
+  const el = document.getElementById('shockButtons');
+  if (!el) return;
+  el.innerHTML = Object.entries(SHOCK_EVENTS).map(([id, s]) =>
+    `<button class="btn btn-warn" onclick="triggerShock('${id}')" style="font-size:0.78rem;padding:0.45rem 0.75rem;border-radius:var(--radius-sm);">${s.emoji} ${s.title}</button>`
+  ).join('');
+}
+
+async function triggerShock(shockId) {
+  if (!db || !myClassCode) return;
+  const shock = SHOCK_EVENTS[shockId];
+  if (!shock) return;
+  // Advance to round 2 when shock triggered
+  await db.collection('market_sessions').doc(myClassCode).update({
+    activeShock: { id: shockId },
+    round: 2,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+async function clearShock() {
+  if (!db || !myClassCode) return;
+  await db.collection('market_sessions').doc(myClassCode).update({
+    activeShock: null,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  });
+}
+
+function renderTeacherAirlinesTable() {
+  const tbody = document.getElementById('teacherAirlinesBody');
+  if (!tbody) return;
+  const data = [...allAirlines].filter(a => a.studentName !== '_botair_');
+  const bot  = allAirlines.find(a => a.studentName === '_botair_');
+  if (bot) data.push(bot);
+
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No airlines yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(a => {
+    const fixedCost = (mySession?.fixedCost || 150000) + (mySession?.activeShock?.id && SHOCK_EVENTS[mySession.activeShock.id]?.costMod ? SHOCK_EVENTS[mySession.activeShock.id].costMod : 0);
+    const profit = (a.revenue||0) - fixedCost;
+    const totalSeats = (a.econSeats||8) + (a.businessSeats||3);
+    const sold = (a.econSold||0) + (a.businessSold||0);
+    const load = totalSeats > 0 ? Math.round((sold/totalSeats)*100) : 0;
+    const pCls = profit >= 0 ? 'text-success' : 'text-danger';
+    const isBot = a.studentName === '_botair_';
+    return `<tr>
+      <td>${isBot ? '🤖 BotAir' : '✈️ ' + a.studentName}${a.submitted ? ' <span class="badge-inline badge-green">✓</span>' : ''}</td>
+      <td>$${(a.econPrice||'—').toLocaleString()}</td>
+      <td>$${(a.businessPrice||'—').toLocaleString()}</td>
+      <td>${sold}</td>
+      <td>${load}%</td>
+      <td class="${pCls}">${profit >= 0 ? '+' : ''}$${profit.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTeacherPassengersTable() {
+  const tbody = document.getElementById('teacherPassengersBody');
+  if (!tbody) return;
+  if (allPassengers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No passengers yet</td></tr>';
+    return;
+  }
+  const sorted = [...allPassengers].sort((a,b) => (b.consumerSurplus||0)-(a.consumerSurplus||0));
+  tbody.innerHTML = sorted.map(p => {
+    const td = TRAVELLER_TYPES[p.travellerType] || {};
+    return `<tr>
+      <td>${td.emoji||''} ${p.studentName}</td>
+      <td>${td.name||p.travellerType||'—'}</td>
+      <td>$${(p.willingnessToPay||0).toLocaleString()}</td>
+      <td>${p.bookedAirline ? (p.bookedAirline==='_botair_'?'🤖 BotAir':'✈️ '+p.bookedAirline) : p.didNotFly?'❌ No flight':'⏳'}</td>
+      <td>${p.pricePaid ? '$'+p.pricePaid.toLocaleString() : '—'}</td>
+      <td class="${p.consumerSurplus>0?'text-success':''}">$${(p.consumerSurplus||0).toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+function updateTeacherStats() {
+  const booked = allPassengers.filter(p => p.bookedAirline).length;
+  const prices  = allPassengers.filter(p => p.pricePaid).map(p => p.pricePaid);
+  const avgP    = prices.length > 0 ? Math.round(prices.reduce((s,p)=>s+p,0)/prices.length) : 0;
+  document.getElementById('tStatAirlines').textContent   = allAirlines.filter(a=>a.studentName!=='_botair_').length;
+  document.getElementById('tStatPassengers').textContent = allPassengers.length;
+  document.getElementById('tStatBooked').textContent     = booked;
+  document.getElementById('tStatEqPrice').textContent    = avgP > 0 ? '$'+avgP.toLocaleString() : '—';
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOTAIR LOGIC
+// ═══════════════════════════════════════════════════════════
+async function updateBotAir() {
+  if (!db || !myClassCode || !mySession) return;
+  const personality = mySession.botPersonality || 'undercutter';
+  if (personality === 'off') return;
+
+  const humanAirlines = allAirlines.filter(a => a.studentName !== '_botair_' && a.submitted);
+  const avgEcon = humanAirlines.length > 0
+    ? Math.round(humanAirlines.reduce((s,a)=>s+a.econPrice,0)/humanAirlines.length)
+    : 800;
+  const avgBus = humanAirlines.length > 0
+    ? Math.round(humanAirlines.reduce((s,a)=>s+a.businessPrice,0)/humanAirlines.length)
+    : 3000;
+
+  let botEcon, botBus;
+  if (personality === 'undercutter') {
+    botEcon = Math.max(150, Math.round(avgEcon * 0.92));
+    botBus  = Math.max(500, Math.round(avgBus  * 0.90));
+  } else if (personality === 'prestige') {
+    botEcon = Math.round(avgEcon * 1.15);
+    botBus  = Math.round(avgBus  * 1.20);
+  } else { // yield manager — revenue maximising
+    const b = 0.0008;
+    botEcon = Math.min(Math.round(1/b * 0.6), Math.round(avgEcon * 0.98));
+    botBus  = Math.round(avgBus * 1.05);
+  }
+
+  const shock = mySession.activeShock;
+  if (shock?.id === 'new_budget') { botEcon = Math.min(botEcon, 299); botBus = Math.min(botBus, 1200); }
+
+  const docId = `${myClassCode}__botair_`;
+  await db.collection('market_airlines').doc(docId).set({
+    studentName: '_botair_', classCode: myClassCode,
+    econPrice: botEcon, econSeats: 8,
+    businessPrice: botBus, businessSeats: 3,
+    econSold: 0, businessSold: 0, revenue: 0, profit: 0,
+    loadFactor: 0, marketShare: 0, submitted: true,
+    score: 0, badge: '', round: currentRound
+  }, { merge: true });
+}
+
+// ═══════════════════════════════════════════════════════════
+// SUPPLY / DEMAND CHART
+// ═══════════════════════════════════════════════════════════
+function renderSDChart() {
+  const canvas = document.getElementById('sdChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Supply: step function — sort airlines by econ price ascending
+  const submitted = allAirlines.filter(a => a.submitted).sort((a,b) => (a.econPrice||0)-(b.econPrice||0));
+  let supplyX = [0], supplyY = [0], cumSeats = 0;
+  submitted.forEach(a => {
+    supplyX.push(cumSeats);
+    supplyY.push(a.econPrice || 0);
+    cumSeats += (a.econSeats || 8);
+    supplyX.push(cumSeats);
+    supplyY.push(a.econPrice || 0);
+  });
+  const supplyData = supplyX.map((x,i) => ({ x, y: supplyY[i] }));
+
+  // Demand: exponential based on aggregate WTP
+  const maxQ = Math.max(cumSeats + 50, 300);
+  const A = Math.max(allPassengers.length * 1.8, 20);
+  const b = 0.0012;
+  const demandData = Array.from({length:40}, (_,i) => {
+    const q = (i/39)*maxQ;
+    const p = q < A ? Math.round((-1/b)*Math.log(q/A)) : 0;
+    return { x: q, y: Math.max(0, p) };
+  });
+
+  if (charts.sd) { charts.sd.destroy(); }
+  charts.sd = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label:'Supply (Airlines)', data: supplyData, borderColor:'#38bdf8', backgroundColor:'rgba(56,189,248,0.1)', showLine:true, tension:0, pointRadius:0, borderWidth:2 },
+        { label:'Demand (Passengers)', data: demandData, borderColor:'#f87171', backgroundColor:'rgba(248,113,113,0.1)', showLine:true, tension:0.3, pointRadius:0, borderWidth:2 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, animation:false,
+      plugins:{ legend:{ labels:{ color:'#94a3b8', font:{size:11} } } },
+      scales:{
+        x:{ type:'linear', title:{ display:true, text:'Quantity (Seats)', color:'#64748b' }, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#64748b'} },
+        y:{ type:'linear', title:{ display:true, text:'Price ($)', color:'#64748b' }, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#64748b', callback: v=>'$'+v.toLocaleString()} }
+      }
+    }
+  });
+}
+
+function renderSurplusChart() {
+  const canvas = document.getElementById('surplusChart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const totalCS = allPassengers.reduce((s,p) => s+(p.consumerSurplus||0), 0);
+  const totalPS = allAirlines.filter(a=>a.studentName!=='_botair_').reduce((s,a) => {
+    const fc = mySession?.fixedCost || 150000;
+    return s + Math.max(0,(a.revenue||0)-fc);
+  },0);
+  const deadweight = Math.max(0, totalCS * 0.18); // estimated
+
+  if (charts.surplus) { charts.surplus.destroy(); }
+  charts.surplus = new Chart(ctx, {
+    type:'doughnut',
+    data:{
+      labels:['Consumer Surplus', 'Producer Surplus', 'Deadweight Loss'],
+      datasets:[{ data:[totalCS, totalPS, deadweight],
+        backgroundColor:['rgba(52,211,153,0.7)','rgba(56,189,248,0.7)','rgba(248,113,113,0.4)'],
+        borderColor:['#34d399','#38bdf8','#f87171'], borderWidth:1 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{color:'#94a3b8', font:{size:11}}}}
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESULTS SCREEN
+// ═══════════════════════════════════════════════════════════
+function calculateAndRenderResults() {
+  const fixedCost = mySession?.fixedCost || 150000;
+  const shock = mySession?.activeShock;
+  const shockCostAdd = shock?.id && SHOCK_EVENTS[shock.id]?.costMod ? SHOCK_EVENTS[shock.id].costMod : 0;
+  const effectiveCost = fixedCost + shockCostAdd;
+
+  // Airline scores
+  const humanAirlines = allAirlines.filter(a=>a.studentName!=='_botair_');
+  const maxProfit = Math.max(...humanAirlines.map(a=>(a.revenue||0)-effectiveCost), 1);
+  const maxLoad   = Math.max(...humanAirlines.map(a=>(a.econSold+a.businessSold)/(a.econSeats+a.businessSeats||1)*100), 1);
+  const totalBooked = allPassengers.filter(p=>p.bookedAirline).length;
+  const maxShare = Math.max(...humanAirlines.map(a=>allPassengers.filter(p=>p.bookedAirline===a.studentName).length), 1);
+
+  const scoredAirlines = humanAirlines.map(a => {
+    // Derive actual bookings FROM passenger records (ground truth)
+    // — airline's own econSold counter can be stale if Firestore updates raced
+    const bookedByMe     = allPassengers.filter(p => p.bookedAirline === a.studentName);
+    const actualEconSold = bookedByMe.filter(p => p.bookedCabin !== 'Business').length;
+    const actualBusSold  = bookedByMe.filter(p => p.bookedCabin === 'Business').length;
+    const actualRevenue  = bookedByMe.reduce((s, p) => s + (p.pricePaid || 0), 0);
+    const totalSeats     = (a.econSeats || 8) + (a.businessSeats || 3);
+    const actualSold     = actualEconSold + actualBusSold;
+
+    const profit   = actualRevenue - effectiveCost;
+    const load     = totalSeats > 0 ? (actualSold / totalSeats) * 100 : 0;
+    const myBooked = bookedByMe.length;
+    const profitScore = maxProfit > 0 ? Math.round((Math.max(0, profit) / maxProfit) * 40) : 20;
+    const loadScore   = Math.round((load / 100) * 30);
+    const shareScore  = Math.round((myBooked / Math.max(maxShare, 1)) * 20);
+    const score = Math.min(100, profitScore + loadScore + shareScore + 10);
+    return { ...a, profit, load, score, badge: getBadge(score),
+             actualSold, actualRevenue, actualEconSold, actualBusSold };
+  });
+  scoredAirlines.sort((a,b)=>b.score-a.score);
+
+  // Passenger scores
+  const maxSurplus = Math.max(...allPassengers.map(p=>p.consumerSurplus||0), 1);
+  const scoredPassengers = allPassengers.map(p => {
+    const surplusScore = Math.round((Math.max(0,p.consumerSurplus||0)/maxSurplus)*50);
+    const bookScore    = p.bookedAirline ? 30 : 0;
+    const score = Math.min(100, surplusScore + bookScore + 10);
+    return { ...p, score, badge: getBadge(score) };
+  });
+  scoredPassengers.sort((a,b)=>b.score-a.score);
+
+  // Summary stats
+  const bookedCount = allPassengers.filter(p=>p.bookedAirline).length;
+  const paidPrices  = allPassengers.filter(p=>p.pricePaid).map(p=>p.pricePaid);
+  const avgPrice    = paidPrices.length ? Math.round(paidPrices.reduce((s,p)=>s+p,0)/paidPrices.length) : 0;
+  const totalCS     = allPassengers.reduce((s,p)=>s+(p.consumerSurplus||0),0);
+  const totalPS     = scoredAirlines.reduce((s,a)=>s+Math.max(0,a.profit),0);
+
+  document.getElementById('rTotalBooked').textContent = bookedCount;
+  document.getElementById('rAvgPrice').textContent    = avgPrice ? '$'+avgPrice.toLocaleString() : '—';
+  document.getElementById('rTotalCS').textContent     = '$'+totalCS.toLocaleString();
+  document.getElementById('rTotalPS').textContent     = '$'+totalPS.toLocaleString();
+
+  // Render leaderboards
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('airlineLeaderboard').innerHTML = scoredAirlines.length
+    ? scoredAirlines.map((a,i) => `
+      <div class="leaderboard-row">
+        <div class="lb-rank">${medals[i]||i+1}</div>
+        <div><div class="lb-name">✈️ ${a.studentName}</div><div class="lb-type">Profit: ${a.profit>=0?'+':''}$${a.profit.toLocaleString()} | Load: ${Math.round(a.load)}%</div></div>
+        <div class="lb-badge">${a.badge.emoji}</div>
+        <div class="lb-score">${a.score}</div>
+      </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem;">No airlines yet.</div>';
+
+  document.getElementById('passengerLeaderboard').innerHTML = scoredPassengers.length
+    ? scoredPassengers.map((p,i) => {
+        const td = TRAVELLER_TYPES[p.travellerType] || {};
+        return `<div class="leaderboard-row">
+          <div class="lb-rank">${medals[i]||i+1}</div>
+          <div><div class="lb-name">${td.emoji||''} ${p.studentName}</div><div class="lb-type">${td.name||''} | Surplus: $${(p.consumerSurplus||0).toLocaleString()}</div></div>
+          <div class="lb-badge">${p.badge.emoji}</div>
+          <div class="lb-score">${p.score}</div>
+        </div>`;
+      }).join('')
+    : '<div style="color:var(--text-muted);font-size:0.85rem;padding:1rem;">No passengers yet.</div>';
+
+  // Show my score card
+  if (myRole === 'airline') {
+    const me = scoredAirlines.find(a=>a.studentName===myName);
+    if (me) {
+      const rank = scoredAirlines.indexOf(me)+1;
+      const verdict = getAirlineVerdict(me, scoredAirlines);
+      setTimeout(() => showScorecard(me.score, me.badge, rank, scoredAirlines.length, verdict), 600);
+    }
+  } else if (myRole === 'passenger') {
+    const me = scoredPassengers.find(p=>p.studentName===myName);
+    if (me) {
+      const rank = scoredPassengers.indexOf(me)+1;
+      const verdict = getPassengerVerdict(me, scoredPassengers);
+      setTimeout(() => showScorecard(me.score, me.badge, rank, scoredPassengers.length, verdict), 600);
+    }
+  }
+
+  // AI Debrief
+  generateAIDebrief(scoredAirlines, scoredPassengers, totalCS, totalPS, avgPrice);
+}
+
+function getBadge(score) {
+  if (score >= 85) return { emoji:'🥇', label:'Gold',       color:'#fbbf24' };
+  if (score >= 65) return { emoji:'🥈', label:'Silver',     color:'#94a3b8' };
+  if (score >= 45) return { emoji:'🥉', label:'Bronze',     color:'#cd7c2f' };
+  return                  { emoji:'🎟️', label:'Participant',color:'#64748b' };
+}
+
+function getAirlineVerdict(airline, all) {
+  if (airline.profit > 100000)
+    return `Outstanding strategy! Your airline generated $${airline.profit.toLocaleString()} profit with a ${Math.round(airline.load)}% load factor — classic example of allocative efficiency.`;
+  if (airline.profit >= 0)
+    return `Profitable flight! Your pricing captured sufficient market share to cover the $${(mySession?.fixedCost||150000).toLocaleString()} fixed cost. Strong yield management.`;
+  if (airline.profit < 0)
+    return `Your airline flew at a loss of $${Math.abs(airline.profit).toLocaleString()}. Prices may have been too low relative to fixed costs, or competition priced you out of market share.`;
+  return `Your airline scored ${airline.score}/100. Higher prices may improve margin; lower prices increase load factor. The sweet spot is where Marginal Revenue = Marginal Cost.`;
+}
+
+function getPassengerVerdict(pax, all) {
+  if ((pax.consumerSurplus||0) > 500)
+    return `Excellent shopping! You secured a flight well below your budget, earning $${pax.consumerSurplus.toLocaleString()} in consumer surplus. You chose the airline with the best value for your traveller type.`;
+  if (pax.bookedAirline)
+    return `Flight secured! Your $${(pax.consumerSurplus||0).toLocaleString()} consumer surplus reflects the market's competitive pressure. More airlines competing = more surplus for passengers.`;
+  return `No affordable flight was found within your budget. This models "excess demand" — when market price exceeds your willingness to pay, you're priced out of the market.`;
+}
+
+function generateAIDebrief(airlines, passengers, totalCS, totalPS, avgPrice) {
+  const topAirline   = airlines[0];
+  const topPassenger = passengers[0];
+  const bookedCount  = passengers.filter(p => p.bookedAirline).length;
+  const shock        = mySession?.activeShock;
+  const shockText    = shock?.id
+    ? `<br><br>The <strong>${SHOCK_EVENTS[shock.id]?.title}</strong> shock shifted the market: ${SHOCK_EVENTS[shock.id]?.desc} This is a real-world example of a <strong>non-price determinant of supply or demand</strong> shifting the curves.`
+    : '';
+
+  const competitionText = airlines.length === 1
+    ? 'With only one airline operating, the market functioned as a <strong>monopoly</strong> — the airline had significant pricing power and passengers had no alternatives.'
+    : airlines.length >= 3
+    ? `With ${airlines.length} airlines competing, the market displayed <strong>oligopoly</strong> characteristics — airlines could observe rival prices and decide whether to undercut, match, or differentiate.`
+    : 'With two airlines, the market operated as a <strong>duopoly</strong>, similar to many domestic air routes.';
+
+  const elasticityText = passengers.some(p => p.travellerType === 'business') && passengers.some(p => p.travellerType === 'leisure')
+    ? 'The class demonstrated <strong>price discrimination in action</strong>: business travellers (inelastic demand, PED ≈ −0.7) paid significantly more than leisure travellers (elastic demand, PED ≈ −2.5) for the same route — exactly how real airlines segment their market.'
+    : '';
+
+  // Load & revenue now come from passenger-derived actuals (never stale)
+  const topLoad = topAirline ? Math.round(topAirline.load) : 0;
+  const loadDesc = topLoad === 0
+    ? 'no seats sold (prices may have been above all passengers\u2019 budgets)'
+    : topLoad < 30
+    ? `${topLoad}% seat occupancy (low fill — consider lower prices or fewer seats offered)`
+    : topLoad < 70
+    ? `${topLoad}% seat occupancy (moderate fill)`
+    : `${topLoad}% seat occupancy (strong fill — could have priced higher!)`;
+
+  const efficiencyText = totalCS > 0 || totalPS > 0
+    ? `Total market surplus: <strong>$${(totalCS + totalPS).toLocaleString()}</strong> (Consumer Surplus $${totalCS.toLocaleString()} + Producer Surplus $${totalPS.toLocaleString()}). ${
+        bookedCount < passengers.length
+          ? `<strong>${passengers.length - bookedCount} passenger${passengers.length - bookedCount > 1 ? 's' : ''}</strong> could not find an affordable flight — this represents <strong>deadweight loss</strong>, value that was never created because prices exceeded some passengers' willingness to pay.`
+          : 'All passengers booked — the market achieved <strong>full allocative efficiency</strong> at this price level!'
+      }`
+    : '';
+
+  document.getElementById('aiDebriefText').innerHTML = `
+    ${topAirline
+      ? `<strong>${topAirline.studentName === '_botair_' ? 'BotAir' : topAirline.studentName}</strong> was the highest-scoring airline (${topAirline.score}/100), earning a ${topAirline.profit >= 0 ? 'profit' : 'loss'} of <strong>${topAirline.profit >= 0 ? '+' : ''}$${topAirline.profit.toLocaleString()}</strong> with ${loadDesc}. `
+      : ''}
+    ${topPassenger?.bookedAirline
+      ? `Top passenger <strong>${topPassenger.studentName}</strong> earned the highest consumer surplus of <strong>$${(topPassenger.consumerSurplus || 0).toLocaleString()}</strong> — the reward for finding the best deal relative to their budget. `
+      : ''}
+    ${competitionText} ${elasticityText} ${shockText}
+    <br><br>${efficiencyText}
+  `;
+
+  // Key concepts
+  const concepts = ['Supply & Demand', 'Price Elasticity', 'Consumer Surplus', 'Producer Surplus'];
+  if (airlines.length >= 3) concepts.push('Oligopoly', 'Game Theory');
+  if (shock?.id) concepts.push('Supply/Demand Shifters', 'Economic Shocks');
+  if (passengers.some(p => p.travellerType === 'business')) concepts.push('Price Discrimination');
+  if (passengers.some(p => !p.bookedAirline)) concepts.push('Deadweight Loss', 'Market Failure');
+  if (topLoad > 80) concepts.push('Yield Management');
+  if (topLoad === 0 && bookedCount > 0) concepts.push('Market Failure', 'Excess Supply');
+  document.getElementById('debriefConcepts').innerHTML = concepts.map(c => `<span class="concept-tag">${c}</span>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SCORE CARD MODAL
+// ═══════════════════════════════════════════════════════════
+function showScorecard(score, badge, rank, total, verdict) {
+  document.getElementById('scScore').textContent  = score;
+  document.getElementById('scEmoji').textContent  = badge.emoji;
+  document.getElementById('scBadgeLabel').textContent = `${badge.emoji} ${badge.label}`;
+  document.getElementById('scBadgeLabel').style.color = badge.color;
+  document.getElementById('scRank').textContent = total > 1
+    ? `You ranked ${rank}${rank===1?'st':rank===2?'nd':rank===3?'rd':'th'} of ${total} ${myRole==='airline'?'airlines':'passengers'}`
+    : 'First to complete!';
+  document.getElementById('scVerdict').textContent = verdict;
+  document.getElementById('scorecardModal').classList.remove('hidden');
+}
+
+function closeScorecard() {
+  document.getElementById('scorecardModal').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// PASSENGER AI ADVISOR
+// ═══════════════════════════════════════════════════════════
+function renderPassengerAdvisor() {
+  const el = document.getElementById('passengerAdvisor');
+  if (!el || !myPassengerData) return;
+
+  const wtp = getEffectiveWTP();
+  const isBusinessType = myPassengerData.travellerType === 'business';
+  const tType = myPassengerData.travellerType || 'leisure';
+
+  const affordable = allAirlines.filter(a => {
+    if (!a.submitted) return false;
+    const p = isBusinessType ? (a.businessPrice || a.econPrice) : a.econPrice;
+    const seats = isBusinessType ? (a.businessSeats - (a.businessSold||0)) : (a.econSeats - (a.econSold||0));
+    return p <= wtp && seats > 0;
+  });
+
+  if (affordable.length === 0) {
+    el.innerHTML = `<div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:0.75rem;font-size:0.82rem;color:var(--text-muted)">
+      🤖 <strong>AI Advisor:</strong> No flights found within your budget of $${wtp.toLocaleString()}. Prices may be above your willingness to pay — this is <strong>excess demand</strong>.
+    </div>`;
+    return;
+  }
+
+  // Sort by price
+  const sorted = [...affordable].sort((a, b) => {
+    const pa = isBusinessType ? (a.businessPrice||9999) : (a.econPrice||9999);
+    const pb = isBusinessType ? (b.businessPrice||9999) : (b.econPrice||9999);
+    return pa - pb;
+  });
+
+  // AI "noise" — deterministic per student so it's stable across refreshes
+  const hashCode = myName.split('').reduce((h, c) => h + c.charCodeAt(0), 0);
+  const isWrong  = (hashCode % 4 === 0) && sorted.length > 1;  // 1-in-4 students get wrong advice
+
+  let recommended, reason, confidence;
+
+  if (isWrong) {
+    // AI recommends 2nd cheapest, citing "reliability"
+    recommended = sorted[1];
+    const recName = recommended.studentName === '_botair_' ? 'BotAir' : recommended.studentName;
+    reason = `Historical on-time data suggests <strong>${recName}</strong> has a stronger reliability record. The small price premium may be worth it.`;
+    confidence = 'Medium';
+  } else if (tType === 'business') {
+    // Business: prioritise seats remaining > price
+    const bySeats = [...sorted].sort((a, b) => {
+      const sa = (a.businessSeats - (a.businessSold||0));
+      const sb = (b.businessSeats - (b.businessSold||0));
+      return sb - sa;
+    });
+    recommended = bySeats[0];
+    reason = `As a <strong>Business Executive</strong> your demand is <strong>price inelastic</strong> (PED ≈ −0.7). Seat availability matters more than price — you need to fly.`;
+    confidence = 'High';
+  } else if (tType === 'backpacker' || tType === 'student') {
+    recommended = sorted[0];
+    const saving = wtp - (isBusinessType ? recommended.businessPrice : recommended.econPrice);
+    reason = `Cheapest available option. As a <strong>budget traveller</strong> your demand is highly elastic (PED ≈ −2.5). Saving $${saving.toLocaleString()} = maximum <strong>consumer surplus</strong>.`;
+    confidence = 'High';
+  } else {
+    recommended = sorted[0];
+    const saving = wtp - (isBusinessType ? recommended.businessPrice : recommended.econPrice);
+    reason = `Best price-to-value for your profile. You\'ll save $${saving.toLocaleString()} vs your budget — that\'s your <strong>consumer surplus</strong>.`;
+    confidence = sorted.length === 1 ? 'High' : 'Medium';
+  }
+
+  const price    = isBusinessType ? (recommended.businessPrice || recommended.econPrice) : recommended.econPrice;
+  const cabin    = isBusinessType ? 'Business' : 'Economy';
+  const dispName = recommended.studentName === '_botair_' ? '🤖 BotAir' : '✈️ ' + recommended.studentName;
+  const confColor = confidence === 'High' ? '#34d399' : '#fbbf24';
+  const confBg    = confidence === 'High' ? 'rgba(52,211,153,0.1)' : 'rgba(251,191,36,0.1)';
+
+  el.innerHTML = `
+    <div style="background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.2);border-radius:var(--radius-sm);padding:0.85rem 1rem;margin-bottom:0.85rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);">🤖 AI Travel Advisor</div>
+        <span style="font-size:0.7rem;padding:0.15rem 0.55rem;background:${confBg};border-radius:9999px;color:${confColor};font-weight:700;">${confidence} Confidence</span>
+      </div>
+      <div style="font-size:0.88rem;font-weight:700;margin-bottom:0.25rem;">Recommends: ${dispName} &mdash; ${cabin} &mdash; $${price.toLocaleString()}</div>
+      <div style="font-size:0.78rem;color:var(--text-secondary);margin-bottom:0.5rem;">${reason}</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);font-style:italic;">💡 This is AI advice — it may be wrong! You can choose any flight below. Your decision, your surplus.</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROUND MANAGEMENT
+// ═══════════════════════════════════════════════════════════
+async function resetForNewRound() {
+  if (!db || !myClassCode) return;
+  if (!confirm('Start the next round? This will clear all bookings so students can re-trade. Airline pricing stays in place.')) return;
+
+  const newRound = (mySession?.round || 1) + 1;
+
+  try {
+    // Reset session round and go back to pricing phase
+    await db.collection('market_sessions').doc(myClassCode).update({
+      round: newRound,
+      phase: 'pricing',
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Reset all passenger bookings
+    const pasSnap = await db.collection('market_passengers').where('classCode','==',myClassCode).get();
+    const batch = db.batch();
+    pasSnap.forEach(doc => {
+      batch.update(doc.ref, {
+        bookedAirline: null, pricePaid: 0, bookedCabin: null,
+        consumerSurplus: 0, didNotFly: false
+      });
+    });
+
+    // Reset airline sold counts (keep prices)
+    const airSnap = await db.collection('market_airlines').where('classCode','==',myClassCode).get();
+    airSnap.forEach(doc => {
+      batch.update(doc.ref, { econSold: 0, businessSold: 0, revenue: 0, profit: 0, loadFactor: 0 });
+    });
+
+    await batch.commit();
+    alert(`Round ${newRound} started! Airlines can update pricing. Teacher: click "Open Booking" when ready.`);
+  } catch(e) {
+    alert('Could not reset round: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+// Initialise slider gradients on load
+document.addEventListener('DOMContentLoaded', () => {
+  updateSliderGradients();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup 2026 — Economics Live</title>
+<meta name="description" content="Live classroom economics simulation — 2026 FIFA World Cup. Run a stadium or fly the fans there.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Inter',sans-serif;
+  background:#030a05;
+  color:#f1f5f9;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ── PITCH BACKGROUND ── */
+.pitch-bg{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(34,197,94,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 50% at 80% 100%, rgba(251,191,36,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 10% 80%, rgba(34,197,94,0.08) 0%, transparent 55%),
+    #030a05;
+}
+/* Pitch lines */
+.pitch-lines{
+  position:fixed;inset:0;z-index:0;opacity:0.04;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.8) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.8) 60px);
+}
+
+.wrapper{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;}
+
+/* ── HERO ── */
+.hero{
+  text-align:center;
+  padding:3rem 1.5rem 2rem;
+}
+.wc-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;
+  background:rgba(251,191,36,0.12);
+  border:1px solid rgba(251,191,36,0.3);
+  border-radius:9999px;
+  padding:0.4rem 1.1rem;
+  font-size:0.78rem;font-weight:700;letter-spacing:0.08em;
+  text-transform:uppercase;color:#fbbf24;
+  margin-bottom:1.5rem;
+  animation:badgePulse 3s ease-in-out infinite;
+}
+@keyframes badgePulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0.2);}50%{box-shadow:0 0 20px 4px rgba(251,191,36,0.12);}}
+
+.hero-eyebrow{
+  font-family:'Outfit',sans-serif;
+  font-size:0.85rem;font-weight:700;letter-spacing:0.12em;
+  text-transform:uppercase;color:#4ade80;
+  margin-bottom:0.75rem;
+}
+.hero-title{
+  font-family:'Outfit',sans-serif;
+  font-size:clamp(2rem,7vw,3.8rem);
+  font-weight:900;
+  line-height:1.05;
+  margin-bottom:1rem;
+}
+.hero-title .gold{
+  background:linear-gradient(135deg,#fbbf24,#f59e0b,#fde68a);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-title .green{
+  background:linear-gradient(135deg,#4ade80,#22c55e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-sub{
+  font-size:1rem;color:#94a3b8;max-width:560px;margin:0 auto 1.5rem;line-height:1.6;
+}
+.session-row{
+  display:flex;align-items:center;gap:0.75rem;justify-content:center;
+  flex-wrap:wrap;margin-bottom:0.5rem;
+}
+.session-input{
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:12px;
+  color:#f1f5f9;
+  padding:0.75rem 1.1rem;
+  font-family:'Outfit',sans-serif;
+  font-size:1.05rem;font-weight:800;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  text-align:center;
+  width:180px;
+  transition:all 0.3s ease;
+}
+.session-input::placeholder{color:#475569;letter-spacing:0.05em;font-weight:400;}
+.session-input:focus{outline:none;border-color:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,0.15);}
+.session-hint{font-size:0.78rem;color:#475569;margin-bottom:2.5rem;}
+
+/* ── COUNTDOWN STRIP ── */
+.match-strip{
+  display:flex;align-items:center;justify-content:center;gap:0.75rem;
+  background:rgba(251,191,36,0.07);
+  border-top:1px solid rgba(251,191,36,0.15);
+  border-bottom:1px solid rgba(251,191,36,0.15);
+  padding:0.75rem 1rem;
+  font-size:0.82rem;color:#fbbf24;font-weight:700;
+  margin-bottom:2.5rem;
+  text-align:center;
+}
+.match-dot{width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 8px #4ade80;animation:blink 1.4s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+
+/* ── SIM CARDS ── */
+.sims-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:1.25rem;
+  max-width:800px;
+  margin:0 auto;
+  padding:0 1.25rem 3rem;
+}
+
+.sim-card{
+  display:block;
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:24px;
+  padding:2rem 1.75rem;
+  text-decoration:none;
+  color:inherit;
+  cursor:pointer;
+  transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
+  position:relative;overflow:hidden;
+}
+.sim-card::before{
+  content:'';position:absolute;inset:0;border-radius:24px;
+  opacity:0;transition:opacity 0.4s ease;pointer-events:none;
+}
+.sim-card.stadium::before{background:radial-gradient(ellipse at top left,rgba(74,222,128,0.12),transparent 65%);}
+.sim-card.airfare::before{background:radial-gradient(ellipse at top right,rgba(56,189,248,0.12),transparent 65%);}
+.sim-card:hover{transform:translateY(-4px);}
+.sim-card.stadium:hover{border-color:rgba(74,222,128,0.4);box-shadow:0 20px 60px rgba(34,197,94,0.12);}
+.sim-card.airfare:hover{border-color:rgba(56,189,248,0.4);box-shadow:0 20px 60px rgba(56,189,248,0.12);}
+.sim-card:hover::before{opacity:1;}
+
+.sim-number{
+  font-family:'Outfit',sans-serif;
+  font-size:0.7rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;
+  margin-bottom:1rem;
+}
+.sim-card.stadium .sim-number{color:#4ade80;}
+.sim-card.airfare .sim-number{color:#38bdf8;}
+
+.sim-icon{
+  font-size:3.5rem;
+  display:block;
+  margin-bottom:1rem;
+  filter:drop-shadow(0 4px 16px rgba(0,0,0,0.4));
+  transition:transform 0.3s ease;
+}
+.sim-card:hover .sim-icon{transform:scale(1.08);}
+
+.sim-title{
+  font-family:'Outfit',sans-serif;
+  font-size:1.6rem;font-weight:900;
+  line-height:1.1;margin-bottom:0.5rem;
+}
+.sim-card.stadium .sim-title{color:#f1f5f9;}
+.sim-card.airfare .sim-title{color:#f1f5f9;}
+
+.sim-tagline{
+  font-size:0.88rem;font-weight:700;margin-bottom:1rem;
+}
+.sim-card.stadium .sim-tagline{color:#4ade80;}
+.sim-card.airfare .sim-tagline{color:#38bdf8;}
+
+.sim-desc{
+  font-size:0.85rem;color:#94a3b8;line-height:1.6;margin-bottom:1.5rem;
+}
+
+.roles-row{
+  display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1.5rem;
+}
+.role-chip{
+  display:inline-flex;align-items:center;gap:0.3rem;
+  padding:0.3rem 0.75rem;
+  border-radius:9999px;
+  font-size:0.75rem;font-weight:700;
+}
+.sim-card.stadium .role-chip{background:rgba(74,222,128,0.1);color:#4ade80;border:1px solid rgba(74,222,128,0.2);}
+.sim-card.airfare .role-chip{background:rgba(56,189,248,0.1);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);}
+.role-chip.teacher{background:rgba(192,132,252,0.1);color:#c084fc;border:1px solid rgba(192,132,252,0.2);}
+
+.sim-cta{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0.9rem 1.25rem;
+  border-radius:14px;
+  font-size:0.9rem;font-weight:800;
+  font-family:'Outfit',sans-serif;
+  transition:all 0.3s ease;
+}
+.sim-card.stadium .sim-cta{background:linear-gradient(135deg,#15803d,#22c55e);color:white;}
+.sim-card.airfare .sim-cta{background:linear-gradient(135deg,#0369a1,#38bdf8);color:white;}
+.sim-card:hover .sim-cta{opacity:0.9;letter-spacing:0.02em;}
+.cta-arrow{font-size:1.2rem;transition:transform 0.3s ease;}
+.sim-card:hover .cta-arrow{transform:translateX(4px);}
+
+/* ── HOW IT WORKS ── */
+.how-section{
+  max-width:700px;margin:0 auto;
+  padding:0 1.25rem 4rem;
+  text-align:center;
+}
+.how-title{
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;
+  text-transform:uppercase;letter-spacing:0.08em;color:#4ade80;
+  margin-bottom:1.5rem;
+}
+.steps-row{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;
+}
+.step-box{
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:16px;
+  padding:1.25rem 1rem;
+}
+.step-num{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#15803d,#22c55e);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;
+  color:white;margin:0 auto 0.75rem;
+}
+.step-text{font-size:0.8rem;color:#94a3b8;line-height:1.5;}
+
+/* ── FOOTER ── */
+.page-footer{
+  border-top:1px solid rgba(255,255,255,0.06);
+  padding:1.5rem;text-align:center;
+  font-size:0.75rem;color:#475569;
+}
+.page-footer a{color:#4ade80;text-decoration:none;}
+
+/* ── TEACHER OVERLAY ── */
+.teacher-note{
+  max-width:700px;margin:0 auto 2rem;
+  padding:0 1.25rem;
+}
+.teacher-box{
+  background:rgba(192,132,252,0.06);
+  border:1px solid rgba(192,132,252,0.2);
+  border-radius:16px;
+  padding:1.1rem 1.25rem;
+  font-size:0.82rem;color:#c084fc;
+  line-height:1.5;
+  text-align:center;
+}
+.teacher-box strong{color:#e9d5ff;}
+</style>
+</head>
+<body>
+
+<div class="pitch-bg"></div>
+<div class="pitch-lines"></div>
+
+<div class="wrapper">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="wc-badge">⚽ 2026 FIFA World Cup · Economics Live</div>
+    <div class="hero-eyebrow">HSC Economics Classroom Simulation</div>
+    <h1 class="hero-title">
+      <span class="gold">World Cup.</span><br>
+      <span class="green">Your Economy.</span>
+    </h1>
+    <p class="hero-sub">
+      The 2026 FIFA World Cup is here. Run a stadium, fly the fans — and discover the economics behind every seat and every seat sold.
+    </p>
+
+    <div class="session-row">
+      <input type="text" id="sessionCodeInput" class="session-input" placeholder="CLASS CODE" maxlength="12"
+        oninput="this.value=this.value.toUpperCase()" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="session-hint">Enter your class code above, then tap your simulation below ↓</div>
+  </div>
+
+  <!-- LIVE BADGE -->
+  <div class="match-strip">
+    <div class="match-dot"></div>
+    LIVE NOW — Both simulations active · Firebase real-time sync
+  </div>
+
+  <!-- SIM CARDS -->
+  <div class="sims-grid">
+
+    <!-- STADIUM -->
+    <div class="sim-card stadium" onclick="goToSim('stadium.html')" role="link" tabindex="0"
+      onkeydown="if(event.key==='Enter')goToSim('stadium.html')">
+      <div class="sim-number">⚽ Simulation 01</div>
+      <span class="sim-icon">🏟️</span>
+      <div class="sim-title">StadiumEcon<br>Live</div>
+      <div class="sim-tagline">Own the venue. Set the price. Fill the stands.</div>
+      <p class="sim-desc">
+        Venue Managers price Cat 1/2/3 tickets for World Cup matches. Fan Groups choose the best deal from all competing stadiums. Teacher controls market shocks — rain alerts, star player announcements, government price caps.
+      </p>
+      <div class="roles-row">
+        <span class="role-chip">🏗️ Venue Manager</span>
+        <span class="role-chip">🎟️ Fan Group</span>
+        <span class="role-chip teacher">📊 Teacher</span>
+      </div>
+      <div class="sim-cta">
+        <span>Join StadiumEcon Live</span>
+        <span class="cta-arrow">→</span>
+      </div>
+    </div>
+
+    <!-- AIRFARE -->
+    <div class="sim-card airfare" onclick="goToSim('airfare.html')" role="link" tabindex="0"
+      onkeydown="if(event.key==='Enter')goToSim('airfare.html')">
+      <div class="sim-number">✈️ Simulation 02</div>
+      <span class="sim-icon">✈️</span>
+      <div class="sim-title">SkyYield<br>Live</div>
+      <div class="sim-tagline">Fly the fans. Set the fares. Maximise yield.</div>
+      <p class="sim-desc">
+        Airline Managers set Economy, Business and First Class fares for flights to the World Cup host city. Passengers shop every airline and book the best deal. Teacher triggers fuel spikes, corporate surges, and health warnings.
+      </p>
+      <div class="roles-row">
+        <span class="role-chip">✈️ Airline Manager</span>
+        <span class="role-chip">🧳 Passenger</span>
+        <span class="role-chip teacher">📊 Teacher</span>
+      </div>
+      <div class="sim-cta">
+        <span>Join SkyYield Live</span>
+        <span class="cta-arrow">→</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CLASS SETUP GUIDE -->
+  <div class="how-section" style="margin-bottom:0;">
+    <div class="how-title">📋 Today's Class Setup — Run Both Sequentially</div>
+    <p style="font-size:0.85rem;color:#64748b;margin-bottom:1.5rem;">
+      All students do <strong style="color:#f1f5f9;">Stadium first</strong>, debrief, then <strong style="color:#f1f5f9;">Airfare</strong>. More competition, better economics discussion.
+    </p>
+
+    <!-- ROUND 1: STADIUM -->
+    <div style="background:rgba(74,222,128,0.05);border:1px solid rgba(74,222,128,0.2);border-radius:18px;padding:1.5rem;margin-bottom:1rem;text-align:left;">
+      <div style="font-family:'Outfit',sans-serif;font-size:0.75rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#4ade80;margin-bottom:1rem;">⚽ Round 1 · StadiumEcon Live · ~15 min</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.15);border-radius:12px;padding:1rem;text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:0.3rem;">🏗️</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#4ade80;" id="venueCount">3</div>
+          <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.2rem;">Venue Managers</div>
+        </div>
+        <div style="background:rgba(74,222,128,0.08);border:1px solid rgba(74,222,128,0.15);border-radius:12px;padding:1rem;text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:0.3rem;">🎟️</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#4ade80;" id="fanCount">8</div>
+          <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.2rem;">Fan Groups</div>
+        </div>
+      </div>
+      <div style="font-size:0.8rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#94a3b8;">Venue Managers</strong> → set ticket prices (Cat 1/2/3) for their World Cup stadium<br>
+        <strong style="color:#94a3b8;">Fan Groups</strong> → choose the best stadium deal based on their budget type<br>
+        <strong style="color:#94a3b8;">You</strong> → trigger shocks mid-game (rain, star player, govt price ceiling)
+      </div>
+    </div>
+
+    <!-- ROUND 2: AIRFARE -->
+    <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.2);border-radius:18px;padding:1.5rem;margin-bottom:1.5rem;text-align:left;">
+      <div style="font-family:'Outfit',sans-serif;font-size:0.75rem;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;color:#38bdf8;margin-bottom:1rem;">✈️ Round 2 · SkyYield Live · ~15 min</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:1rem;">
+        <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:1rem;text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:0.3rem;">✈️</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#38bdf8;" id="airlineCount">3</div>
+          <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.2rem;">Airline Managers</div>
+        </div>
+        <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.15);border-radius:12px;padding:1rem;text-align:center;">
+          <div style="font-size:1.8rem;margin-bottom:0.3rem;">🧳</div>
+          <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#38bdf8;" id="passCount">8</div>
+          <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.2rem;">Passengers</div>
+        </div>
+      </div>
+      <div style="font-size:0.8rem;color:#64748b;line-height:1.6;">
+        <strong style="color:#94a3b8;">Airline Managers</strong> → set Economy/Business/First fares for flights to the World Cup<br>
+        <strong style="color:#94a3b8;">Passengers</strong> → shop every airline and book the best deal<br>
+        <strong style="color:#94a3b8;">You</strong> → trigger fuel spikes, corporate surges, health warnings
+      </div>
+    </div>
+
+    <!-- STUDENT COUNTER -->
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;margin-bottom:0.75rem;">🎓 Adjust for your class size</div>
+      <div style="display:flex;align-items:center;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <button onclick="adjustClass(-1)" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#f1f5f9;font-size:1.2rem;font-weight:700;cursor:pointer;">−</button>
+        <div style="text-align:center;">
+          <div style="font-family:'Outfit',sans-serif;font-size:2.5rem;font-weight:900;color:#fbbf24;line-height:1;" id="totalCount">11</div>
+          <div style="font-size:0.75rem;color:#64748b;">students</div>
+        </div>
+        <button onclick="adjustClass(1)" style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:#f1f5f9;font-size:1.2rem;font-weight:700;cursor:pointer;">+</button>
+      </div>
+    </div>
+
+    <!-- TIMING GUIDE -->
+    <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:16px;padding:1.25rem;text-align:left;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#fbbf24;margin-bottom:0.75rem;">⏱️ Suggested timing</div>
+      <div style="font-size:0.82rem;color:#94a3b8;line-height:2;">
+        <span style="color:#fbbf24;font-weight:700;">0:00</span> — Share URL, students join Stadium<br>
+        <span style="color:#fbbf24;font-weight:700;">2:00</span> — Open Pricing phase · 5 min to set prices<br>
+        <span style="color:#fbbf24;font-weight:700;">7:00</span> — Open Booking phase · trigger a shock mid-way<br>
+        <span style="color:#fbbf24;font-weight:700;">12:00</span> — Show Results · 3 min debrief (who won? why?)<br>
+        <span style="color:#4ade80;font-weight:700;">15:00</span> — Switch to Airfare · repeat<br>
+        <span style="color:#4ade80;font-weight:700;">30:00</span> — Final debrief: compare both markets
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="page-footer">
+    <a href="index.html">← Back to EconTools Hub</a> &nbsp;·&nbsp; Powered by Firebase · Real-time · No login required
+  </div>
+
+</div>
+
+<script>
+function goToSim(url) {
+  const code = document.getElementById('sessionCodeInput').value.trim().toUpperCase();
+  if (!code) {
+    document.getElementById('sessionCodeInput').focus();
+    document.getElementById('sessionCodeInput').style.borderColor = '#f87171';
+    document.getElementById('sessionCodeInput').style.boxShadow = '0 0 0 3px rgba(248,113,113,0.2)';
+    setTimeout(() => {
+      document.getElementById('sessionCodeInput').style.borderColor = '';
+      document.getElementById('sessionCodeInput').style.boxShadow = '';
+    }, 1800);
+    return;
+  }
+  // Store in sessionStorage so the sim can pre-fill it
+  sessionStorage.setItem('wcClassCode', code);
+  window.location.href = url;
+}
+
+// Pre-fill class code in the sim from sessionStorage
+// (Each sim checks for wcClassCode on load)
+window.addEventListener('load', () => {
+  const stored = sessionStorage.getItem('wcClassCode');
+  if (stored) document.getElementById('sessionCodeInput').value = stored;
+});
+
+// ── CLASS SIZE ADJUSTER ──
+let classSize = 11;
+function adjustClass(delta) {
+  classSize = Math.max(4, Math.min(35, classSize + delta));
+  document.getElementById('totalCount').textContent = classSize;
+  // Venue managers = ~27% of class (min 2, max 6)
+  const venues = Math.max(2, Math.min(6, Math.round(classSize * 0.27)));
+  const fans   = classSize - venues;
+  const airlines = Math.max(2, Math.min(6, Math.round(classSize * 0.27)));
+  const pass     = classSize - airlines;
+  document.getElementById('venueCount').textContent   = venues;
+  document.getElementById('fanCount').textContent     = fans;
+  document.getElementById('airlineCount').textContent = airlines;
+  document.getElementById('passCount').textContent    = pass;
+}
+</script>
+
+</body>
+</html>

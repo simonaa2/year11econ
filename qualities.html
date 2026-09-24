@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entrepreneurial Personal Qualities Self-Audit & Class Dashboard</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Compat SDKs (CDN) & Chart.js -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    :root {
+      --bg: #090810;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --primary: #818cf8;
+      --primary-glow: rgba(129, 140, 248, 0.15);
+      --secondary: #c084fc;
+      
+      /* Trait Colors */
+      --color-risk: #f87171;
+      --color-resilience: #34d399;
+      --color-leadership: #a78bfa;
+      --color-skills: #fbbf24;
+      --color-drive: #2dd4bf;
+      --color-innovation: #f472b6;
+      
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-full: 9999px;
+      
+      --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    body.light-mode {
+      --bg: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --border: rgba(0, 0, 0, 0.06);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --shadow: 0 8px 32px 0 rgba(148, 163, 184, 0.15);
+      --primary-glow: rgba(129, 140, 248, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+      transition: var(--transition);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary-glow);
+      color: var(--primary);
+      padding: 0.4rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(129, 140, 248, 0.2);
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #fff, var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    body.light-mode h1 {
+      background: linear-gradient(135deg, #0f172a, #475569);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lead {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Controls Bar */
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(10px);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .student-info-inputs {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      flex-grow: 1;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .input-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .text-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: var(--transition);
+      text-transform: uppercase;
+    }
+    .text-input::placeholder {
+      text-transform: none;
+    }
+    body.light-mode .text-input {
+      background: #fff;
+    }
+    .text-input:focus {
+      border-color: var(--primary);
+    }
+
+    .theme-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      width: 40px;
+      height: 40px;
+    }
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--primary);
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .question-block {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .question-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .question-num {
+      font-size: 0.85rem;
+      font-weight: 800;
+      background: var(--primary-glow);
+      color: var(--primary);
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-sm);
+      height: fit-content;
+    }
+
+    .question-text {
+      font-size: 1.05rem;
+      font-weight: 600;
+      flex-grow: 1;
+    }
+
+    .trait-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.05em;
+    }
+
+    .choices {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .choice-option {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .choice-input {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .choice-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    body.light-mode .choice-dot {
+      background: #fff;
+    }
+
+    .choice-option:hover .choice-dot {
+      border-color: var(--primary);
+      transform: scale(1.1);
+    }
+
+    .choice-input:checked + .choice-dot {
+      border-color: var(--primary);
+      background: var(--primary);
+      box-shadow: 0 0 12px var(--primary);
+    }
+
+    .choice-input:checked + .choice-dot::after {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    .choice-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-align: center;
+    }
+
+    /* Submit / Navigation Buttons */
+    .submit-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 0.85rem 2rem;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: var(--transition);
+      box-shadow: 0 4px 20px rgba(129, 140, 248, 0.25);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(129, 140, 248, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      box-shadow: none;
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--primary);
+    }
+
+    /* Results Panel */
+    .results-container, .classroom-container {
+      display: none;
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .archetype-section {
+      text-align: center;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+
+    .archetype-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-top: 0.5rem;
+      color: var(--primary);
+    }
+
+    .archetype-description {
+      color: var(--text-secondary);
+      font-size: 1.05rem;
+      margin-top: 1rem;
+      max-width: 650px;
+      margin: 1rem auto 0;
+      line-height: 1.6;
+    }
+
+    /* Progress bar displays */
+    .trait-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+
+    .trait-bar-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .trait-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .trait-label-box {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .trait-color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    .trait-progress-bg {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    body.light-mode .trait-progress-bg {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .trait-progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: var(--radius-full);
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    @media (max-width: 600px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .detail-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    body.light-mode .detail-card {
+      background: rgba(0, 0, 0, 0.01);
+    }
+
+    .detail-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .detail-list {
+      list-style: none;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .detail-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .detail-list li::before {
+      content: '•';
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    /* Live Classroom Dashboard Specifics */
+    .classroom-stats {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 2rem;
+    }
+    @media (max-width: 700px) {
+      .classroom-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .stat-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .archetype-counts-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .archetype-count-item {
+      display: flex;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border);
+      padding: 0.6rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+    }
+
+    .table-wrapper {
+      margin-top: 2rem;
+      overflow-x: auto;
+    }
+
+    .audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .audit-table th, .audit-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .audit-table th {
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .report-footer-print {
+      display: none;
+      text-align: center;
+      margin-top: 4rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+        color: #000 !important;
+        padding: 0 !important;
+      }
+      .card {
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+      }
+      .card::before {
+        display: none;
+      }
+      .controls, .submit-container, .theme-toggle-btn, .btn {
+        display: none !important;
+      }
+      .results-container {
+        display: block !important;
+      }
+      .trait-progress-bg {
+        border: 1px solid #000 !important;
+        background: #f1f5f9 !important;
+      }
+      .trait-progress-fill {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      .detail-card {
+        border: 1px solid #cbd5e1 !important;
+        background: transparent !important;
+      }
+      .h1-print-clone {
+        display: block !important;
+        font-family: 'Outfit', sans-serif;
+        font-size: 2rem;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid #000;
+        padding-bottom: 0.5rem;
+      }
+      .report-header-info {
+        display: flex !important;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+        border-bottom: 1px dashed #cbd5e1;
+        padding-bottom: 1rem;
+      }
+      .report-footer-print {
+        display: block !important;
+      }
+    }
+    
+    .h1-print-clone, .report-header-info {
+      display: none;
+    }
+
+    /* Dashboard Visuals & Grid Layout */
+    .container {
+      transition: max-width 0.4s ease;
+    }
+    
+    .dashboard-visuals {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (min-width: 900px) {
+      .dashboard-visuals {
+        grid-template-columns: 1fr 1.2fr;
+      }
+    }
+    
+    .chart-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+    }
+    body.light-mode .chart-card {
+      background: rgba(0, 0, 0, 0.005);
+    }
+    
+    .chart-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    
+    .chart-container {
+      position: relative;
+      flex-grow: 1;
+      width: 100%;
+      height: calc(100% - 2.5rem);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Print Out Header structure -->
+    <div class="h1-print-clone">Personal Qualities Self-Audit Report</div>
+    <div class="report-header-info" id="printHeaderInfo">
+      <div><strong>Student Name:</strong> <span id="printName">_________</span></div>
+      <div><strong>Class Code:</strong> <span id="printClass">_________</span></div>
+      <div><strong>Date:</strong> <span id="printDate">_________</span></div>
+    </div>
+
+    <header id="mainHeader">
+      <div class="badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:0.25rem;"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        Classroom Activity
+      </div>
+      <h1>Personal Qualities Self-Audit</h1>
+      <p class="lead">Analyse individual traits and aggregate results to visualize your class's overall entrepreneurial profile.</p>
+    </header>
+
+    <!-- Student Metadata & Class Code Form -->
+    <div class="controls" id="metadataBar">
+      <div class="student-info-inputs">
+        <div class="input-group">
+          <span class="input-label">Student Name</span>
+          <input type="text" id="studentName" class="text-input" placeholder="e.g. John Doe" oninput="updatePrintMeta()">
+        </div>
+        <div class="input-group">
+          <span class="input-label">Class Session Code</span>
+          <input type="text" id="classCode" class="text-input" placeholder="e.g. ECON11" maxlength="10" oninput="updatePrintMeta()">
+        </div>
+      </div>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+
+    <!-- Questionnaire Panel -->
+    <div class="card" id="auditCard">
+      <div id="questionsContainer">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+
+    <!-- Submit Action buttons -->
+    <div class="submit-container" id="submitContainer">
+      <button class="btn btn-secondary" onclick="openClassroomPrompt()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Open Class Dashboard
+      </button>
+      <button class="btn btn-primary" onclick="calculateResults()">
+        Analyse My Qualities
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </button>
+    </div>
+
+    <!-- Results Panel (Initially Hidden) -->
+    <div class="results-container" id="resultsContainer">
+      <div class="card">
+        <div class="archetype-section">
+          <div class="badge" style="background:var(--primary-glow); color:var(--primary);" id="archetypeBadge">Profile Archetype</div>
+          <h2 class="archetype-title" id="archetypeTitle">Analyzing...</h2>
+          <p class="archetype-description" id="archetypeDesc"></p>
+        </div>
+
+        <h3 style="font-family:'Outfit', sans-serif; font-size:1.4rem; font-weight:800; margin-bottom:1.5rem; letter-spacing:-0.02em;">Audited Traits Distribution</h3>
+        
+        <div class="trait-grid">
+          <!-- Bars injected/controlled via JS -->
+          <div class="trait-bar-container">
+            <div class="trait-info">
+              <div class="trait-label-box"><span class="trait-color-dot" style="background: var(--color-risk)"></span><span>Risk Tolerance</span></div>
+              <span id="scoreVal-risk">0 / 10</span>
+            </div>
+            <div class="trait-progress-bg"><div class="trait-progress-fill" id="bar-risk" style="background: var(--color-risk)"></div></div>
+          </div>
+          <div class="trait-bar-container">
+            <div class="trait-info">
+              <div class="trait-label-box"><span class="trait-color-dot" style="background: var(--color-resilience)"></span><span>Resilience & Grit</span></div>
+              <span id="scoreVal-resilience">0 / 10</span>
+            </div>
+            <div class="trait-progress-bg"><div class="trait-progress-fill" id="bar-resilience" style="background: var(--color-resilience)"></div></div>
+          </div>
+          <div class="trait-bar-container">
+            <div class="trait-info">
+              <div class="trait-label-box"><span class="trait-color-dot" style="background: var(--color-leadership)"></span><span>Leadership & Vision</span></div>
+              <span id="scoreVal-leadership">0 / 10</span>
+            </div>
+            <div class="trait-progress-bg"><div class="trait-progress-fill" id="bar-leadership" style="background: var(--color-leadership)"></div></div>
+          </div>
+          <div class="trait-bar-container">
+            <div class="trait-info">
+              <div class="trait-label-box"><span class="trait-color-dot" style="background: var(--color-skills)"></span><span>Skills & Business Literacy</span></div>
+              <span id="scoreVal-skills">0 / 10</span>
+            </div>
+            <div class="trait-progress-bg"><div class="trait-progress-fill" id="bar-skills" style="background: var(--color-skills)"></div></div>
+          </div>
+          <div class="trait-bar-container">
+            <div class="trait-info">
+              <div class="trait-label-box"><span class="trait-color-dot" style="background: var(--color-drive)"></span><span>Self-Motivation & Drive</span></div>
+              <span id="scoreVal-drive">0 / 10</span>
+            </div>
+            <div class="trait-progress-bg"><div class="trait-progress-fill" id="bar-drive" style="background: var(--color-drive)"></div></div>
+          </div>
+          <div class="trait-bar-container">
+            <div class="trait-info">
+              <div class="trait-label-box"><span class="trait-color-dot" style="background: var(--color-innovation)"></span><span>Innovation & Creativity</span></div>
+              <span id="scoreVal-innovation">0 / 10</span>
+            </div>
+            <div class="trait-progress-bg"><div class="trait-progress-fill" id="bar-innovation" style="background: var(--color-innovation)"></div></div>
+          </div>
+        </div>
+
+        <div class="details-grid">
+          <div class="detail-card">
+            <div class="detail-title" style="color: var(--color-resilience)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>Strengths for SMEs</div>
+            <ul class="detail-list" id="strengthsList"></ul>
+          </div>
+          <div class="detail-card">
+            <div class="detail-title" style="color: var(--color-risk)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Growth & Blind Spots</div>
+            <ul class="detail-list" id="weaknessList"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 4rem;">
+        <button class="btn btn-secondary" onclick="window.print()">Print Report</button>
+        <button class="btn btn-secondary" onclick="resetForm()">Restart Audit</button>
+      </div>
+    </div>
+
+    <!-- Live Classroom Dashboard (Initially Hidden) -->
+    <div class="classroom-container" id="classroomContainer">
+      <div class="card">
+        <h2 style="font-family:'Outfit', sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:0.5rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap; justify-content:space-between;" id="classroomTitleContainer">
+          <span id="classroomTitle">Class: Loading...</span>
+          <button class="btn btn-secondary" id="toggleSessionBtn" onclick="toggleSessionLock()" style="padding:0.4rem 1.2rem; font-size:0.85rem; font-family:'Inter',sans-serif; font-weight:600; display:none; box-shadow:none;">
+            Close Submissions
+          </button>
+        </h2>
+        <p style="color:var(--text-secondary); font-size:0.95rem; margin-bottom:2rem;">Live data updates in real-time as students submit their self-audits.</p>
+        
+        <!-- Two Column Main Grid -->
+        <div class="dashboard-visuals">
+          <!-- Left Column: Stats & Radar Chart -->
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="classroom-stats" style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem;">
+              <!-- Total Count -->
+              <div class="stat-box" style="padding: 1rem;">
+                <span class="input-label" style="margin-bottom:0.25rem; font-size: 0.7rem;">Submissions</span>
+                <div class="stat-number" id="classN" style="font-size: 2.5rem; margin-bottom: 0;">0</div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">Active Students</span>
+              </div>
+
+              <!-- Archetypes Breakdown -->
+              <div class="stat-box" style="align-items: stretch; padding: 1rem 1.25rem; justify-content: space-between;">
+                <span class="input-label" style="text-align:left; font-size: 0.7rem; margin-bottom: 0.25rem;">Profiles</span>
+                <ul class="archetype-counts-list" style="margin-top: 0; gap: 0.4rem;">
+                  <li class="archetype-count-item" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                    <span style="color:var(--color-innovation); font-weight:600;">Visionary</span>
+                    <span id="count-visionary" style="font-weight:700;">0</span>
+                  </li>
+                  <li class="archetype-count-item" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                    <span style="color:var(--color-drive); font-weight:600;">Specialist</span>
+                    <span id="count-specialist" style="font-weight:700;">0</span>
+                  </li>
+                  <li class="archetype-count-item" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                    <span style="color:var(--color-leadership); font-weight:600;">Strategic</span>
+                    <span id="count-strategic" style="font-weight:700;">0</span>
+                  </li>
+                  <li class="archetype-count-item" style="padding: 0.25rem 0.6rem; font-size: 0.8rem;">
+                    <span style="color:var(--primary); font-weight:600;">Balanced</span>
+                    <span id="count-balanced" style="font-weight:700;">0</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Class Radar Chart -->
+            <div class="chart-card">
+              <h3>Class Trait Profile (Radar)</h3>
+              <div class="chart-container">
+                <canvas id="classRadarChart"></canvas>
+              </div>
+              
+              <!-- Trait fallback bars (hidden by default, useful for accessibility) -->
+              <div id="fallbackBarsContainer" style="display:none; margin-top: 1rem;">
+                <div class="trait-bar-container">
+                  <div class="trait-info"><span>Risk Tolerance</span><span id="classScore-risk">0.0 / 10</span></div>
+                  <div class="trait-progress-bg"><div class="trait-progress-fill" id="classBar-risk" style="background: var(--color-risk)"></div></div>
+                </div>
+                <div class="trait-bar-container">
+                  <div class="trait-info"><span>Resilience & Grit</span><span id="classScore-resilience">0.0 / 10</span></div>
+                  <div class="trait-progress-bg"><div class="trait-progress-fill" id="classBar-resilience" style="background: var(--color-resilience)"></div></div>
+                </div>
+                <div class="trait-bar-container">
+                  <div class="trait-info"><span>Leadership & Vision</span><span id="classScore-leadership">0.0 / 10</span></div>
+                  <div class="trait-progress-bg"><div class="trait-progress-fill" id="classBar-leadership" style="background: var(--color-leadership)"></div></div>
+                </div>
+                <div class="trait-bar-container">
+                  <div class="trait-info"><span>Skills & Business Literacy</span><span id="classScore-skills">0.0 / 10</span></div>
+                  <div class="trait-progress-bg"><div class="trait-progress-fill" id="classBar-skills" style="background: var(--color-skills)"></div></div>
+                </div>
+                <div class="trait-bar-container">
+                  <div class="trait-info"><span>Self-Motivation & Drive</span><span id="classScore-drive">0.0 / 10</span></div>
+                  <div class="trait-progress-bg"><div class="trait-progress-fill" id="classBar-drive" style="background: var(--color-drive)"></div></div>
+                </div>
+                <div class="trait-bar-container">
+                  <div class="trait-info"><span>Innovation & Creativity</span><span id="classScore-innovation">0.0 / 10</span></div>
+                  <div class="trait-progress-bg"><div class="trait-progress-fill" id="classBar-innovation" style="background: var(--color-innovation)"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Student Scatter Quadrant Map -->
+          <div class="chart-card">
+            <h3>Student Quadrant Map (Scatter)</h3>
+            <div class="chart-container">
+              <canvas id="studentScatterChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Responses Table -->
+        <h3 style="font-family:'Outfit', sans-serif; font-size:1.3rem; font-weight:800; margin-top:2.5rem; margin-bottom:0.5rem;">Submitted Responses</h3>
+        <div class="table-wrapper">
+          <table class="audit-table">
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Profile Archetype</th>
+                <th>Top Quality / Dimension</th>
+                <th>Calculated Score Map</th>
+              </tr>
+            </thead>
+            <tbody id="classTableBody">
+              <tr>
+                <td colspan="4" style="text-align:center; color:var(--text-muted);">No student responses submitted yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 4rem;">
+        <button class="btn btn-secondary" onclick="closeClassroomDashboard()">Back to Questionnaire</button>
+      </div>
+    </div>
+
+    <!-- Print-only Footer -->
+    <div class="report-footer-print">
+      © DataTrends Classroom Activities. Compiled for Preliminary Course Topic: Small to Medium Enterprises (SMEs).
+    </div>
+
+  </div>
+
+  <script>
+    // Firebase connection initialization
+    const firebaseConfig = {
+      projectId: "maths-f3c6d",
+      appId: "1:76007634547:web:0b9773147e26dd2940dc06",
+      storageBucket: "maths-f3c6d.firebasestorage.app",
+      apiKey: "AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+      authDomain: "www.datatrends.com.au",
+      messagingSenderId: "76007634547"
+    };
+
+    let db = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      console.log("Firebase initialized successfully in Audit tool.");
+    } catch (e) {
+      console.warn("Could not load Firebase connection offline:", e);
+    }
+
+    const QUESTIONS = [
+      { id: 1, trait: "risk", tag: "Risk Tolerance", label: "I am comfortable making decisions in ambiguous situations with incomplete data." },
+      { id: 2, trait: "risk", tag: "Risk Tolerance", label: "I am willing to invest significant time and effort in ideas that might fail if the potential payoff is large." },
+      { id: 3, trait: "resilience", tag: "Resilience & Grit", label: "When a project fails or I get critical feedback, I bounce back quickly and analyze what to improve." },
+      { id: 4, trait: "resilience", tag: "Resilience & Grit", label: "I remain focused, productive, and calm under high levels of stress or tight deadlines." },
+      { id: 5, trait: "leadership", tag: "Leadership & Vision", label: "I naturally take charge in group activities and coordinate people towards a shared goal." },
+      { id: 6, trait: "leadership", tag: "Leadership & Vision", label: "I enjoy pitching my ideas, communicating strategies, and convincing others of their value." },
+      { id: 7, trait: "skills", tag: "Qualifications & Skills", label: "I actively seek out practical training, tutorials, and courses to build my technical knowledge." },
+      { id: 8, trait: "skills", tag: "Qualifications & Skills", label: "I have a solid understanding of planning spreadsheets, pricing, budgeting, and counting numbers." },
+      { id: 9, trait: "drive", tag: "Motivation & Locus", label: "I am self-disciplined and will complete tasks early without anyone monitoring or checking in." },
+      { id: 10, trait: "drive", tag: "Motivation & Locus", label: "When working on something I care about, I easily maintain focus and keep working late into the evening." },
+      { id: 11, trait: "innovation", tag: "Innovation & Creativity", label: "I constantly think of original, creative solutions to solve everyday inefficiencies." },
+      { id: 12, trait: "innovation", tag: "Innovation & Creativity", label: "I thrive in shifting circumstances and enjoy rewriting plans to capitalize on sudden changes." }
+    ];
+
+    const TRAIT_COLORS = {
+      risk: "var(--color-risk)",
+      resilience: "var(--color-resilience)",
+      leadership: "var(--color-leadership)",
+      skills: "var(--color-skills)",
+      drive: "var(--color-drive)",
+      innovation: "var(--color-innovation)"
+    };
+
+    // Render questionnaire
+    const questionsContainer = document.getElementById("questionsContainer");
+    QUESTIONS.forEach((q, index) => {
+      const qBlock = document.createElement("div");
+      qBlock.className = "question-block";
+      qBlock.innerHTML = `
+        <div class="question-header">
+          <span class="question-num">Q${index + 1}</span>
+          <span class="question-text">${q.label}</span>
+          <span class="trait-tag" style="background: ${TRAIT_COLORS[q.trait]}22; color: ${TRAIT_COLORS[q.trait]};">${q.tag}</span>
+        </div>
+        <div class="choices">
+          <label class="choice-option">
+            <input type="radio" name="q-${q.id}" value="1" class="choice-input" required>
+            <span class="choice-dot"></span>
+            <span class="choice-label">Strongly Disagree</span>
+          </label>
+          <label class="choice-option">
+            <input type="radio" name="q-${q.id}" value="2" class="choice-input">
+            <span class="choice-dot"></span>
+            <span class="choice-label">Disagree</span>
+          </label>
+          <label class="choice-option">
+            <input type="radio" name="q-${q.id}" value="3" class="choice-input" checked>
+            <span class="choice-dot"></span>
+            <span class="choice-label">Neutral</span>
+          </label>
+          <label class="choice-option">
+            <input type="radio" name="q-${q.id}" value="4" class="choice-input">
+            <span class="choice-dot"></span>
+            <span class="choice-label">Agree</span>
+          </label>
+          <label class="choice-option">
+            <input type="radio" name="q-${q.id}" value="5" class="choice-input">
+            <span class="choice-dot"></span>
+            <span class="choice-label">Strongly Agree</span>
+          </label>
+        </div>
+      `;
+      questionsContainer.appendChild(qBlock);
+    });
+
+    // Handle theme toggle
+    function toggleTheme() {
+      const body = document.body;
+      const themeIcon = document.getElementById("themeIcon");
+      body.classList.toggle("light-mode");
+      if (body.classList.contains("light-mode")) {
+        themeIcon.innerHTML = `<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>`;
+      } else {
+        themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+      }
+
+      // Update charts dynamically on theme change
+      if (radarChart || scatterChart) {
+        const isDarkMode = !body.classList.contains("light-mode");
+        const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.1)";
+        const labelColor = isDarkMode ? "#94a3b8" : "#475569";
+        const ticksColor = isDarkMode ? "#64748b" : "#94a3b8";
+
+        if (radarChart) {
+          radarChart.options.scales.r.grid.color = gridColor;
+          radarChart.options.scales.r.angleLines.color = gridColor;
+          radarChart.options.scales.r.pointLabels.color = labelColor;
+          radarChart.options.scales.r.ticks.color = ticksColor;
+          radarChart.update();
+        }
+        
+        if (scatterChart) {
+          scatterChart.options.scales.x.grid.color = gridColor;
+          scatterChart.options.scales.x.ticks.color = labelColor;
+          scatterChart.options.scales.x.title.color = labelColor;
+          scatterChart.options.scales.y.grid.color = gridColor;
+          scatterChart.options.scales.y.ticks.color = labelColor;
+          scatterChart.options.scales.y.title.color = labelColor;
+          scatterChart.options.plugins.legend.labels.color = labelColor;
+          scatterChart.update();
+        }
+      }
+    }
+
+    function updatePrintMeta() {
+      const name = document.getElementById("studentName").value || "ANONYMOUS";
+      const classVal = document.getElementById("classCode").value || "NO CLASS CODE";
+      document.getElementById("printName").textContent = name;
+      document.getElementById("printClass").textContent = classVal;
+      document.getElementById("printDate").textContent = new Date().toLocaleDateString('en-AU');
+    }
+
+    async function calculateResults() {
+      updatePrintMeta();
+      const name = document.getElementById("studentName").value.trim() || "Anonymous";
+      const classCode = document.getElementById("classCode").value.trim().toUpperCase();
+
+      // Calculate scores
+      const scores = { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 };
+      let answeredAll = true;
+      
+      QUESTIONS.forEach(q => {
+        const selected = document.querySelector(`input[name="q-${q.id}"]:checked`);
+        if (selected) {
+          scores[q.trait] += parseInt(selected.value, 10);
+        } else {
+          answeredAll = false;
+        }
+      });
+
+      if (!answeredAll) {
+        alert("Please make sure you have answered all questions.");
+        return;
+      }
+
+      // Hide audit, show individual results
+      document.getElementById("auditCard").style.display = "none";
+      document.getElementById("submitContainer").style.display = "none";
+      document.getElementById("resultsContainer").style.display = "block";
+
+      // Render Individual Progress Bars
+      Object.keys(scores).forEach(trait => {
+        const percentage = (scores[trait] / 10) * 100;
+        document.getElementById(`bar-${trait}`).style.width = percentage + "%";
+        document.getElementById(`scoreVal-${trait}`).textContent = `${scores[trait]} / 10`;
+      });
+
+      // Determine Archetype
+      let highestTrait = "innovation";
+      let highestScore = -1;
+      Object.keys(scores).forEach(trait => {
+        if (scores[trait] > highestScore) {
+          highestScore = scores[trait];
+          highestTrait = trait;
+        }
+      });
+
+      let details = { title: "", desc: "", badgeColor: "", strengths: [], weaknesses: [] };
+      if (highestTrait === "innovation" || highestTrait === "risk") {
+        details.title = "The Visionary Disruptor";
+        details.desc = "You are creative, comfortable with uncertainty, and motivated by raw possibilities. You see opportunities where others see barriers. This is the hallmark archetype of the classic startup founder.";
+        details.strengths = [
+          "Superb adaptability to sudden market disruptions.",
+          "High capacity for bearing and evaluating business risk.",
+          "Innovative mindset focused on new goods, services, and strategies."
+        ];
+        details.weaknesses = [
+          "May struggle with administrative operations routines.",
+          "Risk of taking excessive financial positions without hedging.",
+          "Requires support in accounting, bookkeeping, and legal guidelines."
+        ];
+        details.badgeColor = "var(--color-innovation)";
+      } else if (highestTrait === "skills" || highestTrait === "drive") {
+        details.title = "The Specialist Operator";
+        details.desc = "You possess deep technical skills, qualifications, and an exceptional work ethic. You believe in quality of execution, detailed scheduling, and structured processes. You are the backbone of high-performance SMEs.";
+        details.strengths = [
+          "Strong financial management and resource allocation skills.",
+          "High discipline; focus on operations quality and planning standards.",
+          "Highly pragmatic approach to compliance and layout organization."
+        ];
+        details.weaknesses = [
+          "May delay launching a product or service in search of perfection.",
+          "Risk-aversion may prevent scaling into new competitive fields.",
+          "Struggles to delegate key technical tasks to other team members."
+        ];
+        details.badgeColor = "var(--color-drive)";
+      } else {
+        details.title = "The Strategic Organizer";
+        details.desc = "You excel at leadership, long-term vision, and building structures. You possess high emotional resilience, meaning you handle setback events calmly. You coordinate complex functions and manage people effectively.";
+        details.strengths = [
+          "Excellent capability for building networks, partnerships, and HR teams.",
+          "Able to stay calm and lead the company during financial or market crises.",
+          "Skilled at delegating technical or financial responsibilities."
+        ];
+        details.weaknesses = [
+          "May focus on high-level goals and overlook operational bottlenecks.",
+          "Risk of losing touch with day-to-day customer issues.",
+          "Needs strong financial/technical advisors to balance plans."
+        ];
+        details.badgeColor = "var(--color-leadership)";
+      }
+
+      // Check if balanced
+      const scoresArr = Object.values(scores);
+      const max = Math.max(...scoresArr);
+      const min = Math.min(...scoresArr);
+      if (max - min <= 2) {
+        details.title = "The Balanced Enterprise Architect";
+        details.desc = "You display a highly balanced distribution across all personal traits. You are a versatile generalist who can step into marketing, operations, finance, or HR roles as required, balancing your focus to match the SME's immediate bottleneck.";
+        details.strengths = [
+          "Able to bridge communication gaps between creative and financial teams.",
+          "Strong utility across all business functions.",
+          "Calculated risk profiles—avoids unnecessary bets but acts decisively."
+        ];
+        details.weaknesses = [
+          "May lack a singular, driving focus area or ultimate specialization.",
+          "Risk of analysis paralysis when satisfying conflicting demands.",
+          "Must recruit extreme specialists as the business expands."
+        ];
+        details.badgeColor = "var(--primary)";
+      }
+
+      // Set individual texts
+      document.getElementById("archetypeTitle").textContent = details.title;
+      document.getElementById("archetypeTitle").style.color = details.badgeColor;
+      document.getElementById("archetypeDesc").textContent = details.desc;
+      
+      const badge = document.getElementById("archetypeBadge");
+      badge.style.color = details.badgeColor;
+      badge.style.borderColor = details.badgeColor + "44";
+      badge.style.background = details.badgeColor + "15";
+
+      document.getElementById("strengthsList").innerHTML = details.strengths.map(s => `<li>${s}</li>`).join('');
+      document.getElementById("weaknessList").innerHTML = details.weaknesses.map(w => `<li>${w}</li>`).join('');
+
+      // Submit to Firebase Firestore if Class Code is entered
+      if (classCode && db) {
+        // Check if session is closed by teacher
+        try {
+          const sessionDoc = await db.collection("audit_submissions").doc("session_lock_" + classCode).get();
+          if (sessionDoc.exists && sessionDoc.data().closed) {
+            alert(`Submission Blocked: The class session "${classCode}" has been closed by the teacher. Your results are displayed here, but were not submitted to the class dashboard.`);
+            return;
+          }
+        } catch (e) {
+          console.warn("Could not check session lock status, proceeding:", e);
+        }
+
+        // Cooldown check to prevent spamming/duplicates
+        const cooldownKey = "last_audit_submit_" + classCode;
+        const lastSubmitTime = localStorage.getItem(cooldownKey);
+        const now = Date.now();
+        const COOLDOWN_PERIOD = 5 * 60 * 1000; // 5 minutes cooldown
+
+        if (lastSubmitTime) {
+          const timeSince = now - parseInt(lastSubmitTime, 10);
+          if (timeSince < COOLDOWN_PERIOD) {
+            const secondsRemaining = Math.ceil((COOLDOWN_PERIOD - timeSince) / 1000);
+            const minutes = Math.floor(secondsRemaining / 60);
+            const seconds = secondsRemaining % 60;
+            const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+            
+            alert(`Duplicate Prevention: You have already submitted an audit for class "${classCode}" recently. Please wait ${timeStr} before submitting again.`);
+            return;
+          }
+        }
+
+        try {
+          await db.collection("audit_submissions").add({
+            studentName: name,
+            classCode: classCode,
+            scores: scores,
+            archetype: details.title,
+            topTrait: highestTrait,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          localStorage.setItem(cooldownKey, now.toString());
+          console.log("Response written successfully to database!");
+        } catch (e) {
+          console.error("Firestore write failed:", e);
+        }
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      document.getElementById("auditCard").style.display = "block";
+      document.getElementById("submitContainer").style.display = "flex";
+      document.getElementById("resultsContainer").style.display = "none";
+      QUESTIONS.forEach(q => {
+        const neutral = document.querySelector(`input[name="q-${q.id}"][value="3"]`);
+        if (neutral) neutral.checked = true;
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Classroom Live Session Logic
+    let unsubscribeClass = null;
+    let unsubscribeSessionLock = null;
+    let isSessionClosed = false;
+    let radarChart = null;
+    let scatterChart = null;
+
+    function openClassroomPrompt() {
+      const code = prompt("Enter a Class Session Code (e.g. ECON11), or enter 'DEMO' to view a pre-populated class layout:");
+      if (!code) return;
+      
+      const cleanCode = code.trim().toUpperCase();
+      loadClassroomDashboard(cleanCode);
+    }
+
+    function loadClassroomDashboard(classCode) {
+      document.querySelector(".container").classList.add("classroom-active");
+      document.getElementById("mainHeader").style.display = "none";
+      document.getElementById("metadataBar").style.display = "none";
+      document.getElementById("auditCard").style.display = "none";
+      document.getElementById("submitContainer").style.display = "none";
+      document.getElementById("classroomContainer").style.display = "block";
+
+      document.getElementById("classroomTitle").textContent = `Live Class Dashboard: ${classCode}`;
+
+      // Initialize session lock state/listener
+      const toggleBtn = document.getElementById("toggleSessionBtn");
+      if (db && classCode !== "DEMO") {
+        toggleBtn.style.display = "inline-flex";
+        unsubscribeSessionLock = db.collection("audit_submissions").doc("session_lock_" + classCode)
+          .onSnapshot((doc) => {
+            if (doc.exists && doc.data().closed) {
+              isSessionClosed = true;
+              toggleBtn.textContent = "Open Submissions";
+              toggleBtn.style.background = "var(--primary-glow)";
+              toggleBtn.style.borderColor = "var(--color-resilience)";
+              toggleBtn.style.color = "var(--color-resilience)";
+              document.getElementById("classroomTitle").innerHTML = `Live Class Dashboard: ${classCode} <span class="badge" style="background:rgba(248,113,113,0.15); color:var(--color-risk); border:1px solid rgba(248,113,113,0.25); font-size:0.75rem; padding:0.2rem 0.6rem; margin-left:0.5rem; text-transform:none;">Closed</span>`;
+            } else {
+              isSessionClosed = false;
+              toggleBtn.textContent = "Close Submissions";
+              toggleBtn.style.background = "rgba(248,113,113,0.1)";
+              toggleBtn.style.borderColor = "var(--color-risk)";
+              toggleBtn.style.color = "var(--color-risk)";
+              document.getElementById("classroomTitle").innerHTML = `Live Class Dashboard: ${classCode} <span class="badge" style="background:rgba(52,211,153,0.15); color:var(--color-resilience); border:1px solid rgba(52,211,153,0.25); font-size:0.75rem; padding:0.2rem 0.6rem; margin-left:0.5rem; text-transform:none;">Open</span>`;
+            }
+          }, (error) => {
+            console.error("Session lock snapshot error:", error);
+          });
+      } else {
+        toggleBtn.style.display = "none";
+      }
+
+      if (classCode === "DEMO") {
+        const mockSubmissions = [
+          { studentName: "ALICE SMITH", classCode: "DEMO", archetype: "The Visionary Disruptor", topTrait: "innovation", scores: { risk: 9, resilience: 8, leadership: 9, skills: 4, drive: 8, innovation: 10 } },
+          { studentName: "BOB JONES", classCode: "DEMO", archetype: "The Specialist Operator", topTrait: "skills", scores: { risk: 4, resilience: 7, leadership: 5, skills: 9, drive: 10, innovation: 5 } },
+          { studentName: "CHARLIE BROWN", classCode: "DEMO", archetype: "The Strategic Organizer", topTrait: "leadership", scores: { risk: 5, resilience: 9, leadership: 9, skills: 8, drive: 7, innovation: 6 } },
+          { studentName: "DIANA PRINCE", classCode: "DEMO", archetype: "The Balanced Enterprise Architect", topTrait: "drive", scores: { risk: 7, resilience: 7, leadership: 7, skills: 7, drive: 8, innovation: 7 } },
+          { studentName: "ETHAN HUNT", classCode: "DEMO", archetype: "The Visionary Disruptor", topTrait: "risk", scores: { risk: 10, resilience: 9, leadership: 8, skills: 5, drive: 9, innovation: 9 } },
+          { studentName: "FIONA GALLAGHER", classCode: "DEMO", archetype: "The Specialist Operator", topTrait: "drive", scores: { risk: 5, resilience: 8, leadership: 4, skills: 8, drive: 9, innovation: 4 } },
+          { studentName: "GEORGE CLARK", classCode: "DEMO", archetype: "The Strategic Organizer", topTrait: "leadership", scores: { risk: 4, resilience: 9, leadership: 10, skills: 6, drive: 8, innovation: 5 } },
+          { studentName: "HANNAH ABBOTT", classCode: "DEMO", archetype: "The Balanced Enterprise Architect", topTrait: "resilience", scores: { risk: 6, resilience: 6, leadership: 6, skills: 6, drive: 6, innovation: 6 } },
+          { studentName: "IAN MALCOLM", classCode: "DEMO", archetype: "The Visionary Disruptor", topTrait: "innovation", scores: { risk: 9, resilience: 5, leadership: 6, skills: 7, drive: 6, innovation: 10 } },
+          { studentName: "JULIA ROBERTS", classCode: "DEMO", archetype: "The Specialist Operator", topTrait: "skills", scores: { risk: 3, resilience: 6, leadership: 5, skills: 10, drive: 8, innovation: 3 } },
+          { studentName: "KEVIN HART", classCode: "DEMO", archetype: "The Strategic Organizer", topTrait: "resilience", scores: { risk: 6, resilience: 8, leadership: 8, skills: 5, drive: 7, innovation: 5 } },
+          { studentName: "LAURA CROFT", classCode: "DEMO", archetype: "The Visionary Disruptor", topTrait: "resilience", scores: { risk: 9, resilience: 10, leadership: 8, skills: 8, drive: 9, innovation: 8 } },
+          { studentName: "MIKE TYSON", classCode: "DEMO", archetype: "The Specialist Operator", topTrait: "drive", scores: { risk: 5, resilience: 9, leadership: 4, skills: 6, drive: 9, innovation: 3 } },
+          { studentName: "NINA SIMONE", classCode: "DEMO", archetype: "The Balanced Enterprise Architect", topTrait: "innovation", scores: { risk: 8, resilience: 8, leadership: 7, skills: 8, drive: 8, innovation: 8 } }
+        ];
+        updateClassDashboard(mockSubmissions);
+        return;
+      }
+
+      if (!db) {
+        alert("Firestore database is offline. Cannot load live session.");
+        return;
+      }
+
+      // Start Snapshot Listener
+      unsubscribeClass = db.collection("audit_submissions")
+        .where("classCode", "==", classCode)
+        .onSnapshot((querySnapshot) => {
+          const submissions = [];
+          querySnapshot.forEach(doc => {
+            submissions.push(doc.data());
+          });
+
+          // Sort client-side by timestamp
+          submissions.sort((a, b) => {
+            const timeA = a.timestamp?.seconds || 0;
+            const timeB = b.timestamp?.seconds || 0;
+            return timeB - timeA;
+          });
+
+          updateClassDashboard(submissions);
+        }, (error) => {
+          console.error("Snapshot listener error:", error);
+          alert("Failed to load live data. Please check your Firestore rules.");
+        });
+    }
+
+    function updateClassDashboard(submissions) {
+      const count = submissions.length;
+      document.getElementById("classN").textContent = count;
+
+      if (count === 0) {
+        document.getElementById("classTableBody").innerHTML = `
+          <tr>
+            <td colspan="4" style="text-align:center; color:var(--text-muted); padding: 2rem 0;">No student responses submitted yet. Waiting...</td>
+          </tr>
+        `;
+        
+        // Clear charts
+        if (radarChart) {
+          radarChart.destroy();
+          radarChart = null;
+        }
+        if (scatterChart) {
+          scatterChart.destroy();
+          scatterChart = null;
+        }
+
+        // Reset text/fallback bars
+        ["risk", "resilience", "leadership", "skills", "drive", "innovation"].forEach(trait => {
+          const bar = document.getElementById(`classBar-${trait}`);
+          if (bar) bar.style.width = "0%";
+          const txt = document.getElementById(`classScore-${trait}`);
+          if (txt) txt.textContent = "0.0 / 10";
+        });
+        document.getElementById("count-visionary").textContent = "0";
+        document.getElementById("count-specialist").textContent = "0";
+        document.getElementById("count-strategic").textContent = "0";
+        document.getElementById("count-balanced").textContent = "0";
+        return;
+      }
+
+      // Count Archetypes
+      const counts = { visionary: 0, specialist: 0, strategic: 0, balanced: 0 };
+      // Sum Scores
+      const totals = { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 };
+
+      const tableBody = document.getElementById("classTableBody");
+      tableBody.innerHTML = "";
+
+      // Datasets for scatter chart
+      const scatterData = {
+        visionary: [],
+        specialist: [],
+        strategic: [],
+        balanced: []
+      };
+
+      submissions.forEach(sub => {
+        // Increment Archetypes
+        let colorClass = "var(--primary)";
+        if (sub.archetype === "The Visionary Disruptor") {
+          counts.visionary++;
+          colorClass = "var(--color-innovation)";
+        } else if (sub.archetype === "The Specialist Operator") {
+          counts.specialist++;
+          colorClass = "var(--color-drive)";
+        } else if (sub.archetype === "The Strategic Organizer") {
+          counts.strategic++;
+          colorClass = "var(--color-leadership)";
+        } else {
+          counts.balanced++;
+          colorClass = "var(--primary)";
+        }
+
+        // Add to averages
+        Object.keys(totals).forEach(trait => {
+          totals[trait] += sub.scores[trait] || 0;
+        });
+
+        // Coordinates for Scatter Plot
+        // X: Creative Risk-taking = (Innovation + Risk) / 2 (value from 2 to 10)
+        // Y: Operational Execution = (Resilience + Drive + Skills) / 3 (value from 2 to 10)
+        const xVal = ((sub.scores.innovation || 0) + (sub.scores.risk || 0)) / 2;
+        const yVal = ((sub.scores.resilience || 0) + (sub.scores.drive || 0) + (sub.scores.skills || 0)) / 3;
+
+        const studentPoint = {
+          x: parseFloat(xVal.toFixed(2)),
+          y: parseFloat(yVal.toFixed(2)),
+          label: sub.studentName,
+          archetype: sub.archetype
+        };
+
+        if (sub.archetype === "The Visionary Disruptor") scatterData.visionary.push(studentPoint);
+        else if (sub.archetype === "The Specialist Operator") scatterData.specialist.push(studentPoint);
+        else if (sub.archetype === "The Strategic Organizer") scatterData.strategic.push(studentPoint);
+        else scatterData.balanced.push(studentPoint);
+
+        // Insert row
+        const row = document.createElement("tr");
+        const scoresMapText = Object.keys(sub.scores).map(t => `${t.slice(0,3).toUpperCase()}:${sub.scores[t]}`).join(', ');
+        
+        row.innerHTML = `
+          <td><strong>${sub.studentName}</strong></td>
+          <td><span style="color: ${colorClass}; font-weight:700;">${sub.archetype}</span></td>
+          <td style="text-transform: capitalize;">${sub.topTrait}</td>
+          <td style="color: var(--text-muted); font-family: monospace;">${scoresMapText}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Update Count displays
+      document.getElementById("count-visionary").textContent = counts.visionary;
+      document.getElementById("count-specialist").textContent = counts.specialist;
+      document.getElementById("count-strategic").textContent = counts.strategic;
+      document.getElementById("count-balanced").textContent = counts.balanced;
+
+      // Class Averages
+      const radarLabels = ["Risk Tolerance", "Resilience & Grit", "Leadership & Vision", "Skills & Literacy", "Self-Motivation", "Innovation"];
+      const radarValues = [
+        totals.risk / count,
+        totals.resilience / count,
+        totals.leadership / count,
+        totals.skills / count,
+        totals.drive / count,
+        totals.innovation / count
+      ];
+
+      // Update fallback / screen-reader bars
+      Object.keys(totals).forEach(trait => {
+        const avg = totals[trait] / count;
+        const percentage = (avg / 10) * 100;
+        const bar = document.getElementById(`classBar-${trait}`);
+        if (bar) bar.style.width = percentage + "%";
+        const txt = document.getElementById(`classScore-${trait}`);
+        if (txt) txt.textContent = `${avg.toFixed(1)} / 10`;
+      });
+
+      // Charts Styling Options (based on theme)
+      const isDarkMode = !document.body.classList.contains("light-mode");
+      const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.1)";
+      const labelColor = isDarkMode ? "#94a3b8" : "#475569";
+      const ticksColor = isDarkMode ? "#64748b" : "#94a3b8";
+
+      // Initialize / Update Radar Chart
+      const radarCtx = document.getElementById("classRadarChart").getContext("2d");
+      if (radarChart) {
+        radarChart.data.datasets[0].data = radarValues;
+        radarChart.options.scales.r.grid.color = gridColor;
+        radarChart.options.scales.r.angleLines.color = gridColor;
+        radarChart.options.scales.r.pointLabels.color = labelColor;
+        radarChart.options.scales.r.ticks.color = ticksColor;
+        radarChart.update();
+      } else {
+        radarChart = new Chart(radarCtx, {
+          type: "radar",
+          data: {
+            labels: radarLabels,
+            datasets: [{
+              label: "Class Average",
+              data: radarValues,
+              backgroundColor: "rgba(129, 140, 248, 0.2)",
+              borderColor: "#818cf8",
+              borderWidth: 2.5,
+              pointBackgroundColor: "#818cf8",
+              pointBorderColor: "#fff",
+              pointHoverBackgroundColor: "#fff",
+              pointHoverBorderColor: "#818cf8",
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false }
+            },
+            scales: {
+              r: {
+                min: 0,
+                max: 10,
+                ticks: {
+                  stepSize: 2,
+                  backdropColor: "transparent",
+                  color: ticksColor,
+                  font: { size: 9, weight: "500" }
+                },
+                grid: { color: gridColor },
+                angleLines: { color: gridColor },
+                pointLabels: {
+                  color: labelColor,
+                  font: { family: "Inter", size: 10, weight: "600" }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // Initialize / Update Scatter Plot
+      const scatterCtx = document.getElementById("studentScatterChart").getContext("2d");
+      const scatterDatasets = [
+        {
+          label: "Visionary Disruptor",
+          data: scatterData.visionary,
+          backgroundColor: "#f472b6",
+          borderColor: "#f472b6",
+          pointRadius: 6,
+          pointHoverRadius: 8
+        },
+        {
+          label: "Specialist Operator",
+          data: scatterData.specialist,
+          backgroundColor: "#2dd4bf",
+          borderColor: "#2dd4bf",
+          pointRadius: 6,
+          pointHoverRadius: 8
+        },
+        {
+          label: "Strategic Organizer",
+          data: scatterData.strategic,
+          backgroundColor: "#a78bfa",
+          borderColor: "#a78bfa",
+          pointRadius: 6,
+          pointHoverRadius: 8
+        },
+        {
+          label: "Balanced Architect",
+          data: scatterData.balanced,
+          backgroundColor: "#fbbf24",
+          borderColor: "#fbbf24",
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }
+      ];
+
+      if (scatterChart) {
+        scatterDatasets.forEach((ds, i) => {
+          scatterChart.data.datasets[i].data = ds.data;
+        });
+        scatterChart.options.scales.x.grid.color = gridColor;
+        scatterChart.options.scales.x.ticks.color = labelColor;
+        scatterChart.options.scales.x.title.color = labelColor;
+        scatterChart.options.scales.y.grid.color = gridColor;
+        scatterChart.options.scales.y.ticks.color = labelColor;
+        scatterChart.options.scales.y.title.color = labelColor;
+        scatterChart.options.plugins.legend.labels.color = labelColor;
+        scatterChart.update();
+      } else {
+        scatterChart = new Chart(scatterCtx, {
+          type: "scatter",
+          data: {
+            datasets: scatterDatasets
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: {
+                  color: labelColor,
+                  font: { family: "Inter", size: 10, weight: "500" },
+                  boxWidth: 8,
+                  padding: 12
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const student = context.raw;
+                    return ` ${student.label} (${student.archetype}): Creative Risk: ${student.x}, Ops Exec: ${student.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                min: 2,
+                max: 10,
+                title: {
+                  display: true,
+                  text: "Creative Risk-Taking (Innovation + Risk)",
+                  color: labelColor,
+                  font: { family: "Outfit", size: 11, weight: "700" }
+                },
+                grid: { color: gridColor },
+                ticks: { color: labelColor, stepSize: 1 }
+              },
+              y: {
+                min: 2,
+                max: 10,
+                title: {
+                  display: true,
+                  text: "Operational Execution (Resilience + Drive + Skills)",
+                  color: labelColor,
+                  font: { family: "Outfit", size: 11, weight: "700" }
+                },
+                grid: { color: gridColor },
+                ticks: { color: labelColor, stepSize: 1 }
+              }
+            },
+            plugins: [{
+              id: 'quadrantCrosshair',
+              beforeDraw(chart) {
+                const { ctx, chartArea: { top, right, bottom, left }, scales: { x, y } } = chart;
+                const xVal = x.getPixelForValue(6.0);
+                const yVal = y.getPixelForValue(6.0);
+                
+                ctx.save();
+                const activeDarkMode = !document.body.classList.contains("light-mode");
+                ctx.strokeStyle = activeDarkMode ? "rgba(255, 255, 255, 0.18)" : "rgba(15, 23, 42, 0.18)";
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([5, 5]);
+                
+                // Draw vertical axis line (X = 6)
+                ctx.beginPath();
+                ctx.moveTo(xVal, top);
+                ctx.lineTo(xVal, bottom);
+                ctx.stroke();
+                
+                // Draw horizontal axis line (Y = 6)
+                ctx.beginPath();
+                ctx.moveTo(left, yVal);
+                ctx.lineTo(right, yVal);
+                ctx.stroke();
+                
+                // Draw text labels for quadrants
+                ctx.restore();
+                ctx.save();
+                ctx.fillStyle = activeDarkMode ? "rgba(255, 255, 255, 0.35)" : "rgba(15, 23, 42, 0.4)";
+                ctx.font = "bold 9px Inter";
+                
+                // Top Right
+                ctx.textAlign = "right";
+                ctx.fillText("HIGH VISION + EXECUTION", right - 10, top + 15);
+                // Top Left
+                ctx.textAlign = "left";
+                ctx.fillText("OPERATIONAL SPECIALISTS", left + 10, top + 15);
+                // Bottom Right
+                ctx.textAlign = "right";
+                ctx.fillText("CREATIVE IDEA STARTERS", right - 10, bottom - 10);
+                // Bottom Left
+                ctx.textAlign = "left";
+                ctx.fillText("DEVELOPING PROFILE", left + 10, bottom - 10);
+                
+                ctx.restore();
+              }
+            }]
+          }
+        });
+      }
+    }
+
+    async function toggleSessionLock() {
+      // Get current classroom code from text content
+      const titleText = document.getElementById("classroomTitle").textContent || "";
+      const classCodeVal = titleText.replace("Live Class Dashboard:", "").trim().split(" ")[0];
+      if (!classCodeVal || !db || classCodeVal === "DEMO") return;
+      
+      const newClosedState = !isSessionClosed;
+      try {
+        await db.collection("audit_submissions").doc("session_lock_" + classCodeVal).set({
+          closed: newClosedState,
+          isLock: true,
+          studentName: "Session Lock Manager",
+          classCode: "SYSTEM_LOCK",
+          scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+          archetype: "System",
+          topTrait: "none",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (e) {
+        console.error("Error toggling session lock:", e);
+        alert("Failed to update session status.");
+      }
+    }
+
+    function closeClassroomDashboard() {
+      // Unsubscribe listeners
+      if (unsubscribeClass) {
+        unsubscribeClass();
+        unsubscribeClass = null;
+      }
+      if (unsubscribeSessionLock) {
+        unsubscribeSessionLock();
+        unsubscribeSessionLock = null;
+      }
+
+      // Hide toggle button
+      document.getElementById("toggleSessionBtn").style.display = "none";
+
+      // Destroy charts to avoid memory leaks/canvas bugs
+      if (radarChart) {
+        radarChart.destroy();
+        radarChart = null;
+      }
+      if (scatterChart) {
+        scatterChart.destroy();
+        scatterChart = null;
+      }
+
+      document.querySelector(".container").classList.remove("classroom-active");
+      document.getElementById("mainHeader").style.display = "block";
+      document.getElementById("metadataBar").style.display = "flex";
+      document.getElementById("auditCard").style.display = "block";
+      document.getElementById("submitContainer").style.display = "flex";
+      document.getElementById("classroomContainer").style.display = "none";
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

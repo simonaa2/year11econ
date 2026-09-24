@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PropertyPulse Live — Housing Market Simulation</title>
+<meta name="description" content="Live classroom housing market simulation. Students play developers and buyers in a real-time competitive property market with government interventions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:#05040f; --bg-card:rgba(255,255,255,0.03); --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14); --text-primary:#f1f5f9;
+  --text-secondary:#94a3b8; --text-muted:#64748b;
+  --primary:#818cf8; --primary-dark:#6366f1; --primary-glow:rgba(129,140,248,0.18);
+  --secondary:#c084fc; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+  --blue:#38bdf8; --orange:#fb923c; --teal:#2dd4bf;
+  --developer:#fb923c; --buyer:#818cf8; --teacher:#c084fc;
+  --radius-sm:8px; --radius-md:16px; --radius-lg:24px; --radius-full:9999px;
+  --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;overflow-x:hidden;line-height:1.5;}
+.hidden{display:none!important;}
+a{color:var(--primary);text-decoration:none;}
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:0.5rem;}
+.top-bar-title{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:900;background:linear-gradient(135deg,#fb923c,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav-btns{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.nav-link{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-full);padding:0.35rem 0.9rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;transition:var(--transition);}
+.nav-link:hover{background:rgba(255,255,255,0.09);color:var(--text-primary);}
+.screen{min-height:100vh;padding:2rem 1rem 4rem;}
+.screen.hidden{display:none!important;}
+.container{max-width:860px;margin:0 auto;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;}
+.card-title{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.5rem;}
+.card-sub{color:var(--text-secondary);font-size:0.9rem;margin-bottom:2rem;}
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.5rem;}
+.role-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem;cursor:pointer;transition:var(--transition);text-align:center;}
+.role-card:hover{transform:translateY(-2px);}
+.role-card.developer:hover{border-color:var(--developer);}
+.role-card.buyer:hover{border-color:var(--buyer);}
+.role-card.teacher:hover{border-color:var(--teacher);}
+.role-icon{font-size:2.5rem;margin-bottom:0.75rem;}
+.role-name{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:0.4rem;}
+.role-desc{font-size:0.82rem;color:var(--text-secondary);}
+.phase-pill{display:inline-block;padding:0.3rem 0.9rem;border-radius:var(--radius-full);font-size:0.75rem;font-weight:700;margin-bottom:1.5rem;}
+.phase-lobby{background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.3);}
+.phase-pricing{background:rgba(251,146,60,0.15);color:#fb923c;border:1px solid rgba(251,146,60,0.3);}
+.phase-viewing{background:rgba(129,140,248,0.15);color:#818cf8;border:1px solid rgba(129,140,248,0.3);}
+.phase-results{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.3);}
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.04em;}
+.text-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.65rem 0.9rem;font-family:'Inter',sans-serif;font-size:0.9rem;transition:var(--transition);}
+.text-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+.select-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.65rem 0.9rem;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;}
+.select-input option{background:#1e1e3a;}
+.range-slider{width:100%;appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;margin:0.5rem 0;background:linear-gradient(to right,var(--developer) 0%,var(--developer) 40%,rgba(255,255,255,0.1) 40%);}
+.range-slider.blue{background:linear-gradient(to right,var(--blue) 0%,var(--blue) 40%,rgba(255,255,255,0.1) 40%);}
+.range-slider.yellow{background:linear-gradient(to right,var(--yellow) 0%,var(--yellow) 40%,rgba(255,255,255,0.1) 40%);}
+.range-slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);}
+.slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;}
+.slider-label{font-size:0.83rem;color:var(--text-secondary);}
+.slider-val{font-weight:700;font-size:0.95rem;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.7rem 1.5rem;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:var(--transition);border:none;}
+.btn-primary{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));color:white;}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-secondary{background:rgba(255,255,255,0.07);color:var(--text-primary);border:1px solid var(--border);}
+.btn-secondary:hover{background:rgba(255,255,255,0.12);}
+.btn-developer{background:linear-gradient(135deg,#ea580c,#fb923c);color:white;}
+.btn-developer:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-buyer{background:linear-gradient(135deg,var(--primary-dark),var(--primary));color:white;}
+.btn-buyer:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-teacher{background:linear-gradient(135deg,#9333ea,#c084fc);color:white;}
+.btn-teacher:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-full{width:100%;}
+.btn-sm{padding:0.4rem 0.9rem;font-size:0.8rem;}
+.phase-controls{display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:2rem;}
+.phase-btn{padding:0.65rem 0.5rem;border-radius:var(--radius-sm);font-size:0.78rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-secondary);transition:var(--transition);text-align:center;}
+.phase-btn:hover{background:rgba(255,255,255,0.08);}
+.phase-btn.active-phase{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));color:white;border-color:transparent;}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:var(--radius-full);font-size:0.72rem;font-weight:700;}
+.badge-green{background:rgba(52,211,153,0.15);color:#34d399;}
+.badge-blue{background:rgba(56,189,248,0.15);color:#38bdf8;}
+.badge-yellow{background:rgba(251,191,36,0.15);color:#fbbf24;}
+.badge-orange{background:rgba(251,146,60,0.15);color:#fb923c;}
+.badge-gray{background:rgba(100,116,139,0.15);color:#94a3b8;}
+.development-card{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:0.75rem;cursor:pointer;transition:var(--transition);}
+.development-card:hover{border-color:var(--buyer);background:rgba(129,140,248,0.04);}
+.development-card.selected{border-color:var(--buyer);background:rgba(129,140,248,0.08);}
+.dev-name{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;margin-bottom:0.5rem;}
+.price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.5rem;}
+.price-tile{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.6rem;text-align:center;font-size:0.8rem;}
+.price-tile.affordable{border-color:var(--green);background:rgba(52,211,153,0.05);}
+.price-tile.unaffordable{opacity:0.4;}
+.price-amt{font-weight:800;font-size:0.9rem;}
+.intervention-panel{background:linear-gradient(135deg,rgba(251,191,36,0.05),rgba(248,113,113,0.05));border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:2rem;}
+.intervention-panel h4{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#fbbf24;margin-bottom:0.75rem;}
+.intervention-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:0.5rem;}
+.intervention-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);padding:0.6rem 0.75rem;font-size:0.78rem;font-weight:700;cursor:pointer;color:var(--text-primary);transition:var(--transition);text-align:left;}
+.intervention-btn:hover{background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4);}
+.intervention-btn.fired{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;cursor:default;}
+.active-tag{display:inline-flex;align-items:center;gap:0.35rem;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius-full);padding:0.25rem 0.75rem;font-size:0.78rem;font-weight:700;color:#fbbf24;margin:0.25rem;}
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.5rem;}
+.ai-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;text-align:center;}
+.ai-card strong{display:block;font-size:0.82rem;margin-bottom:0.3rem;}
+.ai-wtp{font-size:0.72rem;color:var(--text-muted);margin-bottom:0.5rem;}
+.leaderboard-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:0.5rem;}
+.leaderboard-rank{font-size:1.2rem;width:30px;text-align:center;flex-shrink:0;}
+.leaderboard-name{flex:1;font-weight:700;}
+.leaderboard-stat{font-size:0.82rem;color:var(--text-secondary);}
+.leaderboard-value{font-weight:800;font-size:1rem;color:var(--primary);}
+.stat-box{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;text-align:center;}
+.stat-box-val{font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:800;color:var(--primary);}
+.stat-box-lbl{font-size:0.78rem;color:var(--text-muted);margin-top:0.25rem;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.75rem;margin-bottom:1.5rem;}
+.preview-box{background:rgba(129,140,248,0.05);border:1px solid rgba(129,140,248,0.15);border-radius:var(--radius-sm);padding:1rem;margin:1rem 0;font-size:0.85rem;}
+.preview-row{display:flex;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.preview-row:last-child{border-bottom:none;font-weight:700;padding-top:0.5rem;}
+.lobby-wait{text-align:center;padding:3rem 1rem;}
+.lobby-wait .big-icon{font-size:4rem;margin-bottom:1rem;}
+.lobby-wait h3{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:0.5rem;}
+.lobby-wait p{color:var(--text-secondary);font-size:0.9rem;}
+.chart-wrap{position:relative;height:260px;margin:1.5rem 0;}
+.scroll-area{max-height:300px;overflow-y:auto;padding-right:0.25rem;}
+.scroll-area::-webkit-scrollbar{width:4px;}
+.scroll-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <div class="top-bar-title">🏠 PropertyPulse Live</div>
+  <div class="nav-btns">
+    <span class="phase-pill phase-lobby" id="globalPhasePill">⏳ Lobby</span>
+    <a href="index.html" class="nav-link">← Hub</a>
+  </div>
+</nav>
+
+<!-- ─── JOIN SCREEN ─────────────────────────────────────── -->
+<div class="screen" id="joinScreen">
+  <div class="container" style="max-width:520px;margin-top:3rem;">
+    <div class="card">
+      <div class="card-title">🏠 PropertyPulse Live</div>
+      <div class="card-sub">Housing Market Simulation — Developers vs Buyers</div>
+      <div class="form-group">
+        <label class="form-label">Session Code</label>
+        <input type="text" id="entryCode" class="text-input" placeholder="e.g. 12ECO" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div id="entryMsg" style="color:var(--red);font-size:0.83rem;margin-bottom:1rem;"></div>
+      <div class="role-grid">
+        <div class="role-card developer" onclick="chooseRole('developer')">
+          <div class="role-icon">🏗️</div>
+          <div class="role-name" style="color:var(--developer);">Property Developer</div>
+          <div class="role-desc">Name your suburb, set prices for Studio/2BR/3BR, pick a development strategy.</div>
+        </div>
+        <div class="role-card buyer" onclick="chooseRole('buyer')">
+          <div class="role-icon">🔑</div>
+          <div class="role-name" style="color:var(--buyer);">Property Buyer</div>
+          <div class="role-desc">Browse all developments, choose the best property based on your buyer type and budget.</div>
+        </div>
+        <div class="role-card teacher" onclick="chooseRole('teacher')">
+          <div class="role-icon">📊</div>
+          <div class="role-name" style="color:var(--teacher);">Teacher Dashboard</div>
+          <div class="role-desc">Control 4 phases, spawn AI buyers, trigger government interventions.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── DEVELOPER NAME SCREEN ──────────────────────────── -->
+<div class="screen hidden" id="devNameScreen">
+  <div class="container" style="max-width:480px;margin-top:3rem;">
+    <div class="card">
+      <div class="card-title">🏗️ Name Your Development</div>
+      <div class="form-group" style="margin-top:1rem;">
+        <label class="form-label">Development / Suburb Name</label>
+        <input type="text" id="devNameInput" class="text-input" placeholder="e.g. Harbour View Estate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Development Strategy</label>
+        <select id="devStrategyInput" class="select-input">
+          <option value="affordable">🏛️ Affordable Housing — Prices -12%, qualifies for government incentives</option>
+          <option value="premium">✨ Premium Development — High-end finishes. HNW buyer WTP +15%</option>
+          <option value="mixed">⚖️ Mixed Development — Balanced mix, +2 units per type</option>
+          <option value="greenfield">🌿 Greenfield Site — Far from CBD. Buyer WTP -10%, but costs -20%</option>
+        </select>
+      </div>
+      <div id="devNameMsg" style="color:var(--red);font-size:0.83rem;margin-bottom:1rem;"></div>
+      <button class="btn btn-developer btn-full" onclick="joinAsDeveloper()">Join as Developer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── BUYER TYPE SCREEN ──────────────────────────────── -->
+<div class="screen hidden" id="buyerTypeScreen">
+  <div class="container" style="max-width:560px;margin-top:3rem;">
+    <div class="card">
+      <div class="card-title">🔑 Choose Your Buyer Profile</div>
+      <div class="card-sub">Your buyer type determines your budget priorities and willingness-to-pay for each property type.</div>
+      <div id="buyerTypeGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-top:1rem;"></div>
+      <div id="buyerTypeMsg" style="color:var(--red);font-size:0.83rem;margin:1rem 0;"></div>
+      <button class="btn btn-buyer btn-full" style="margin-top:1rem;" onclick="joinAsBuyer()">Join as Buyer →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── DEVELOPER SCREEN ───────────────────────────────── -->
+<div class="screen hidden" id="devScreen">
+  <div class="container" style="max-width:600px;margin-top:2rem;">
+    <div class="card">
+      <div class="phase-pill phase-lobby" id="devPhasePill">⏳ Lobby</div>
+      <div class="card-title" id="devTitle">🏗️ Your Development</div>
+      <div id="devActiveInterventions" style="margin-bottom:1rem;"></div>
+      <div id="devContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── BUYER SCREEN ───────────────────────────────────── -->
+<div class="screen hidden" id="buyerScreen">
+  <div class="container" style="max-width:700px;margin-top:2rem;">
+    <div class="card">
+      <div class="phase-pill phase-lobby" id="buyerPhasePill">⏳ Lobby</div>
+      <div class="card-title" id="buyerTitle">🔑 Property Market</div>
+      <div id="buyerActiveInterventions" style="margin-bottom:1rem;"></div>
+      <div id="buyerContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TEACHER SCREEN ──────────────────────────────────── -->
+<div class="screen hidden" id="teacherScreen">
+  <div class="container">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+        <div>
+          <div class="card-title">📊 Teacher Dashboard</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);">Session: <strong id="teacherCodeLabel" style="color:var(--primary);"></strong></div>
+        </div>
+        <div class="phase-pill phase-lobby" id="teacherPhasePill">⏳ Lobby</div>
+      </div>
+
+      <div class="phase-controls">
+        <button class="phase-btn" onclick="setPhase('lobby')">⏳ Lobby</button>
+        <button class="phase-btn" onclick="setPhase('pricing')">💰 Pricing</button>
+        <button class="phase-btn" onclick="setPhase('viewing')">🏘️ Viewing</button>
+        <button class="phase-btn" onclick="setPhase('results')">🏆 Results</button>
+      </div>
+
+      <div class="intervention-panel">
+        <h4>🏛️ Government Interventions</h4>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Trigger real-world housing policy events. Buyer WTPs update instantly on all screens.</p>
+        <div class="intervention-grid" id="interventionGrid"></div>
+        <div id="activeInterventionsList" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;">
+        <div>
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;">🏗️ Developers (<span id="devCount">0</span>)</div>
+          <div class="scroll-area" id="devList"><span style="color:var(--text-muted);font-size:0.82rem;">Waiting…</span></div>
+        </div>
+        <div>
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;">🔑 Buyers (<span id="buyerCount">0</span>)</div>
+          <div class="scroll-area" id="buyerList"><span style="color:var(--text-muted);font-size:0.82rem;">Waiting…</span></div>
+        </div>
+      </div>
+
+      <div style="background:rgba(129,140,248,0.04);border:1px solid rgba(129,140,248,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:2rem;">
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--buyer);margin-bottom:0.75rem;">🤖 Spawn AI Buyers</div>
+        <div class="ai-grid" id="aiGrid"></div>
+        <button class="btn btn-buyer" style="margin-top:1rem;width:100%;font-size:0.85rem;" onclick="spawnAllAI()">🤖 Spawn All 5 Buyer Types</button>
+      </div>
+
+      <div id="teacherResultsArea" class="hidden">
+        <div style="font-size:1rem;font-weight:800;font-family:'Outfit',sans-serif;margin-bottom:1rem;">📊 Market Results</div>
+        <div class="stats-grid" id="teacherResultStats"></div>
+        <div style="font-weight:700;margin-bottom:0.75rem;">🏗️ Developer Profit Leaderboard</div>
+        <div id="devLeaderboard" class="scroll-area" style="max-height:250px;margin-bottom:1.5rem;"></div>
+        <div style="font-weight:700;margin-bottom:0.75rem;">🔑 Buyer Surplus Leaderboard</div>
+        <div id="buyerLeaderboard" class="scroll-area" style="max-height:250px;margin-bottom:1.5rem;"></div>
+        <div class="chart-wrap"><canvas id="marketChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain:"www.datatrends.com.au",
+  projectId:"maths-f3c6d",
+  storageBucket:"maths-f3c6d.appspot.com",
+  messagingSenderId:"731995338466",
+  appId:"1:731995338466:web:71a88e716a8e75d7cc4b44"
+});
+const db = firebase.firestore();
+
+// ── STATE ─────────────────────────────────────────────────
+let sessionCode='', userRole='', devName='', devStrategy='';
+let buyerTypeKey='', buyerTypeData=null;
+let currentPhase='lobby';
+let phaseUnsub=null, devsUnsub=null, buyersUnsub=null;
+let allDevs=[], allBuyers=[];
+let selectedDevId=null, selectedPropType=null;
+let pricingSubmitted=false, buyingSubmitted=false;
+let marketChart=null;
+let interventionsFired=new Set();
+let activeInterventionData=[];
+
+// Default prices
+let studioP=520000, twoBRP=850000, threeBRP=1200000;
+
+// ── DATA ──────────────────────────────────────────────────
+const PROPERTIES = {
+  studio:   { label:'🏢 Studio/1BR', units:15, varCost:180000, color:'var(--green)',  pMin:200000, pMax:1500000 },
+  two_br:   { label:'🏠 2-Bed Apt',  units:10, varCost:320000, color:'var(--blue)',   pMin:400000, pMax:2500000 },
+  three_br: { label:'🏡 3-Bed House', units:6, varCost:560000, color:'var(--yellow)', pMin:600000, pMax:4000000 }
+};
+const FIXED_COST = 500000;
+
+const BUYER_TYPES = {
+  first_home: {
+    label:'🏠 First Home Buyer', short:'FHB',
+    desc:'Eligible for govt grants. Needs affordable entry-level property.',
+    wtp:{ studio:550000, two_br:780000, three_br:920000 },
+    pref:'studio', color:'var(--green)'
+  },
+  investor: {
+    label:'📊 Property Investor', short:'Investor',
+    desc:'Seeks rental yield. Comfortable with premium prices for returns.',
+    wtp:{ studio:700000, two_br:1100000, three_br:1550000 },
+    pref:'two_br', color:'var(--blue)'
+  },
+  family: {
+    label:'👨‍👩‍👧 Growing Family', short:'Family',
+    desc:'Needs space. Stretches for 3BR. Studio is a last resort.',
+    wtp:{ studio:380000, two_br:900000, three_br:1150000 },
+    pref:'three_br', color:'var(--orange)'
+  },
+  downsizer: {
+    label:'👴 Downsizer', short:'Downsizer',
+    desc:'Selling large family home. Premium studio or 2BR buyer.',
+    wtp:{ studio:750000, two_br:980000, three_br:600000 },
+    pref:'studio', color:'var(--secondary)'
+  },
+  high_net: {
+    label:'💰 High Net Worth', short:'HNW',
+    desc:'Price insensitive. Buys prestige properties as assets.',
+    wtp:{ studio:950000, two_br:1600000, three_br:2800000 },
+    pref:'three_br', color:'var(--yellow)'
+  }
+};
+
+const DEV_STRATEGIES = {
+  affordable: { label:'🏛️ Affordable', priceMod:0.88, desc:'-12% prices, govt incentive bonus' },
+  premium:    { label:'✨ Premium',    priceMod:1.0,  desc:'HNW WTP +15%' },
+  mixed:      { label:'⚖️ Mixed',     priceMod:1.0,  bonusUnits:2, desc:'+2 units per type' },
+  greenfield: { label:'🌿 Greenfield', priceMod:1.0,  wtpMod:0.90, costMod:0.80, desc:'WTP -10%, costs -20%' }
+};
+
+const INTERVENTIONS = {
+  rate_hike:    { label:'📈 Rate Rise +2%',   desc:'RBA raises rates. All buyer WTP -15%.', emoji:'📈', wtpMod:0.85 },
+  fhb_grant:    { label:'🎁 FHB Grant $50K',  desc:'First home buyer grant. FHB WTP +$50K.', emoji:'🎁', type:'fhb_boost', amount:50000 },
+  stamp_cut:    { label:'✂️ Stamp Duty Off',  desc:'Stamp duty abolished. All buyer WTP +5%.', emoji:'✂️', wtpMod:1.05 },
+  foreign_ban:  { label:'🚫 Foreign Buyer Ban', desc:'Bans foreign investment. Investor WTP -35%.', emoji:'🚫', type:'investor_cut', mod:0.65 },
+  infra_boom:   { label:'🚆 Infrastructure', desc:'New train line announced. All WTPs +12%.', emoji:'🚆', wtpMod:1.12 }
+};
+
+// ── HELPERS ──────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function fp() {
+  return btoa([navigator.language, screen.width+'x'+screen.height, navigator.platform, Intl.DateTimeFormat().resolvedOptions().timeZone].join('|'));
+}
+function fmtM(n) {
+  if (n>=1000000) return '$'+(n/1000000).toFixed(2)+'M';
+  if (n>=1000) return '$'+(n/1000).toFixed(0)+'K';
+  return '$'+Math.round(n).toLocaleString();
+}
+function getPhasePillClass(p) {
+  return {lobby:'phase-lobby',pricing:'phase-pricing',viewing:'phase-viewing',results:'phase-results'}[p]||'phase-lobby';
+}
+function getPhasePillText(p) {
+  return {lobby:'⏳ Lobby',pricing:'💰 Pricing Open',viewing:'🏘️ Inspection Day',results:'🏆 Results'}[p]||'⏳ Lobby';
+}
+function updatePhasePill(id, phase) {
+  const el=document.getElementById(id); if(!el) return;
+  el.className='phase-pill '+getPhasePillClass(phase);
+  el.textContent=getPhasePillText(phase);
+}
+function updatePhaseButtons(phase) {
+  const order=['lobby','pricing','viewing','results'];
+  document.querySelectorAll('.phase-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active-phase', order[i]===phase);
+  });
+}
+
+// ── BUYER WTP WITH INTERVENTIONS ──────────────────────────
+function getBuyerWTP(buyerType, propType) {
+  const bt = BUYER_TYPES[buyerType];
+  if (!bt) return 0;
+  let wtp = bt.wtp[propType] || 0;
+  if (!wtp) return 0;
+  // Rate hike
+  if (activeInterventionData.includes('rate_hike')) wtp *= 0.85;
+  // Stamp duty cut
+  if (activeInterventionData.includes('stamp_cut')) wtp *= 1.05;
+  // Infrastructure boom
+  if (activeInterventionData.includes('infra_boom')) wtp *= 1.12;
+  // FHB grant
+  if (activeInterventionData.includes('fhb_grant') && buyerType==='first_home') wtp += 50000;
+  // Foreign buyer ban
+  if (activeInterventionData.includes('foreign_ban') && buyerType==='investor') wtp *= 0.65;
+  return Math.round(wtp);
+}
+
+function getDevPrice(devData, propType) {
+  let price = devData[propType+'Price'] || 0;
+  const strat = DEV_STRATEGIES[devData.devStrategy] || {};
+  if (devData.devStrategy==='affordable') price *= 0.88;
+  return Math.round(price);
+}
+
+// ── ROLE SELECTION ────────────────────────────────────────
+function chooseRole(role) {
+  const code = document.getElementById('entryCode').value.trim().toUpperCase();
+  if (!code) { document.getElementById('entryMsg').textContent='Enter a session code first.'; return; }
+  document.getElementById('entryMsg').textContent='';
+  sessionCode = code;
+  userRole = role;
+  if (role==='developer') { showScreen('devNameScreen'); return; }
+  if (role==='buyer') { buildBuyerTypeGrid(); showScreen('buyerTypeScreen'); return; }
+  if (role==='teacher') { joinAsTeacher(); return; }
+}
+
+function buildBuyerTypeGrid() {
+  const grid = document.getElementById('buyerTypeGrid');
+  grid.innerHTML = Object.entries(BUYER_TYPES).map(([key,bt])=>`
+    <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;cursor:pointer;transition:var(--transition);"
+      id="btype_${key}" onclick="selectBuyerType('${key}')">
+      <div style="font-size:1.3rem;margin-bottom:0.4rem;">${bt.label.split(' ')[0]}</div>
+      <strong style="font-size:0.88rem;">${bt.label}</strong>
+      <div style="font-size:0.75rem;color:var(--text-muted);margin:0.3rem 0;">${bt.desc}</div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">Prefers: ${PROPERTIES[bt.pref]?.label||bt.pref}</div>
+    </div>`).join('');
+}
+
+let selectedBuyerTypeKey=null;
+function selectBuyerType(key) {
+  selectedBuyerTypeKey=key;
+  document.querySelectorAll('[id^="btype_"]').forEach(el=>{
+    el.style.borderColor='var(--border)';
+    el.style.background='rgba(255,255,255,0.02)';
+  });
+  const el=document.getElementById('btype_'+key);
+  if(el){ el.style.borderColor='var(--buyer)'; el.style.background='rgba(129,140,248,0.08)'; }
+}
+
+async function joinAsDeveloper() {
+  const name = document.getElementById('devNameInput').value.trim();
+  const strategy = document.getElementById('devStrategyInput').value;
+  if (!name) { document.getElementById('devNameMsg').textContent='Enter your development name.'; return; }
+  devName=name; devStrategy=strategy;
+  document.getElementById('devTitle').textContent='🏗️ '+devName;
+  const strat = DEV_STRATEGIES[strategy];
+  const bonusU = strategy==='mixed'?2:0;
+  await db.collection('housing_developers').doc(sessionCode+'_'+fp()).set({
+    sessionCode, devName:name, devStrategy:strategy,
+    studioPrice:studioP, two_brPrice:twoBRP, three_brPrice:threeBRP,
+    studioUnits:PROPERTIES.studio.units+bonusU,
+    two_brUnits:PROPERTIES.two_br.units+bonusU,
+    three_brUnits:PROPERTIES.three_br.units+bonusU,
+    pricingSubmitted:false,
+    studioSold:0, two_brSold:0, three_brSold:0,
+    profit:0, isAI:false, joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+  startPhaseListener();
+  showScreen('devScreen');
+  renderDevContent('lobby');
+}
+
+async function joinAsBuyer() {
+  if(!selectedBuyerTypeKey){ document.getElementById('buyerTypeMsg').textContent='Select a buyer type first.'; return; }
+  buyerTypeKey=selectedBuyerTypeKey;
+  buyerTypeData=BUYER_TYPES[buyerTypeKey];
+  document.getElementById('buyerTitle').textContent='🔑 '+buyerTypeData.label;
+  await db.collection('housing_buyers').doc(sessionCode+'_'+fp()).set({
+    sessionCode, buyerType:buyerTypeKey, buyerLabel:buyerTypeData.label,
+    chosenDevId:null, chosenPropType:null, pricePaid:0, surplus:0,
+    submitted:false, isAI:false, joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+  startPhaseListener();
+  showScreen('buyerScreen');
+  renderBuyerContent('lobby');
+}
+
+async function joinAsTeacher() {
+  document.getElementById('teacherCodeLabel').textContent=sessionCode;
+  await db.collection('housing_market').doc(sessionCode).set({
+    phase:'lobby', interventions:[],
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+  startPhaseListener();
+  startDevsListener();
+  startBuyersListener();
+  buildInterventionGrid();
+  buildAIGrid();
+  showScreen('teacherScreen');
+}
+
+// ── PHASE LISTENER ────────────────────────────────────────
+function startPhaseListener() {
+  if (phaseUnsub) phaseUnsub();
+  phaseUnsub = db.collection('housing_market').doc(sessionCode).onSnapshot(snap=>{
+    if (!snap.exists) return;
+    const data=snap.data();
+    currentPhase=data.phase||'lobby';
+    activeInterventionData=data.interventions||[];
+    updatePhasePill('globalPhasePill',currentPhase);
+    if(userRole==='developer'){
+      updatePhasePill('devPhasePill',currentPhase);
+      renderDevContent(currentPhase);
+      renderActiveInterventions('devActiveInterventions',activeInterventionData);
+    }
+    if(userRole==='buyer'){
+      updatePhasePill('buyerPhasePill',currentPhase);
+      renderBuyerContent(currentPhase);
+      renderActiveInterventions('buyerActiveInterventions',activeInterventionData);
+    }
+    if(userRole==='teacher'){
+      updatePhasePill('teacherPhasePill',currentPhase);
+      updatePhaseButtons(currentPhase);
+      activeInterventionData.forEach(id=>interventionsFired.add(id));
+      renderInterventionButtons();
+      renderActiveInterventions('activeInterventionsList',activeInterventionData);
+      if(currentPhase==='results') showTeacherResults();
+    }
+  });
+}
+
+function renderActiveInterventions(containerId, list) {
+  const el=document.getElementById(containerId);
+  if(!el||!list.length){if(el)el.innerHTML='';return;}
+  el.innerHTML='<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem;">Active policies:</div>'+
+    list.map(id=>`<span class="active-tag">${INTERVENTIONS[id]?.emoji||'🏛️'} ${INTERVENTIONS[id]?.label||id}</span>`).join('');
+}
+
+// ── DEVELOPER CONTENT ─────────────────────────────────────
+function renderDevContent(phase) {
+  const el=document.getElementById('devContent');
+  if(phase==='lobby'){
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏗️</div><h3>Waiting for Teacher</h3><p>Your development: <strong>${devName}</strong><br>Strategy: ${DEV_STRATEGIES[devStrategy]?.label||devStrategy}</p></div>`;
+    return;
+  }
+  if(phase==='pricing'){
+    if(pricingSubmitted){
+      el.innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Prices Submitted!</h3><p>Waiting for inspection day…</p></div>`;
+      return;
+    }
+    const strat=DEV_STRATEGIES[devStrategy];
+    const bonusU=devStrategy==='mixed'?2:0;
+    el.innerHTML=`
+      <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:0.75rem;">Set Your Asking Prices</div>
+      <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">Strategy: <strong style="color:var(--developer);">${strat.label}</strong> — ${strat.desc}</div>
+
+      <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:0.75rem;">🏢 Studio / 1BR — ${PROPERTIES.studio.units+bonusU} units</div>
+        <div class="slider-row"><div class="slider-label">Asking price</div><div class="slider-val" id="studioVal" style="color:var(--green);">${fmtM(studioP)}</div></div>
+        <input type="range" class="range-slider" id="studioSlider" min="200000" max="1500000" step="10000" value="${studioP}"
+          oninput="studioP=+this.value;document.getElementById('studioVal').textContent=fmtM(studioP);updateDevPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$200K</span><span>$1.5M</span></div>
+      </div>
+
+      <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:0.75rem;">🏠 2-Bed Apartment — ${PROPERTIES.two_br.units+bonusU} units</div>
+        <div class="slider-row"><div class="slider-label">Asking price</div><div class="slider-val" id="twoBrVal" style="color:var(--blue);">${fmtM(twoBRP)}</div></div>
+        <input type="range" class="range-slider blue" id="twoBrSlider" min="400000" max="2500000" step="10000" value="${twoBRP}"
+          oninput="twoBRP=+this.value;document.getElementById('twoBrVal').textContent=fmtM(twoBRP);updateDevPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$400K</span><span>$2.5M</span></div>
+      </div>
+
+      <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--yellow);margin-bottom:0.75rem;">🏡 3-Bed House — ${PROPERTIES.three_br.units+bonusU} units</div>
+        <div class="slider-row"><div class="slider-label">Asking price</div><div class="slider-val" id="threeBrVal" style="color:var(--yellow);">${fmtM(threeBRP)}</div></div>
+        <input type="range" class="range-slider yellow" id="threeBrSlider" min="600000" max="4000000" step="20000" value="${threeBRP}"
+          oninput="threeBRP=+this.value;document.getElementById('threeBrVal').textContent=fmtM(threeBRP);updateDevPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$600K</span><span>$4M</span></div>
+      </div>
+
+      <div class="preview-box" id="devPreview"></div>
+      <button class="btn btn-developer btn-full" onclick="submitDevPrices()">🏗️ Submit Prices to Market</button>`;
+    updateDevPreview();
+    return;
+  }
+  if(phase==='viewing'){
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏘️</div><h3>Inspection Day Open!</h3><p>Buyers are browsing your development now.<br>Check back for results.</p></div>`;
+    return;
+  }
+  if(phase==='results'){
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏆</div><h3>Results Published!</h3><p>Check the teacher screen for final rankings.</p></div>`;
+    return;
+  }
+}
+
+function updateDevPreview() {
+  const el=document.getElementById('devPreview');
+  if(!el) return;
+  const strat=DEV_STRATEGIES[devStrategy]||{};
+  const bonusU=devStrategy==='mixed'?2:0;
+  const costMod=devStrategy==='greenfield'?0.80:1;
+  const pMod=devStrategy==='affordable'?0.88:1;
+  const uS=PROPERTIES.studio.units+bonusU, uT=PROPERTIES.two_br.units+bonusU, uH=PROPERTIES.three_br.units+bonusU;
+  const maxRev = uS*(studioP*pMod) + uT*(twoBRP*pMod) + uH*(threeBRP*pMod);
+  const totalCost = uS*PROPERTIES.studio.varCost*costMod + uT*PROPERTIES.two_br.varCost*costMod + uH*PROPERTIES.three_br.varCost*costMod + FIXED_COST;
+  const maxProfit = maxRev - totalCost;
+  el.innerHTML=`
+    <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--developer);margin-bottom:0.5rem;">Projected P&L (Full Sell-Through)</div>
+    <div class="preview-row"><span>Max Revenue (all units sold)</span><span>${fmtM(maxRev)}</span></div>
+    <div class="preview-row"><span>Total Build Cost${strat.costMod?` (${(strat.costMod*100).toFixed(0)}%)`:''}  + Fixed $500K</span><span style="color:var(--red);">${fmtM(totalCost)}</span></div>
+    <div class="preview-row"><span>Max Profit (if full sell-through)</span><strong style="color:${maxProfit>=0?'var(--green)':'var(--red)'};">${fmtM(maxProfit)}</strong></div>`;
+}
+
+async function submitDevPrices() {
+  await db.collection('housing_developers').doc(sessionCode+'_'+fp()).update({
+    studioPrice:studioP, two_brPrice:twoBRP, three_brPrice:threeBRP, pricingSubmitted:true
+  });
+  pricingSubmitted=true;
+  document.getElementById('devContent').innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Prices Submitted!</h3><p>Studio: <strong>${fmtM(studioP)}</strong> | 2BR: <strong>${fmtM(twoBRP)}</strong> | 3BR: <strong>${fmtM(threeBRP)}</strong><br>Waiting for inspection day…</p></div>`;
+}
+
+// ── BUYER CONTENT ─────────────────────────────────────────
+async function renderBuyerContent(phase) {
+  const el=document.getElementById('buyerContent');
+  if(phase==='lobby'){
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🔑</div><h3>Waiting for Teacher</h3><p>You are: <strong>${buyerTypeData?.label||'Buyer'}</strong><br>Prefer: ${PROPERTIES[buyerTypeData?.pref]?.label||''}</p></div>`;
+    return;
+  }
+  if(phase==='pricing'){
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">📋</div><h3>Developers Setting Prices…</h3><p>Wait for Inspection Day to see all available properties.</p></div>`;
+    return;
+  }
+  if(phase==='viewing'){
+    if(buyingSubmitted){
+      el.innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Purchase Submitted!</h3><p>Waiting for results…</p></div>`;
+      return;
+    }
+    const snap=await db.collection('housing_developers').where('sessionCode','==',sessionCode).get();
+    const devs=snap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>d.pricingSubmitted);
+    if(!devs.length){
+      el.innerHTML=`<div class="lobby-wait"><div class="big-icon">📋</div><h3>Market Loading…</h3><p>Waiting for developers to submit prices.</p></div>`;
+      return;
+    }
+    const wt=buyerTypeData;
+    let html=`<div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:0.5rem;">🏘️ Property Market</div>
+      <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">You are: <strong>${wt.label}</strong> | Preferred: ${PROPERTIES[wt.pref]?.label||wt.pref}</div>`;
+    devs.forEach(d=>{
+      const strat=DEV_STRATEGIES[d.devStrategy]||{};
+      const wtpMod=d.devStrategy==='greenfield'?0.90:1;
+      const propTypes=Object.entries(PROPERTIES).map(([key,prop])=>{
+        let price=d[key+'Price']||0;
+        if(d.devStrategy==='affordable') price*=0.88;
+        let myWTP=getBuyerWTP(buyerTypeKey,key);
+        if(d.devStrategy==='greenfield') myWTP=Math.round(myWTP*0.90);
+        if(d.devStrategy==='premium'&&buyerTypeKey==='high_net') myWTP=Math.round(myWTP*1.15);
+        const canAfford=price>0&&price<=myWTP;
+        const surplus=canAfford?myWTP-price:0;
+        return {key,prop,price,myWTP,canAfford,surplus};
+      });
+      html+=`<div class="development-card" id="dc_${d.id}">
+        <div class="dev-name">🏗️ ${d.devName} <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">${strat.label||''}</span></div>
+        <div class="price-grid">
+          ${propTypes.map(t=>`
+            <div class="price-tile ${t.price===0?'unaffordable':t.canAfford?'affordable':'unaffordable'}"
+                 onclick="${t.canAfford?`selectProperty('${d.id}','${t.key}')`:''}"
+                 style="cursor:${t.canAfford?'pointer':'default'};">
+              <div style="font-size:0.7rem;color:var(--text-muted);">${t.prop.label}</div>
+              <div class="price-amt" style="color:${t.canAfford?'var(--green)':t.price>0?'var(--red)':'var(--text-muted)'};">${t.price?fmtM(t.price):'—'}</div>
+              <div style="font-size:0.65rem;color:var(--text-muted);">Your WTP: ${t.myWTP?fmtM(t.myWTP):'N/A'}</div>
+              ${t.canAfford?`<div style="font-size:0.65rem;color:var(--green);">Surplus: +${fmtM(t.surplus)}</div>`:''}
+            </div>`).join('')}
+        </div>
+      </div>`;
+    });
+    html+=`<div id="buyerPurchaseBtn" style="margin-top:1rem;"></div>`;
+    el.innerHTML=html;
+    return;
+  }
+  if(phase==='results'){
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏆</div><h3>Results Published!</h3><p>Check the teacher screen for final rankings.</p></div>`;
+    return;
+  }
+}
+
+let chosenDevId=null, chosenPropType=null;
+function selectProperty(devId, propType) {
+  chosenDevId=devId; chosenPropType=propType;
+  document.querySelectorAll('.development-card').forEach(el=>el.classList.remove('selected'));
+  const el=document.getElementById('dc_'+devId);
+  if(el) el.classList.add('selected');
+  const btn=document.getElementById('buyerPurchaseBtn');
+  if(btn) btn.innerHTML=`<button class="btn btn-buyer btn-full" onclick="submitBuyerPurchase()">🔑 Purchase ${PROPERTIES[propType]?.label||propType}</button>`;
+}
+
+async function submitBuyerPurchase() {
+  if(!chosenDevId||!chosenPropType) return;
+  const devSnap=await db.collection('housing_developers').doc(chosenDevId).get();
+  const dev=devSnap.data(); if(!dev) return;
+  let price=dev[chosenPropType+'Price']||0;
+  if(dev.devStrategy==='affordable') price*=0.88;
+  let myWTP=getBuyerWTP(buyerTypeKey,chosenPropType);
+  if(dev.devStrategy==='greenfield') myWTP=Math.round(myWTP*0.90);
+  if(dev.devStrategy==='premium'&&buyerTypeKey==='high_net') myWTP=Math.round(myWTP*1.15);
+  const surplus=myWTP-price;
+  price=Math.round(price);
+  await db.collection('housing_buyers').doc(sessionCode+'_'+fp()).update({
+    chosenDevId, chosenDevName:dev.devName, chosenPropType, pricePaid:price, surplus:Math.round(surplus), submitted:true
+  });
+  const soldField=chosenPropType+'Sold';
+  await db.collection('housing_developers').doc(chosenDevId).update({ [soldField]: (dev[soldField]||0)+1 });
+  buyingSubmitted=true;
+  document.getElementById('buyerContent').innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Purchase Submitted!</h3><p>Purchased: <strong>${PROPERTIES[chosenPropType]?.label}</strong> at <strong>${dev.devName}</strong><br>Price: <strong>${fmtM(price)}</strong> | Your surplus: <strong style="color:var(--green);">+${fmtM(Math.max(0,surplus))}</strong></p></div>`;
+}
+
+// ── TEACHER LISTENERS ─────────────────────────────────────
+function startDevsListener() {
+  if(devsUnsub) devsUnsub();
+  devsUnsub=db.collection('housing_developers').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    allDevs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('devCount').textContent=allDevs.length;
+    const list=document.getElementById('devList');
+    if(!allDevs.length){list.innerHTML='<span style="color:var(--text-muted);font-size:0.82rem;">Waiting…</span>';return;}
+    list.innerHTML=allDevs.map(d=>`
+      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+        <span>🏗️</span>
+        <span style="flex:1;font-weight:600;font-size:0.85rem;">${d.devName}${d.isAI?' <span style="font-size:0.7rem;color:var(--text-muted);">(AI)</span>':''}</span>
+        <span class="badge ${d.pricingSubmitted?'badge-green':'badge-gray'}">${d.pricingSubmitted?'✓ Priced':'Lobby'}</span>
+      </div>`).join('');
+    if(currentPhase==='results') showTeacherResults();
+  });
+}
+
+function startBuyersListener() {
+  if(buyersUnsub) buyersUnsub();
+  buyersUnsub=db.collection('housing_buyers').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    allBuyers=snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('buyerCount').textContent=allBuyers.length;
+    const list=document.getElementById('buyerList');
+    if(!allBuyers.length){list.innerHTML='<span style="color:var(--text-muted);font-size:0.82rem;">Waiting…</span>';return;}
+    list.innerHTML=allBuyers.map(b=>`
+      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+        <span>${(BUYER_TYPES[b.buyerType]||{}).label?.split(' ')[0]||'🔑'}</span>
+        <span style="flex:1;font-size:0.82rem;">${b.buyerLabel||b.buyerType}${b.isAI?' <span style="font-size:0.7rem;color:var(--text-muted);">(AI)</span>':''}</span>
+        <span class="badge ${b.submitted?'badge-green':'badge-gray'}">${b.submitted?'✓ Bought':'Waiting'}</span>
+      </div>`).join('');
+    if(currentPhase==='results') showTeacherResults();
+  });
+}
+
+// ── PHASE CONTROL ─────────────────────────────────────────
+async function setPhase(phase) {
+  if(phase==='viewing') await autoBookAI();
+  if(phase==='results') await calcDevProfits();
+  await db.collection('housing_market').doc(sessionCode).update({phase});
+}
+
+// ── INTERVENTIONS ─────────────────────────────────────────
+function buildInterventionGrid() {
+  const grid=document.getElementById('interventionGrid');
+  if(!grid) return;
+  grid.innerHTML=Object.entries(INTERVENTIONS).map(([key,iv])=>`
+    <button class="intervention-btn" id="ivbtn_${key}" onclick="fireIntervention('${key}')">
+      ${iv.emoji} ${iv.label}<br><span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);">${iv.desc}</span>
+    </button>`).join('');
+}
+
+function renderInterventionButtons() {
+  Object.keys(INTERVENTIONS).forEach(key=>{
+    const btn=document.getElementById('ivbtn_'+key);
+    if(!btn) return;
+    if(interventionsFired.has(key)){ btn.className='intervention-btn fired'; btn.disabled=true; }
+  });
+}
+
+async function fireIntervention(key) {
+  if(interventionsFired.has(key)) return;
+  interventionsFired.add(key);
+  const snap=await db.collection('housing_market').doc(sessionCode).get();
+  const current=(snap.data()||{}).interventions||[];
+  if(!current.includes(key)) {
+    await db.collection('housing_market').doc(sessionCode).update({interventions:[...current,key]});
+  }
+  renderInterventionButtons();
+}
+
+// ── AI BUYERS ─────────────────────────────────────────────
+function buildAIGrid() {
+  const grid=document.getElementById('aiGrid');
+  if(!grid) return;
+  grid.innerHTML=Object.entries(BUYER_TYPES).map(([key,bt])=>`
+    <div class="ai-card">
+      <strong>${bt.label}</strong>
+      <div class="ai-wtp">WTP Studio: ${fmtM(bt.wtp.studio)}</div>
+      <button class="btn btn-secondary btn-sm" onclick="spawnAI('${key}',1)">+ Spawn 1</button>
+    </div>`).join('');
+}
+
+async function spawnAI(typeKey,count) {
+  const bt=BUYER_TYPES[typeKey]; if(!bt) return;
+  for(let i=0;i<count;i++){
+    const id=sessionCode+'_ai_'+typeKey+'_'+Date.now()+'_'+i;
+    await db.collection('housing_buyers').doc(id).set({
+      sessionCode, buyerType:typeKey, buyerLabel:bt.label,
+      chosenDevId:null, chosenPropType:null, pricePaid:0, surplus:0,
+      submitted:false, isAI:true, joinedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+async function spawnAllAI() {
+  for(const key of Object.keys(BUYER_TYPES)) await spawnAI(key,1);
+}
+
+async function autoBookAI() {
+  const [aiSnap, devSnap]=await Promise.all([
+    db.collection('housing_buyers').where('sessionCode','==',sessionCode).where('isAI','==',true).get(),
+    db.collection('housing_developers').where('sessionCode','==',sessionCode).get()
+  ]);
+  const devs=devSnap.docs.map(d=>({id:d.id,...d.data()})).filter(d=>d.pricingSubmitted);
+  if(!devs.length) return;
+  const soldCount={};
+  devs.forEach(d=>{ soldCount[d.id]={studio:d.studioSold||0,two_br:d.two_brSold||0,three_br:d.three_brSold||0}; });
+  const units={};
+  devs.forEach(d=>{ units[d.id]={studio:d.studioUnits||PROPERTIES.studio.units,two_br:d.two_brUnits||PROPERTIES.two_br.units,three_br:d.three_brUnits||PROPERTIES.three_br.units}; });
+
+  for(const doc of aiSnap.docs){
+    const b=doc.data(); if(b.submitted) continue;
+    const bt=BUYER_TYPES[b.buyerType]; if(!bt) continue;
+    let bestSurplus=-1,bestDev=null,bestProp=null,bestPrice=0;
+    for(const d of devs){
+      for(const propKey of Object.keys(PROPERTIES)){
+        let price=d[propKey+'Price']||0;
+        if(d.devStrategy==='affordable') price*=0.88;
+        price=Math.round(price);
+        let wtp=getBuyerWTP(b.buyerType,propKey);
+        if(d.devStrategy==='greenfield') wtp=Math.round(wtp*0.90);
+        if(d.devStrategy==='premium'&&b.buyerType==='high_net') wtp=Math.round(wtp*1.15);
+        if(!price||price>wtp) continue;
+        const avail=units[d.id][propKey]-soldCount[d.id][propKey];
+        if(avail<=0) continue;
+        const surplus=wtp-price;
+        if(surplus>bestSurplus){bestSurplus=surplus;bestDev=d;bestProp=propKey;bestPrice=price;}
+      }
+    }
+    if(bestDev&&bestProp){
+      soldCount[bestDev.id][bestProp]++;
+      await doc.ref.update({chosenDevId:bestDev.id,chosenDevName:bestDev.devName,chosenPropType:bestProp,pricePaid:bestPrice,surplus:bestSurplus,submitted:true});
+      await db.collection('housing_developers').doc(bestDev.id).update({[bestProp+'Sold']:soldCount[bestDev.id][bestProp]});
+    }
+  }
+}
+
+async function calcDevProfits() {
+  const devSnap=await db.collection('housing_developers').where('sessionCode','==',sessionCode).get();
+  for(const doc of devSnap.docs){
+    const d=doc.data();
+    const strat=DEV_STRATEGIES[d.devStrategy]||{};
+    const costMod=d.devStrategy==='greenfield'?0.80:1;
+    const pMod=d.devStrategy==='affordable'?0.88:1;
+    let revenue=0, cost=FIXED_COST;
+    ['studio','two_br','three_br'].forEach(pt=>{
+      const sold=d[pt+'Sold']||0;
+      revenue+=sold*(d[pt+'Price']||0)*pMod;
+      cost+=sold*PROPERTIES[pt].varCost*costMod;
+    });
+    const profit=Math.round(revenue-cost);
+    await doc.ref.update({profit,revenue:Math.round(revenue)});
+  }
+}
+
+async function showTeacherResults() {
+  const resultsArea=document.getElementById('teacherResultsArea');
+  resultsArea.classList.remove('hidden');
+  const [devSnap,buyerSnap]=await Promise.all([
+    db.collection('housing_developers').where('sessionCode','==',sessionCode).get(),
+    db.collection('housing_buyers').where('sessionCode','==',sessionCode).get()
+  ]);
+  const devs=devSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.profit||0)-(a.profit||0));
+  const buyers=buyerSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.surplus||0)-(a.surplus||0));
+  const bought=buyers.filter(b=>b.submitted);
+  const unhoused=buyers.filter(b=>!b.submitted);
+  const totalSurplus=bought.reduce((s,b)=>s+(b.surplus||0),0);
+  document.getElementById('teacherResultStats').innerHTML=`
+    <div class="stat-box"><div class="stat-box-val">${bought.length}</div><div class="stat-box-lbl">Properties Sold</div></div>
+    <div class="stat-box"><div class="stat-box-val">${unhoused.length}</div><div class="stat-box-lbl">Unhoused (DWL)</div></div>
+    <div class="stat-box"><div class="stat-box-val">${fmtM(totalSurplus)}</div><div class="stat-box-lbl">Total Buyer Surplus</div></div>
+    <div class="stat-box"><div class="stat-box-val">${devs.length}</div><div class="stat-box-lbl">Developers</div></div>`;
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('devLeaderboard').innerHTML=devs.map((d,i)=>`
+    <div class="leaderboard-row">
+      <div class="leaderboard-rank">${medals[i]||i+1}</div>
+      <div><div class="leaderboard-name">${d.devName}</div><div class="leaderboard-stat">${DEV_STRATEGIES[d.devStrategy]?.label||''} · ${(d.studioSold||0)}S/${(d.two_brSold||0)}T/${(d.three_brSold||0)}H sold</div></div>
+      <div class="leaderboard-value">${fmtM(d.profit||0)}</div>
+    </div>`).join('')||'<div style="color:var(--text-muted);font-size:0.82rem;">No data yet.</div>';
+  document.getElementById('buyerLeaderboard').innerHTML=buyers.map((b,i)=>`
+    <div class="leaderboard-row">
+      <div class="leaderboard-rank">${medals[i]||i+1}</div>
+      <div><div class="leaderboard-name">${b.buyerLabel||b.buyerType}${b.isAI?' (AI)':''}</div><div class="leaderboard-stat">${b.chosenDevName||'Unhoused'} · ${b.chosenPropType?PROPERTIES[b.chosenPropType]?.label:'No purchase'}</div></div>
+      <div class="leaderboard-value" style="color:var(--green);">+${fmtM(b.surplus||0)}</div>
+    </div>`).join('')||'<div style="color:var(--text-muted);font-size:0.82rem;">No data yet.</div>';
+  // Chart: properties sold vs units by dev
+  if(marketChart){marketChart.destroy();marketChart=null;}
+  const ctx=document.getElementById('marketChart').getContext('2d');
+  marketChart=new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:devs.map(d=>d.devName),
+      datasets:[
+        {label:'Studio Sold',data:devs.map(d=>d.studioSold||0),backgroundColor:'rgba(52,211,153,0.6)',borderColor:'#34d399',borderWidth:1},
+        {label:'2BR Sold',data:devs.map(d=>d.two_brSold||0),backgroundColor:'rgba(56,189,248,0.6)',borderColor:'#38bdf8',borderWidth:1},
+        {label:'3BR Sold',data:devs.map(d=>d.three_brSold||0),backgroundColor:'rgba(251,191,36,0.6)',borderColor:'#fbbf24',borderWidth:1}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8'}},title:{display:true,text:'Properties Sold by Developer & Type',color:'#f1f5f9'}},
+      scales:{
+        x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},
+        y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}}
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>

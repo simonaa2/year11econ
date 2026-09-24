@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SkyYield Live — Airfare Yield Management Simulation</title>
+<meta name="description" content="Live classroom airfare yield management simulation. Students play airline managers and passengers in a real-time competitive market.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:#05040f; --bg-card:rgba(255,255,255,0.03); --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14); --text-primary:#f1f5f9;
+  --text-secondary:#94a3b8; --text-muted:#64748b;
+  --primary:#818cf8; --primary-dark:#6366f1; --primary-glow:rgba(129,140,248,0.18);
+  --secondary:#c084fc; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+  --blue:#38bdf8; --orange:#fb923c; --teal:#2dd4bf;
+  --airline:#38bdf8; --passenger:#34d399; --teacher:#c084fc;
+  --radius-sm:8px; --radius-md:16px; --radius-lg:24px; --radius-full:9999px;
+  --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;overflow-x:hidden;line-height:1.5;}
+.hidden{display:none!important;}
+a{color:var(--primary);text-decoration:none;}
+
+/* NAV */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:0;flex-wrap:wrap;gap:0.5rem;}
+.top-bar-title{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:900;background:linear-gradient(135deg,#38bdf8,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav-btns{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.nav-link{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-full);padding:0.35rem 0.9rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;transition:var(--transition);}
+.nav-link:hover{background:rgba(255,255,255,0.09);color:var(--text-primary);}
+
+/* SCREENS */
+.screen{min-height:100vh;padding:2rem 1rem 4rem;}
+.container{max-width:860px;margin:0 auto;}
+.container-wide{max-width:1100px;margin:0 auto;}
+
+/* PHASE PILL */
+.phase-pill{display:inline-flex;align-items:center;gap:0.5rem;padding:0.35rem 1rem;border-radius:var(--radius-full);font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;}
+.phase-lobby{background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.3);color:#94a3b8;}
+.phase-pricing{background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;}
+.phase-booking{background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34d399;}
+.phase-results{background:rgba(129,140,248,0.12);border:1px solid rgba(129,140,248,0.35);color:#818cf8;}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;}
+.card-title{font-family:'Outfit',sans-serif;font-size:1.35rem;font-weight:800;margin-bottom:0.6rem;}
+.card-subtitle{font-size:0.88rem;color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.6;}
+
+/* ROLE CARDS */
+.role-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem;}
+@media(max-width:640px){.role-grid{grid-template-columns:1fr;}}
+.role-card{background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;transition:var(--transition);text-align:center;}
+.role-card:hover{transform:translateY(-4px);}
+.role-card.airline:hover{border-color:var(--airline);background:rgba(56,189,248,0.06);}
+.role-card.passenger:hover{border-color:var(--passenger);background:rgba(52,211,153,0.06);}
+.role-card.teacher:hover{border-color:var(--teacher);background:rgba(192,132,252,0.06);}
+.role-icon{font-size:2.5rem;margin-bottom:0.6rem;}
+.role-title{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:0.3rem;}
+.role-desc{font-size:0.8rem;color:var(--text-secondary);line-height:1.4;}
+
+/* FORMS */
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:0.78rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:0.4rem;}
+.text-input,.select-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border-strong);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.7rem 1rem;font-size:0.95rem;font-family:'Inter',sans-serif;outline:none;transition:var(--transition);}
+.text-input:focus,.select-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+.select-input option{background:#1e1b4b;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.65rem 1.4rem;border-radius:var(--radius-full);font-size:0.9rem;font-weight:700;cursor:pointer;transition:var(--transition);border:none;font-family:'Inter',sans-serif;}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,0.35);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,0.5);}
+.btn-primary:disabled{opacity:0.45;transform:none;cursor:not-allowed;}
+.btn-secondary{background:rgba(255,255,255,0.06);border:1px solid var(--border-strong);color:var(--text-secondary);}
+.btn-secondary:hover{background:rgba(255,255,255,0.11);color:var(--text-primary);}
+.btn-blue{background:linear-gradient(135deg,#0284c7,#38bdf8);color:#fff;box-shadow:0 4px 14px rgba(56,189,248,0.3);}
+.btn-blue:hover{transform:translateY(-2px);}
+.btn-green{background:linear-gradient(135deg,#059669,#34d399);color:#fff;box-shadow:0 4px 14px rgba(52,211,153,0.3);}
+.btn-green:hover{transform:translateY(-2px);}
+.btn-purple{background:linear-gradient(135deg,#7c3aed,#c084fc);color:#fff;box-shadow:0 4px 14px rgba(192,132,252,0.3);}
+.btn-purple:hover{transform:translateY(-2px);}
+.btn-yellow{background:linear-gradient(135deg,#d97706,#fbbf24);color:#000;font-weight:800;}
+.btn-yellow:hover{transform:translateY(-2px);}
+.btn-full{width:100%;justify-content:center;padding:0.85rem;}
+
+/* SLIDERS */
+.slider-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;}
+.slider-label{flex:1;font-size:0.85rem;color:var(--text-secondary);}
+.slider-val{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;min-width:80px;text-align:right;}
+.range-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;outline:none;cursor:pointer;margin-top:0.3rem;}
+.range-slider.econ::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--green);box-shadow:0 0 10px rgba(52,211,153,0.5);cursor:pointer;}
+.range-slider.biz::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--blue);box-shadow:0 0 10px rgba(56,189,248,0.5);cursor:pointer;}
+.range-slider.first::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--yellow);box-shadow:0 0 10px rgba(251,191,36,0.5);cursor:pointer;}
+
+/* LIVE PREVIEW BOX */
+.preview-box{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.1rem 1.25rem;margin:1.25rem 0;}
+.preview-row{display:flex;justify-content:space-between;align-items:center;font-size:0.85rem;padding:0.3rem 0;}
+.preview-row.total{border-top:1px solid var(--border);margin-top:0.3rem;padding-top:0.6rem;font-size:0.95rem;}
+
+/* FLIGHT CARDS (passenger booking) */
+.flight-grid{display:flex;flex-direction:column;gap:1rem;margin-bottom:1.5rem;}
+.flight-card{background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;transition:var(--transition);cursor:default;}
+.flight-card.selectable{cursor:pointer;}
+.flight-card.selectable:hover{border-color:var(--teal);background:rgba(45,212,191,0.05);}
+.flight-card.selected{border-color:var(--teal);background:rgba(45,212,191,0.08);}
+.flight-airline-name{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem;}
+.cabin-row{display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;}
+.cabin-cell{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.7rem;text-align:center;cursor:pointer;transition:var(--transition);}
+.cabin-cell:hover{border-color:var(--teal);background:rgba(45,212,191,0.08);}
+.cabin-cell.booked-out{opacity:0.4;cursor:not-allowed;}
+.cabin-cell.chosen{border-color:var(--teal);background:rgba(45,212,191,0.15);}
+.cabin-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.25rem;}
+.cabin-price{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;}
+.cabin-surplus{font-size:0.72rem;margin-top:0.2rem;}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;text-align:center;}
+.stat-val{font-family:'Outfit',sans-serif;font-size:1.9rem;font-weight:800;line-height:1;}
+.stat-lbl{font-size:0.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;margin-top:0.3rem;}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;border-radius:var(--radius-sm);margin-bottom:0.5rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);}
+.lb-row.gold{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.25);}
+.lb-row.silver{background:rgba(148,163,184,0.06);border-color:rgba(148,163,184,0.2);}
+.lb-row.bronze{background:rgba(251,146,60,0.06);border-color:rgba(251,146,60,0.2);}
+.lb-rank{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;width:28px;text-align:center;flex-shrink:0;}
+.lb-name{flex:1;font-weight:600;}
+.lb-detail{font-size:0.78rem;color:var(--text-muted);}
+.lb-score{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;}
+
+/* TEACHER PANEL */
+.phase-btn-row{display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;}
+.phase-btn{padding:0.6rem 1.25rem;border-radius:var(--radius-full);font-size:0.85rem;font-weight:700;cursor:pointer;border:2px solid;transition:var(--transition);font-family:'Inter',sans-serif;background:transparent;}
+.phase-btn.lobby-btn{border-color:rgba(100,116,139,0.4);color:#94a3b8;}
+.phase-btn.pricing-btn{border-color:rgba(251,191,36,0.4);color:#fbbf24;}
+.phase-btn.booking-btn{border-color:rgba(52,211,153,0.4);color:#34d399;}
+.phase-btn.results-btn{border-color:rgba(129,140,248,0.4);color:#818cf8;}
+.phase-btn.active-btn{color:#fff!important;}
+.phase-btn.lobby-btn.active-btn{background:#475569;border-color:#475569;}
+.phase-btn.pricing-btn.active-btn{background:#d97706;border-color:#d97706;}
+.phase-btn.booking-btn.active-btn{background:#059669;border-color:#059669;}
+.phase-btn.results-btn.active-btn{background:#6366f1;border-color:#6366f1;}
+
+.ai-type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1rem;}
+.ai-type-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;font-size:0.82rem;}
+.ai-type-card strong{display:block;margin-bottom:0.2rem;}
+.ai-wtp{font-size:0.72rem;color:var(--text-muted);}
+
+/* WAITING SCREEN */
+.waiting-pulse{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 2rem;text-align:center;}
+.waiting-icon{font-size:4rem;margin-bottom:1rem;animation:floatIcon 3s ease-in-out infinite;}
+@keyframes floatIcon{0%,100%{transform:translateY(0);}50%{transform:translateY(-12px);}}
+.waiting-title{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:800;margin-bottom:0.5rem;}
+.waiting-sub{color:var(--text-secondary);font-size:0.9rem;}
+
+/* BOOKING TICKER (airline sees bookings coming in) */
+.seat-fill-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;}
+.seat-fill-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;text-align:center;}
+.seat-fill-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.4rem;}
+.seat-fill-count{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;line-height:1;}
+.seat-fill-of{font-size:0.8rem;color:var(--text-muted);}
+.fill-bar-wrap{height:6px;background:rgba(255,255,255,0.08);border-radius:3px;margin-top:0.5rem;overflow:hidden;}
+.fill-bar{height:100%;border-radius:3px;transition:width 0.5s ease;}
+
+/* SURPLUS BADGE */
+.surplus-badge{display:inline-block;padding:0.3rem 0.8rem;border-radius:var(--radius-full);font-size:0.8rem;font-weight:700;}
+.surplus-high{background:rgba(52,211,153,0.15);color:var(--green);border:1px solid rgba(52,211,153,0.3);}
+.surplus-mid{background:rgba(251,191,36,0.15);color:var(--yellow);border:1px solid rgba(251,191,36,0.3);}
+.surplus-low{background:rgba(248,113,113,0.15);color:var(--red);border:1px solid rgba(248,113,113,0.3);}
+
+/* CHART */
+.chart-wrap{position:relative;height:240px;margin-bottom:1rem;}
+
+/* MISC */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+@media(max-width:640px){.two-col{grid-template-columns:1fr;}}
+.badge{display:inline-block;padding:0.18rem 0.6rem;border-radius:var(--radius-full);font-size:0.72rem;font-weight:700;}
+.badge-blue{background:rgba(56,189,248,0.12);color:var(--blue);border:1px solid rgba(56,189,248,0.2);}
+.badge-green{background:rgba(52,211,153,0.12);color:var(--green);border:1px solid rgba(52,211,153,0.2);}
+.badge-yellow{background:rgba(251,191,36,0.12);color:var(--yellow);border:1px solid rgba(251,191,36,0.2);}
+.badge-purple{background:rgba(192,132,252,0.12);color:var(--secondary);border:1px solid rgba(192,132,252,0.2);}
+.divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-bar">
+  <div class="top-bar-title">✈️ SkyYield Live</div>
+  <div class="nav-btns">
+    <a href="index.html" class="nav-link">🏠 Hub</a>
+    <a href="market.html" class="nav-link">📈 SkyMarket</a>
+    <a href="simulations.html" class="nav-link">⚡ Simulations</a>
+    <a href="stadium.html" class="nav-link">🏟️ Stadium</a>
+  </div>
+</nav>
+
+<!-- ═══ ENTRY SCREEN ═══ -->
+<div class="screen" id="entryScreen">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:2.5rem;">
+      <div style="font-size:3.5rem;margin-bottom:0.75rem;">✈️</div>
+      <h1 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#38bdf8,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:0.6rem;">SkyYield Live</h1>
+      <p style="color:var(--text-secondary);max-width:520px;margin:0 auto;line-height:1.6;">Airfare yield management simulation. Airline managers set prices across 3 cabin classes. Passengers hunt for the best deal. The market clears in real time.</p>
+    </div>
+
+    <div class="card" style="max-width:560px;margin:0 auto;">
+      <div class="form-group">
+        <label class="form-label">Class Session Code</label>
+        <input type="text" id="entryCode" class="text-input" placeholder="e.g. 11ECO1 — ask your teacher"
+          style="text-transform:uppercase;letter-spacing:0.06em;font-size:1.1rem;"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="role-grid">
+        <div class="role-card airline" id="airlineRoleCard" onclick="chooseRole('airline')">
+          <div class="role-icon">🧑‍✈️</div>
+          <div class="role-title" style="color:var(--airline);">Airline Manager</div>
+          <div class="role-desc">Name your airline, set Economy / Business / First class prices, choose a yield strategy and compete for passengers.</div>
+          <div style="margin-top:0.75rem;font-size:0.78rem;font-weight:700;color:var(--yellow);" id="airlineSlotLabel">Loading slots…</div>
+        </div>
+        <div class="role-card passenger" id="passengerRoleCard" onclick="chooseRole('passenger')">
+          <div class="role-icon">🧳</div>
+          <div class="role-title" style="color:var(--passenger);">Passenger</div>
+          <div class="role-desc">Choose your traveller type. When booking opens, compare all airlines and pick the best deal. Score = your consumer surplus.</div>
+          <div style="margin-top:0.75rem;font-size:0.78rem;font-weight:700;color:var(--green);" id="passengerSlotLabel">Loading…</div>
+        </div>
+        <div class="role-card teacher" onclick="chooseRole('teacher')">
+          <div class="role-icon">📊</div>
+          <div class="role-title" style="color:var(--teacher);">Teacher Dashboard</div>
+          <div class="role-desc">Control the four phases, spawn AI passengers for small classes, and watch the market clear in real time.</div>
+        </div>
+      </div>
+      <div id="airlineCapWarning" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:0.75rem 1rem;font-size:0.82rem;color:#fca5a5;margin-top:0.75rem;text-align:center;"></div>
+      <div id="entryMsg" style="font-size:0.85rem;color:var(--red);text-align:center;"></div>
+
+    </div>
+
+    <!-- Concept explainer -->
+    <div style="max-width:860px;margin:2rem auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+      <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.15);border-radius:var(--radius-md);padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">💺</div>
+        <div style="font-size:0.8rem;font-weight:700;color:var(--blue);margin-bottom:0.25rem;">Yield Management</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5;">Sell the same seat at different prices to different passengers based on WTP — the core of airline pricing strategy.</div>
+      </div>
+      <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:var(--radius-md);padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">💰</div>
+        <div style="font-size:0.8rem;font-weight:700;color:var(--green);margin-bottom:0.25rem;">Consumer Surplus</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5;">What you were willing to pay minus what you actually paid. Higher surplus = better deal for the passenger.</div>
+      </div>
+      <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:var(--radius-md);padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">🏆</div>
+        <div style="font-size:0.8rem;font-weight:700;color:var(--yellow);margin-bottom:0.25rem;">Price Competition</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5;">Price too high → empty seats, lost revenue. Price too low → full plane but small profit. Find the sweet spot.</div>
+      </div>
+      <div style="background:rgba(192,132,252,0.05);border:1px solid rgba(192,132,252,0.15);border-radius:var(--radius-md);padding:1rem;">
+        <div style="font-size:1.3rem;margin-bottom:0.4rem;">⚖️</div>
+        <div style="font-size:0.8rem;font-weight:700;color:var(--secondary);margin-bottom:0.25rem;">Deadweight Loss</div>
+        <div style="font-size:0.78rem;color:var(--text-muted);line-height:1.5;">When a passenger wants a seat but the price is above their WTP — a mutually beneficial trade that doesn't happen.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AIRLINE NAME MODAL (overlays entry) ═══ -->
+<div class="screen hidden" id="airlineNameScreen">
+  <div class="container" style="max-width:480px;padding-top:4rem;">
+    <button class="btn btn-secondary" style="margin-bottom:1.5rem;" onclick="showScreen('entryScreen')">← Back</button>
+    <div class="card">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">🧑‍✈️</div>
+      <h2 class="card-title">Name Your Airline</h2>
+      <p class="card-subtitle">Choose a memorable airline name. This appears on the market board for passengers to see.</p>
+      <div class="form-group">
+        <label class="form-label">Airline Name</label>
+        <input type="text" id="airlineNameInput" class="text-input" placeholder="e.g. BlueHorizon Air, FastJet, PacificWings…" maxlength="24">
+      </div>
+      <button class="btn btn-blue btn-full" onclick="joinAsAirline()">✈️ Enter as Airline Manager →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PASSENGER TYPE SCREEN ═══ -->
+<div class="screen hidden" id="passengerTypeScreen">
+  <div class="container" style="max-width:680px;padding-top:2rem;">
+    <button class="btn btn-secondary" style="margin-bottom:1.5rem;" onclick="showScreen('entryScreen')">← Back</button>
+    <div class="card">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">🧳</div>
+      <h2 class="card-title">Choose Your Traveller Type</h2>
+      <p class="card-subtitle">Your type sets your budget (willingness to pay) for each cabin class. You'll see your consumer surplus after booking.</p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;margin-bottom:1.25rem;" id="passengerTypeGrid"></div>
+      <div id="passengerTypeMsg" style="font-size:0.85rem;color:var(--red);margin-bottom:0.75rem;"></div>
+      <button class="btn btn-green btn-full" onclick="joinAsPassenger()">🧳 Enter as Passenger →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AIRLINE SCREEN ═══ -->
+<div class="screen hidden" id="airlineScreen">
+  <div class="container" style="max-width:680px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.5rem;">
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.2rem;">Airline Manager</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:900;color:var(--airline);" id="airlineDisplayName">Your Airline</div>
+      </div>
+      <div id="airlinePhasePill" class="phase-pill phase-lobby">⏳ Lobby</div>
+    </div>
+    <div id="airlineContent"></div>
+  </div>
+</div>
+
+<!-- ═══ PASSENGER SCREEN ═══ -->
+<div class="screen hidden" id="passengerScreen">
+  <div class="container" style="max-width:720px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.5rem;">
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.2rem;">Passenger</div>
+        <div style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:900;color:var(--passenger);" id="passengerDisplayType">Traveller</div>
+      </div>
+      <div id="passengerPhasePill" class="phase-pill phase-lobby">⏳ Lobby</div>
+    </div>
+    <div id="passengerContent"></div>
+  </div>
+</div>
+
+<!-- ═══ TEACHER SCREEN ═══ -->
+<div class="screen hidden" id="teacherScreen">
+  <div class="container-wide">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.2rem;">Teacher Dashboard — <span id="teacherCodeLabel" style="color:var(--teacher);font-weight:700;"></span></div>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:900;">SkyYield Control Room</h2>
+      </div>
+      <div id="teacherPhasePill" class="phase-pill phase-lobby">⏳ Lobby</div>
+    </div>
+
+    <!-- Phase control -->
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:0.75rem;">Phase Control</div>
+      <div class="phase-btn-row">
+        <button class="phase-btn lobby-btn active-btn" id="phaseBtnLobby" onclick="setPhase('lobby')">⏳ Lobby</button>
+        <button class="phase-btn pricing-btn" id="phaseBtnPricing" onclick="setPhase('pricing')">💰 Open Pricing</button>
+        <button class="phase-btn booking-btn" id="phaseBtnBooking" onclick="setPhase('booking')">🎫 Open Booking</button>
+        <button class="phase-btn results-btn" id="phaseBtnResults" onclick="setPhase('results')">📊 Show Results</button>
+      </div>
+      <div style="font-size:0.78rem;color:var(--text-muted);">
+        <strong>Lobby</strong> → students join &nbsp;|&nbsp; <strong>Pricing</strong> → airlines set prices (passengers wait) &nbsp;|&nbsp; <strong>Booking</strong> → passengers choose (airlines watch) &nbsp;|&nbsp; <strong>Results</strong> → market clears, scorecards appear
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:1.5rem;">
+      <!-- Airlines joined -->
+      <div class="card">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--blue);margin-bottom:0.75rem;">✈️ Airlines (<span id="airlineCount">0</span>)</div>
+        <div id="airlineList" style="font-size:0.85rem;color:var(--text-muted);">Waiting for airlines to join…</div>
+      </div>
+      <!-- Passengers joined -->
+      <div class="card">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);margin-bottom:0.75rem;">🧳 Passengers (<span id="passengerCount">0</span>)</div>
+        <div id="passengerList" style="font-size:0.85rem;color:var(--text-muted);">Waiting for passengers to join…</div>
+        <hr class="divider">
+        <!-- AI spawn -->
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:0.75rem;">🤖 Spawn AI Passengers</div>
+        <div class="ai-type-grid" id="aiTypeGrid"></div>
+        <button class="btn btn-purple btn-full" style="font-size:0.82rem;" onclick="spawnAllAI()">🤖 Spawn All 5 AI Types</button>
+      </div>
+    </div>
+
+    <!-- Live results preview (shown when in results phase) -->
+    <div class="card" id="teacherResultsCard" style="display:none;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--primary);margin-bottom:1rem;">📊 Live Market Results</div>
+      <div id="teacherResultsContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ RESULTS SCREEN ═══ -->
+<div class="screen hidden" id="resultsScreen">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div style="font-size:3rem;margin-bottom:0.5rem;">📊</div>
+      <h2 style="font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,#38bdf8,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Market Results</h2>
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-top:0.25rem;" id="resultsCode"></div>
+    </div>
+    <div id="resultsContent"></div>
+  </div>
+</div>
+
+<script>
+// ── FIREBASE ─────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain:"www.datatrends.com.au",
+  projectId:"maths-f3c6d",
+  storageBucket:"maths-f3c6d.appspot.com",
+  messagingSenderId:"731995338466",
+  appId:"1:731995338466:web:71a88e716a8e75d7cc4b44"
+});
+const db = firebase.firestore();
+
+// ── STATE ─────────────────────────────────────────────────
+let sessionCode = '', userRole = '', airlineName = '', passengerTypeKey = '';
+let currentPhase = 'lobby';
+let myPassengerType = null;
+let phaseUnsub = null, airlinesUnsub = null, passengersUnsub = null;
+let chosenAirline = null, chosenCabin = null;
+let submitted = false;
+let allAirlines = [], allPassengers = [];
+
+// ── PASSENGER TYPES ───────────────────────────────────────
+const PASSENGER_TYPES = {
+  business: {
+    label: '💼 Business Traveller', short: 'Business',
+    desc: 'Time-sensitive, price-insensitive. Needs a proper seat.',
+    wtp: { econ: 650, biz: 3800, first: 9000 },
+    pref: 'biz', color: 'var(--blue)'
+  },
+  leisure: {
+    label: '🌴 Leisure Traveller', short: 'Leisure',
+    desc: 'Holiday maker. Price-conscious, fine with Economy.',
+    wtp: { econ: 480, biz: 1200, first: 2500 },
+    pref: 'econ', color: 'var(--green)'
+  },
+  family: {
+    label: '👨‍👩‍👧 Family Group', short: 'Family',
+    desc: 'Budget-focused. Economy only, very price-sensitive.',
+    wtp: { econ: 360, biz: 0, first: 0 },
+    pref: 'econ', color: 'var(--orange)'
+  },
+  student: {
+    label: '🎓 Student Backpacker', short: 'Student',
+    desc: 'Absolute cheapest Economy seat only.',
+    wtp: { econ: 260, biz: 0, first: 0 },
+    pref: 'econ', color: 'var(--yellow)'
+  },
+  corporate: {
+    label: '💰 Corporate Account', short: 'Corporate',
+    desc: 'Company-funded. Prefers First or Business regardless of price.',
+    wtp: { econ: 700, biz: 5000, first: 13000 },
+    pref: 'first', color: 'var(--secondary)'
+  }
+};
+
+// ── SEAT CAPACITY & COSTS ─────────────────────────────────
+const SEATS = { econ: 150, biz: 30, first: 10 };
+const FIXED_COST = 52000; // per flight
+
+// ── HELPERS ──────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0, 0);
+}
+function fp() {
+  return btoa([navigator.language, screen.width + 'x' + screen.height, navigator.platform, Intl.DateTimeFormat().resolvedOptions().timeZone].join('|'));
+}
+
+// ── ENTRY ROLE COUNTER ──────────────────────────────────
+const MAX_AIRLINES = 4;
+let entryAirUnsub = null, entryPassUnsub = null;
+
+function watchAirfareRoleCounts() {
+  const code = document.getElementById('entryCode').value.trim().toUpperCase();
+  if (!code || code.length < 2) return;
+  if (entryAirUnsub) entryAirUnsub();
+  if (entryPassUnsub) entryPassUnsub();
+  entryAirUnsub = db.collection('airfare_airlines').where('sessionCode','==',code).onSnapshot(snap => {
+    const count = snap.docs.filter(d => !d.data().isAI).length;
+    const full = count >= MAX_AIRLINES;
+    const label = document.getElementById('airlineSlotLabel');
+    const card  = document.getElementById('airlineRoleCard');
+    const warn  = document.getElementById('airlineCapWarning');
+    label.textContent = full ? `🔴 Full (${count}/${MAX_AIRLINES} airlines joined)` : `🟢 ${count}/${MAX_AIRLINES} airlines joined`;
+    label.style.color = full ? 'var(--red)' : 'var(--yellow)';
+    card.style.opacity = full ? '0.5' : '1';
+    card.style.cursor  = full ? 'not-allowed' : 'pointer';
+    if (full) { warn.style.display='block'; warn.textContent='⚠️ Airline slots are full. Please join as a Passenger instead.'; }
+    else { warn.style.display='none'; }
+  });
+  entryPassUnsub = db.collection('airfare_passengers').where('sessionCode','==',code).onSnapshot(snap => {
+    const count = snap.docs.filter(d => !d.data().isAI).length;
+    document.getElementById('passengerSlotLabel').textContent = `🧳 ${count} passenger${count!==1?'s':''} joined`;
+  });
+}
+
+document.getElementById('entryCode').addEventListener('input', function(){
+  this.value = this.value.toUpperCase();
+  if (this.value.length >= 2) watchAirfareRoleCounts();
+});
+
+// ── ENTRY / ROLE SELECTION ────────────────────────────────
+function chooseRole(role) {
+  const code = document.getElementById('entryCode').value.trim().toUpperCase();
+  if (!code) { document.getElementById('entryMsg').textContent = 'Enter a class code first.'; return; }
+  if (role === 'airline') {
+    const card = document.getElementById('airlineRoleCard');
+    if (card.style.opacity === '0.5') { document.getElementById('entryMsg').textContent = '⚠️ Airline slots full — please join as a Passenger.'; return; }
+  }
+  document.getElementById('entryMsg').textContent = '';
+  sessionCode = code;
+  userRole = role;
+  if (role === 'airline') { showScreen('airlineNameScreen'); return; }
+  if (role === 'passenger') { buildPassengerTypeGrid(); showScreen('passengerTypeScreen'); return; }
+  if (role === 'teacher') { joinAsTeacher(); return; }
+}
+
+function fmtMoney(n) { return '$' + Math.round(n).toLocaleString(); }
+function getPhasePillClass(p) {
+  return { lobby: 'phase-lobby', pricing: 'phase-pricing', booking: 'phase-booking', results: 'phase-results' }[p] || 'phase-lobby';
+}
+function getPhasePillText(p) {
+  return { lobby: '⏳ Lobby', pricing: '💰 Pricing Open', booking: '🎫 Booking Open', results: '📊 Results' }[p] || '⏳ Lobby';
+}
+function updatePhasePill(id, phase) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = 'phase-pill ' + getPhasePillClass(phase);
+  el.textContent = getPhasePillText(phase);
+}
+
+// (duplicate chooseRole removed — slot cap guard preserved in the first definition above)
+
+function buildPassengerTypeGrid() {
+  const grid = document.getElementById('passengerTypeGrid');
+  grid.innerHTML = '';
+  Object.entries(PASSENGER_TYPES).forEach(([key, pt]) => {
+    const card = document.createElement('div');
+    card.className = 'role-card passenger';
+    card.style.textAlign = 'left';
+    card.style.padding = '1rem';
+    card.dataset.key = key;
+    card.onclick = () => {
+      document.querySelectorAll('#passengerTypeGrid .role-card').forEach(c => c.style.borderColor = 'var(--border)');
+      card.style.borderColor = pt.color;
+      passengerTypeKey = key;
+    };
+    card.innerHTML = `<div style="font-size:1.4rem;margin-bottom:0.35rem;">${pt.label.split(' ')[0]}</div>
+      <div style="font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:800;color:${pt.color};margin-bottom:0.2rem;">${pt.label.slice(pt.label.indexOf(' ')+1)}</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);line-height:1.4;margin-bottom:0.5rem;">${pt.desc}</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">
+        Econ WTP: <strong style="color:var(--text-secondary);">${pt.wtp.econ?fmtMoney(pt.wtp.econ):'—'}</strong> &nbsp;
+        Biz: <strong style="color:var(--text-secondary);">${pt.wtp.biz?fmtMoney(pt.wtp.biz):'—'}</strong> &nbsp;
+        First: <strong style="color:var(--text-secondary);">${pt.wtp.first?fmtMoney(pt.wtp.first):'—'}</strong>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+async function joinAsAirline() {
+  const name = document.getElementById('airlineNameInput').value.trim();
+  if (!name) { alert('Please enter an airline name.'); return; }
+  if (name.length > 24) { alert('Name too long (max 24 chars).'); return; }
+  airlineName = name;
+  document.getElementById('airlineDisplayName').textContent = airlineName;
+  // Register in Firestore
+  await db.collection('airfare_airlines').doc(sessionCode + '_' + fp()).set({
+    sessionCode, airlineName, submitted: false, joinedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    econPrice: 450, bizPrice: 1800, firstPrice: 6500, strategy: 'dynamic',
+    econBookings: 0, bizBookings: 0, firstBookings: 0, isAI: false
+  }, { merge: true });
+  startPhaseListener();
+  showScreen('airlineScreen');
+  renderAirlineContent('lobby');
+}
+
+async function joinAsPassenger() {
+  if (!passengerTypeKey) { document.getElementById('passengerTypeMsg').textContent = 'Please select a traveller type.'; return; }
+  myPassengerType = PASSENGER_TYPES[passengerTypeKey];
+  document.getElementById('passengerDisplayType').textContent = myPassengerType.label;
+  await db.collection('airfare_passengers').doc(sessionCode + '_' + fp()).set({
+    sessionCode, passengerType: passengerTypeKey, passengerLabel: myPassengerType.label,
+    chosenAirline: null, chosenCabin: null, pricePaid: 0, surplus: 0,
+    submitted: false, isAI: false, joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  startPhaseListener();
+  showScreen('passengerScreen');
+  renderPassengerContent('lobby');
+}
+
+
+function joinAsTeacher() {
+  // PIN gate — show modal
+  document.getElementById('teacherPinOverlay').classList.remove('hidden');
+  document.getElementById('teacherPinInput').value = '';
+  document.getElementById('teacherPinInput').focus();
+  document.getElementById('teacherPinMsg').textContent = '';
+}
+
+async function confirmTeacherPin() {
+  const entered = document.getElementById('teacherPinInput').value.trim();
+  if (entered !== '1982') {
+    document.getElementById('teacherPinMsg').textContent = '❌ Incorrect PIN. Try again.';
+    document.getElementById('teacherPinInput').value = '';
+    document.getElementById('teacherPinInput').focus();
+    return;
+  }
+  document.getElementById('teacherPinOverlay').classList.add('hidden');
+  document.getElementById('teacherCodeLabel').textContent = sessionCode;
+  await db.collection('airfare_market').doc(sessionCode).set({
+    phase: 'lobby', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true });
+  startPhaseListener();
+  startAirlinesListener();
+  startPassengersListener();
+  showScreen('teacherScreen');
+  buildAITypeGrid();
+}
+
+// ── PHASE LISTENER ────────────────────────────────────────
+function startPhaseListener() {
+  if (phaseUnsub) phaseUnsub();
+  phaseUnsub = db.collection('airfare_market').doc(sessionCode).onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data();
+    currentPhase = data.phase || 'lobby';
+    onPhaseChange(currentPhase);
+  });
+}
+
+function onPhaseChange(phase) {
+  updatePhasePill('airlinePhasePill', phase);
+  updatePhasePill('passengerPhasePill', phase);
+  updatePhasePill('teacherPhasePill', phase);
+  // Update phase buttons
+  ['lobby','pricing','booking','results'].forEach(p => {
+    const btn = document.getElementById('phaseBtn' + p.charAt(0).toUpperCase() + p.slice(1));
+    if (btn) btn.classList.toggle('active-btn', p === phase);
+  });
+  if (userRole === 'airline') renderAirlineContent(phase);
+  if (userRole === 'passenger') renderPassengerContent(phase);
+  if (userRole === 'teacher') {
+    const rc = document.getElementById('teacherResultsCard');
+    if (rc) rc.style.display = phase === 'results' ? 'block' : 'none';
+    if (phase === 'results') renderTeacherResults();
+  }
+  if (phase === 'results' && userRole !== 'teacher') {
+    document.getElementById('resultsCode').textContent = 'Session: ' + sessionCode;
+    showScreen('resultsScreen');
+    renderResultsScreen();
+  }
+}
+
+// ── TEACHER CONTROLS ──────────────────────────────────────
+async function saveAirfareSnapshot() {
+  try {
+    const airlines   = allAirlines.filter(a => !a.isAI);
+    const passengers = allPassengers.filter(p => !p.isAI);
+
+    const strategyBreakdown = {}, passengerTypeBreakdown = {}, cabinBreakdown = {};
+    airlines.forEach(a   => { strategyBreakdown[a.strategy||'dynamic'] = (strategyBreakdown[a.strategy||'dynamic']||0)+1; });
+    passengers.forEach(p => { passengerTypeBreakdown[p.passengerType] = (passengerTypeBreakdown[p.passengerType]||0)+1; });
+    passengers.forEach(p => { if(p.chosenCabin) cabinBreakdown[p.chosenCabin] = (cabinBreakdown[p.chosenCabin]||0)+1; });
+
+    const bookedPassengers = passengers.filter(p => p.chosenAirline);
+    const pricedOutCount   = passengers.filter(p => !p.chosenAirline).length;
+    const totalRevenue     = passengers.reduce((s,p) => s + (p.pricePaid||0), 0);
+    const totalSurplus     = passengers.reduce((s,p) => s + (p.surplus||0), 0);
+    const avgEconPrice     = airlines.length ? Math.round(airlines.reduce((s,a)=>s+(a.econPrice||0),0)/airlines.length) : 0;
+    const avgBizPrice      = airlines.length ? Math.round(airlines.reduce((s,a)=>s+(a.bizPrice||0),0)/airlines.length) : 0;
+
+    const snapshot = {
+      simType: 'airfare',
+      sessionCode,
+      savedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      airlineCount: airlines.length,
+      passengerCount: passengers.length,
+      bookedCount: bookedPassengers.length,
+      pricedOutCount,
+      totalRevenue,
+      totalSurplus,
+      avgEconPrice,
+      avgBizPrice,
+      strategyBreakdown,
+      passengerTypeBreakdown,
+      cabinBreakdown,
+      econPrices: airlines.map(a => a.econPrice||0),
+      bizPrices:  airlines.map(a => a.bizPrice||0),
+      airlines: airlines.map(a => ({name:a.airlineName, strategy:a.strategy||'dynamic', econ:a.econPrice||0, biz:a.bizPrice||0, first:a.firstPrice||0, econBookings:a.econBookings||0, bizBookings:a.bizBookings||0, firstBookings:a.firstBookings||0})),
+      passengers: passengers.map(p => ({type:p.passengerType, airline:p.chosenAirline, cabin:p.chosenCabin, paid:p.pricePaid||0, surplus:p.surplus||0, booked:!!p.chosenAirline}))
+    };
+    const docId = `airfare_${sessionCode}_${Date.now()}`;
+    await db.collection('sim_results').doc(docId).set(snapshot);
+    console.log('✅ Airfare snapshot saved:', docId);
+  } catch(e) {
+    console.warn('Airfare snapshot save failed (non-critical):', e.message);
+  }
+}
+
+async function setPhase(phase) {
+  await db.collection('airfare_market').doc(sessionCode).set({ phase }, { merge: true });
+  if (phase === 'booking') autoBookAI();
+  if (phase === 'results') saveAirfareSnapshot();
+}
+
+function startAirlinesListener() {
+  if (airlinesUnsub) airlinesUnsub();
+  airlinesUnsub = db.collection('airfare_airlines')
+    .where('sessionCode', '==', sessionCode)
+    .onSnapshot(snap => {
+      allAirlines = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      document.getElementById('airlineCount').textContent = allAirlines.length;
+      const list = document.getElementById('airlineList');
+      if (!allAirlines.length) { list.innerHTML = '<span style="color:var(--text-muted);">Waiting for airlines to join…</span>'; return; }
+      list.innerHTML = allAirlines.map(a => `
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+          <span>✈️</span>
+          <span style="flex:1;font-weight:600;">${a.airlineName}${a.isAI ? ' <span style="font-size:0.7rem;color:var(--text-muted);">(AI)</span>' : ''}</span>
+          <span class="badge ${a.submitted ? 'badge-green' : 'badge-blue'}">${a.submitted ? '✓ Prices set' : 'Waiting'}</span>
+        </div>`).join('');
+      if (currentPhase === 'results') renderTeacherResults();
+    });
+}
+
+function startPassengersListener() {
+  if (passengersUnsub) passengersUnsub();
+  passengersUnsub = db.collection('airfare_passengers')
+    .where('sessionCode', '==', sessionCode)
+    .onSnapshot(snap => {
+      allPassengers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      document.getElementById('passengerCount').textContent = allPassengers.length;
+      const list = document.getElementById('passengerList');
+      if (!allPassengers.length) { list.innerHTML = '<span style="color:var(--text-muted);">Waiting for passengers…</span>'; return; }
+      list.innerHTML = allPassengers.map(p => `
+        <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+          <span>${(PASSENGER_TYPES[p.passengerType] || {}).label?.split(' ')[0] || '🧳'}</span>
+          <span style="flex:1;font-size:0.83rem;">${p.passengerLabel || p.passengerType}${p.isAI ? ' <span style="font-size:0.7rem;color:var(--text-muted);">(AI)</span>' : ''}</span>
+          <span class="badge ${p.submitted ? 'badge-green' : 'badge-blue'}">${p.submitted ? '✓ Booked' : 'Waiting'}</span>
+        </div>`).join('');
+      if (currentPhase === 'results') renderTeacherResults();
+    });
+}
+
+function buildAITypeGrid() {
+  const grid = document.getElementById('aiTypeGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(PASSENGER_TYPES).map(([key, pt]) => `
+    <div class="ai-type-card">
+      <strong>${pt.label}</strong>
+      <div class="ai-wtp">Econ: ${pt.wtp.econ ? fmtMoney(pt.wtp.econ) : '—'} | Biz: ${pt.wtp.biz ? fmtMoney(pt.wtp.biz) : '—'} | First: ${pt.wtp.first ? fmtMoney(pt.wtp.first) : '—'}</div>
+      <button class="btn btn-secondary" style="font-size:0.72rem;padding:0.3rem 0.75rem;margin-top:0.5rem;" onclick="spawnAI('${key}',1)">+ Spawn 1</button>
+    </div>`).join('');
+}
+
+async function spawnAI(typeKey, count) {
+  const pt = PASSENGER_TYPES[typeKey];
+  for (let i = 0; i < count; i++) {
+    const id = sessionCode + '_ai_' + typeKey + '_' + Date.now() + '_' + i;
+    await db.collection('airfare_passengers').doc(id).set({
+      sessionCode, passengerType: typeKey, passengerLabel: pt.label,
+      chosenAirline: null, chosenCabin: null, pricePaid: 0, surplus: 0,
+      submitted: false, isAI: true, joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+async function spawnAllAI() {
+  for (const [key] of Object.entries(PASSENGER_TYPES)) await spawnAI(key, 2);
+}
+
+// AI auto-booking: finds best surplus option for each AI passenger
+async function autoBookAI() {
+  const [aiSnap, airlineSnap] = await Promise.all([
+    db.collection('airfare_passengers').where('sessionCode', '==', sessionCode).where('isAI', '==', true).get(),
+    db.collection('airfare_airlines').where('sessionCode', '==', sessionCode).get()
+  ]);
+  const airlines = airlineSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+  if (!airlines.length) return;
+  const bookingCount = {};
+  airlines.forEach(a => { bookingCount[a.id] = { econ: a.econBookings || 0, biz: a.bizBookings || 0, first: a.firstBookings || 0 }; });
+
+  for (const doc of aiSnap.docs) {
+    const p = doc.data();
+    const pt = PASSENGER_TYPES[p.passengerType];
+    if (!pt || p.submitted) continue;
+    let bestSurplus = -1, bestAirline = null, bestCabin = null, bestPrice = 0;
+    for (const a of airlines) {
+      const cabins = [
+        { key: 'econ', price: a.econPrice, seats: SEATS.econ, booked: bookingCount[a.id].econ },
+        { key: 'biz', price: a.bizPrice, seats: SEATS.biz, booked: bookingCount[a.id].biz },
+        { key: 'first', price: a.firstPrice, seats: SEATS.first, booked: bookingCount[a.id].first },
+      ];
+      for (const c of cabins) {
+        const wtp = pt.wtp[c.key] || 0;
+        if (!wtp || c.price > wtp || c.booked >= c.seats) continue;
+        const surplus = wtp - c.price;
+        if (surplus > bestSurplus) { bestSurplus = surplus; bestAirline = a; bestCabin = c.key; bestPrice = c.price; }
+      }
+    }
+    if (bestAirline && bestCabin) {
+      bookingCount[bestAirline.id][bestCabin]++;
+      await db.collection('airfare_passengers').doc(doc.id).update({
+        chosenAirline: bestAirline.airlineName, chosenCabin: bestCabin,
+        pricePaid: bestPrice, surplus: bestSurplus, submitted: true
+      });
+      await db.collection('airfare_airlines').doc(bestAirline.id).update({
+        econBookings: bookingCount[bestAirline.id].econ,
+        bizBookings: bookingCount[bestAirline.id].biz,
+        firstBookings: bookingCount[bestAirline.id].first,
+      });
+    }
+  }
+}
+
+// ── AIRLINE CONTENT ───────────────────────────────────────
+function renderAirlineContent(phase) {
+  const el = document.getElementById('airlineContent');
+  if (phase === 'lobby') {
+    el.innerHTML = `<div class="waiting-pulse">
+      <div class="waiting-icon">⏳</div>
+      <div class="waiting-title">Waiting in the Gate</div>
+      <div class="waiting-sub">Your teacher will open the Pricing phase shortly. Prepare your strategy.</div>
+    </div>`;
+  } else if (phase === 'pricing') {
+    renderAirlinePricingForm(el);
+    startAirlineBookingsListener();
+  } else if (phase === 'booking') {
+    renderAirlineBookingWatch(el);
+    startAirlineBookingsListener();
+  } else if (phase === 'results') {
+    showScreen('resultsScreen');
+    renderResultsScreen();
+  }
+}
+
+let econP = 450, bizP = 1800, firstP = 6500;
+
+function renderAirlinePricingForm(el) {
+  if (submitted) {
+    el.innerHTML = `<div class="card"><div style="text-align:center;padding:2rem;">
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;">✅</div>
+      <div style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:0.5rem;">Prices Submitted!</div>
+      <div style="color:var(--text-muted);font-size:0.88rem;">Waiting for teacher to open booking. Passengers will start choosing soon.</div>
+    </div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div class="card">
+      <h2 class="card-title">💰 Set Your Prices</h2>
+      <p class="card-subtitle">Set Economy, Business and First Class prices. Price too high → empty seats. Too low → full plane, little profit. Choose wisely.</p>
+
+      <div class="form-group">
+        <label class="form-label">Yield Strategy</label>
+        <select id="airlineStrategy" class="select-input" onchange="updateAirlinePreview()">
+          <option value="dynamic">Dynamic Yield — adjusts mix to fill rate (industry standard)</option>
+          <option value="skimming">Price Skimming — premium prices, targets high-WTP passengers first</option>
+          <option value="penetration">Penetration Pricing — low Economy price to fill seats quickly (+20% economy demand)</option>
+          <option value="costplus">Cost-Plus — fixed markup on costs, predictable but less optimal</option>
+          <option value="budget">Budget LCC — ultra-low Economy, charges for everything else</option>
+        </select>
+      </div>
+
+      <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.25rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--green);margin-bottom:0.75rem;">💺 Economy — ${SEATS.econ} seats</div>
+        <div class="slider-row">
+          <div class="slider-label">Price per seat</div>
+          <div class="slider-val" id="econVal" style="color:var(--green);">$450</div>
+        </div>
+        <input type="range" id="econSlider" class="range-slider econ" min="150" max="1500" step="10" value="450"
+          oninput="econP=+this.value;document.getElementById('econVal').textContent=fmtMoney(econP);updateAirlinePreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$150</span><span>$1,500</span></div>
+      </div>
+
+      <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.25rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:0.75rem;">🛋️ Business Class — ${SEATS.biz} seats</div>
+        <div class="slider-row">
+          <div class="slider-label">Price per seat</div>
+          <div class="slider-val" id="bizVal" style="color:var(--blue);">$1,800</div>
+        </div>
+        <input type="range" id="bizSlider" class="range-slider biz" min="500" max="8000" step="50" value="1800"
+          oninput="bizP=+this.value;document.getElementById('bizVal').textContent=fmtMoney(bizP);updateAirlinePreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$500</span><span>$8,000</span></div>
+      </div>
+
+      <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.25rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--yellow);margin-bottom:0.75rem;">✨ First Class — ${SEATS.first} seats</div>
+        <div class="slider-row">
+          <div class="slider-label">Price per seat</div>
+          <div class="slider-val" id="firstVal" style="color:var(--yellow);">$6,500</div>
+        </div>
+        <input type="range" id="firstSlider" class="range-slider first" min="2000" max="20000" step="100" value="6500"
+          oninput="firstP=+this.value;document.getElementById('firstVal').textContent=fmtMoney(firstP);updateAirlinePreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$2,000</span><span>$20,000</span></div>
+      </div>
+
+      <div class="preview-box" id="airlinePreview"></div>
+
+      <button class="btn btn-blue btn-full" onclick="submitAirlinePrices()">✈️ Submit Prices to Market</button>
+    </div>`;
+  updateAirlinePreview();
+}
+
+// Strategy demand multipliers — applied to projected seat demand in preview & profit calc
+const STRATEGY_MULTIPLIERS = {
+  dynamic:     { econ: 1.08, biz: 1.08, first: 1.08 }, // balanced boost
+  skimming:    { econ: 0.85, biz: 1.15, first: 1.15 }, // fewer econ buyers, more premium
+  penetration: { econ: 1.20, biz: 1.00, first: 0.90 }, // economy demand +20% (as advertised)
+  costplus:    { econ: 1.00, biz: 1.00, first: 1.00 }, // no multiplier — baseline
+  budget:      { econ: 1.40, biz: 0.80, first: 0.60 }, // economy surge, premium gutted
+};
+
+function getStrategyMult(strategy) {
+  return STRATEGY_MULTIPLIERS[strategy] || STRATEGY_MULTIPLIERS.costplus;
+}
+
+function updateAirlinePreview() {
+  const el = document.getElementById('airlinePreview');
+  if (!el) return;
+  const strategy = document.getElementById('airlineStrategy')?.value || 'dynamic';
+  const sm = getStrategyMult(strategy);
+  // Variable cost scales with ACTUAL projected bookings, not all seats
+  const projEcon  = Math.round(SEATS.econ  * sm.econ);
+  const projBiz   = Math.round(SEATS.biz   * sm.biz);
+  const projFirst = Math.round(SEATS.first * sm.first);
+  const varCost   = (projEcon * 80) + (projBiz * 200) + (projFirst * 400);
+  const totalCost = FIXED_COST + varCost;
+  const maxRevenue = (Math.min(projEcon,SEATS.econ) * econP) + (Math.min(projBiz,SEATS.biz) * bizP) + (Math.min(projFirst,SEATS.first) * firstP);
+  const maxProfit = maxRevenue - totalCost;
+    <div class="preview-row"><span>Business (${SEATS.biz} × ${fmtMoney(bizP)})</span><strong style="color:var(--blue);">${fmtMoney(SEATS.biz * bizP)}</strong></div>
+    <div class="preview-row"><span>First (${SEATS.first} × ${fmtMoney(firstP)})</span><strong style="color:var(--yellow);">${fmtMoney(SEATS.first * firstP)}</strong></div>
+    <div class="preview-row"><span>Total operating cost</span><strong style="color:var(--red);">-${fmtMoney(totalCost)}</strong></div>
+    <div class="preview-row total"><span><strong>Max possible profit (if sold out)</strong></span><strong style="color:${maxProfit>0?'var(--green)':'var(--red)'};">${fmtMoney(maxProfit)}</strong></div>`;
+}
+
+async function submitAirlinePrices() {
+  const strategy = document.getElementById('airlineStrategy')?.value || 'dynamic';
+  await db.collection('airfare_airlines').doc(sessionCode + '_' + fp()).update({
+    econPrice: econP, bizPrice: bizP, firstPrice: firstP, strategy, submitted: true
+  });
+  submitted = true;
+  renderAirlinePricingForm(document.getElementById('airlineContent'));
+}
+
+function renderAirlineBookingWatch(el) {
+  el.innerHTML = `
+    <div class="card">
+      <h2 class="card-title">🎫 Booking Is Open!</h2>
+      <p class="card-subtitle">Passengers are choosing airlines now. Watch your seats fill up in real time.</p>
+      <div class="seat-fill-grid">
+        <div class="seat-fill-card">
+          <div class="seat-fill-label" style="color:var(--green);">💺 Economy</div>
+          <div class="seat-fill-count" style="color:var(--green);" id="watchEcon">0</div>
+          <div class="seat-fill-of">of ${SEATS.econ} seats</div>
+          <div class="fill-bar-wrap"><div class="fill-bar" id="barEcon" style="background:var(--green);width:0%;"></div></div>
+        </div>
+        <div class="seat-fill-card">
+          <div class="seat-fill-label" style="color:var(--blue);">🛋️ Business</div>
+          <div class="seat-fill-count" style="color:var(--blue);" id="watchBiz">0</div>
+          <div class="seat-fill-of">of ${SEATS.biz} seats</div>
+          <div class="fill-bar-wrap"><div class="fill-bar" id="barBiz" style="background:var(--blue);width:0%;"></div></div>
+        </div>
+        <div class="seat-fill-card">
+          <div class="seat-fill-label" style="color:var(--yellow);">✨ First</div>
+          <div class="seat-fill-count" style="color:var(--yellow);" id="watchFirst">0</div>
+          <div class="seat-fill-of">of ${SEATS.first} seats</div>
+          <div class="fill-bar-wrap"><div class="fill-bar" id="barFirst" style="background:var(--yellow);width:0%;"></div></div>
+        </div>
+      </div>
+      <div style="font-size:0.82rem;color:var(--text-muted);text-align:center;">Updating live as passengers book…</div>
+    </div>`;
+}
+
+let airlineBookingsUnsub = null;
+function startAirlineBookingsListener() {
+  if (airlineBookingsUnsub) airlineBookingsUnsub();
+  airlineBookingsUnsub = db.collection('airfare_airlines')
+    .doc(sessionCode + '_' + fp())
+    .onSnapshot(snap => {
+      if (!snap.exists) return;
+      const d = snap.data();
+      const eB = d.econBookings || 0, bB = d.bizBookings || 0, fB = d.firstBookings || 0;
+      const we = document.getElementById('watchEcon'), wb = document.getElementById('watchBiz'), wf = document.getElementById('watchFirst');
+      if (we) we.textContent = eB;
+      if (wb) wb.textContent = bB;
+      if (wf) wf.textContent = fB;
+      const be = document.getElementById('barEcon'), bb = document.getElementById('barBiz'), bf = document.getElementById('barFirst');
+      if (be) be.style.width = Math.min(100, eB / SEATS.econ * 100) + '%';
+      if (bb) bb.style.width = Math.min(100, bB / SEATS.biz * 100) + '%';
+      if (bf) bf.style.width = Math.min(100, fB / SEATS.first * 100) + '%';
+    });
+}
+
+// ── PASSENGER CONTENT ─────────────────────────────────────
+function renderPassengerContent(phase) {
+  const el = document.getElementById('passengerContent');
+  if (phase === 'lobby' || phase === 'pricing') {
+    const msg = phase === 'lobby' ? 'Your teacher will open pricing shortly…' : 'Airlines are setting their prices. Booking opens soon!';
+    const icon = phase === 'lobby' ? '⏳' : '💰';
+    el.innerHTML = `<div class="waiting-pulse">
+      <div class="waiting-icon">${icon}</div>
+      <div class="waiting-title">${phase === 'lobby' ? 'Waiting in the Terminal' : 'Airlines Are Pricing Now'}</div>
+      <div class="waiting-sub">${msg}</div>
+    </div>`;
+  } else if (phase === 'booking') {
+    renderPassengerBooking(el);
+  } else if (phase === 'results') {
+    showScreen('resultsScreen');
+    renderResultsScreen();
+  }
+}
+
+let passengerAirlinesUnsub = null;
+function renderPassengerBooking(el) {
+  if (submitted) {
+    el.innerHTML = `<div class="card"><div style="text-align:center;padding:2rem;">
+      <div style="font-size:2.5rem;margin-bottom:0.75rem;">✅</div>
+      <div style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:0.5rem;">Booking Confirmed!</div>
+      <div style="color:var(--text-muted);font-size:0.88rem;">Waiting for results. Your consumer surplus will be revealed.</div>
+    </div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="background:rgba(52,211,153,0.06);border:1px solid rgba(52,211,153,0.2);border-radius:var(--radius-md);padding:1rem 1.25rem;margin-bottom:1.25rem;font-size:0.85rem;">
+      <strong style="color:var(--green);">🧳 Your budget (WTP):</strong>
+      Economy: <strong>${myPassengerType?.wtp.econ ? fmtMoney(myPassengerType.wtp.econ) : '—'}</strong> &nbsp;|&nbsp;
+      Business: <strong>${myPassengerType?.wtp.biz ? fmtMoney(myPassengerType.wtp.biz) : '—'}</strong> &nbsp;|&nbsp;
+      First: <strong>${myPassengerType?.wtp.first ? fmtMoney(myPassengerType.wtp.first) : '—'}</strong><br>
+      <span style="color:var(--text-muted);font-size:0.78rem;">Choose the cabin where price ≤ your WTP. Consumer surplus = WTP – price paid.</span>
+    </div>
+    <div class="flight-grid" id="flightGrid"><div style="color:var(--text-muted);padding:1rem;">Loading airlines…</div></div>
+    <div id="passengerBookMsg" style="color:var(--red);font-size:0.85rem;margin-bottom:0.75rem;"></div>
+    <button class="btn btn-green btn-full" onclick="submitPassengerBooking()" id="bookBtn">🎫 Confirm Booking</button>`;
+
+  if (passengerAirlinesUnsub) passengerAirlinesUnsub();
+  passengerAirlinesUnsub = db.collection('airfare_airlines')
+    .where('sessionCode', '==', sessionCode)
+    .where('submitted', '==', true)
+    .onSnapshot(snap => {
+      const airlines = snap.docs.map(d => ({ id: d.id, ...d.data() })).filter(a => !a.isAI);
+      renderFlightGrid(airlines);
+    });
+}
+
+function renderFlightGrid(airlines) {
+  const grid = document.getElementById('flightGrid');
+  if (!grid) return;
+  if (!airlines.length) { grid.innerHTML = '<div style="color:var(--text-muted);padding:1rem;">No airlines have submitted prices yet…</div>'; return; }
+  const pt = myPassengerType;
+  grid.innerHTML = airlines.map(a => {
+    const cabins = [
+      { key: 'econ', label: '💺 Economy', price: a.econPrice, seats: SEATS.econ, booked: a.econBookings || 0, color: 'var(--green)' },
+      { key: 'biz',  label: '🛋️ Business', price: a.bizPrice,  seats: SEATS.biz,  booked: a.bizBookings || 0, color: 'var(--blue)' },
+      { key: 'first',label: '✨ First',    price: a.firstPrice, seats: SEATS.first, booked: a.firstBookings || 0, color: 'var(--yellow)' },
+    ];
+    const cabinHtml = cabins.map(c => {
+      const wtp = pt?.wtp[c.key] || 0;
+      const surplus = wtp - c.price;
+      const isFull = c.booked >= c.seats;
+      const canAfford = wtp > 0 && surplus >= 0;
+      const surplusClass = surplus >= 500 ? 'surplus-high' : surplus >= 0 ? 'surplus-mid' : 'surplus-low';
+      const isChosen = chosenAirline === a.airlineName && chosenCabin === c.key;
+      return `<div class="cabin-cell ${isFull ? 'booked-out' : 'selectable'} ${isChosen ? 'chosen' : ''}"
+        onclick="${isFull ? '' : `selectCabin('${a.airlineName}','${c.key}',${c.price})`}">
+        <div class="cabin-label" style="color:${c.color};">${c.label}</div>
+        <div class="cabin-price" style="color:${canAfford ? c.color : 'var(--red)'};">${fmtMoney(c.price)}</div>
+        ${isFull ? '<div style="font-size:0.7rem;color:var(--red);">SOLD OUT</div>'
+          : wtp ? `<div class="cabin-surplus ${surplusClass}">${surplus >= 0 ? '+' : ''}${fmtMoney(surplus)} surplus</div>`
+          : '<div style="font-size:0.7rem;color:var(--text-muted);">—</div>'}
+        <div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.2rem;">${c.booked}/${c.seats} booked</div>
+      </div>`;
+    }).join('');
+    return `<div class="flight-card">
+      <div class="flight-airline-name">✈️ ${a.airlineName} <span class="badge badge-blue" style="font-size:0.68rem;">${a.strategy || 'dynamic'}</span></div>
+      <div class="cabin-row">${cabinHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function selectCabin(airline, cabin, price) {
+  chosenAirline = airline; chosenCabin = cabin;
+  // Re-render selections
+  document.querySelectorAll('.cabin-cell.selectable').forEach(c => c.classList.remove('chosen'));
+  // Trigger re-render via the latest snapshot
+  document.getElementById('passengerBookMsg').textContent = `Selected: ${airline} — ${cabin} at ${fmtMoney(price)}`;
+}
+
+async function submitPassengerBooking() {
+  if (!chosenAirline || !chosenCabin) { document.getElementById('passengerBookMsg').textContent = 'Please select a cabin first.'; return; }
+  const pt = myPassengerType;
+  // Get current price
+  const snap = await db.collection('airfare_airlines')
+    .where('sessionCode', '==', sessionCode)
+    .where('airlineName', '==', chosenAirline).get();
+  if (snap.empty) { document.getElementById('passengerBookMsg').textContent = 'Airline not found.'; return; }
+  const airline = snap.docs[0];
+  const aData = airline.data();
+  const priceKey = { econ: 'econPrice', biz: 'bizPrice', first: 'firstPrice' }[chosenCabin];
+  const bookKey = { econ: 'econBookings', biz: 'bizBookings', first: 'firstBookings' }[chosenCabin];
+  const price = aData[priceKey];
+  const wtp = pt?.wtp[chosenCabin] || 0;
+  const surplus = wtp - price;
+  await db.collection('airfare_passengers').doc(sessionCode + '_' + fp()).update({
+    chosenAirline, chosenCabin, pricePaid: price, surplus, submitted: true
+  });
+  await db.collection('airfare_airlines').doc(airline.id).update({
+    [bookKey]: firebase.firestore.FieldValue.increment(1)
+  });
+  submitted = true;
+  renderPassengerBooking(document.getElementById('passengerContent'));
+}
+
+// ── RESULTS ───────────────────────────────────────────────
+async function renderResultsScreen() {
+  const el = document.getElementById('resultsContent');
+  el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:2rem;">Loading results…</div>';
+  const [airSnap, pasSnap] = await Promise.all([
+    db.collection('airfare_airlines').where('sessionCode', '==', sessionCode).get(),
+    db.collection('airfare_passengers').where('sessionCode', '==', sessionCode).get()
+  ]);
+  const airlines = airSnap.docs.map(d => d.data()).filter(a => !a.isAI);
+  const passengers = pasSnap.docs.map(d => d.data());
+  renderResults(el, airlines, passengers, false);
+}
+
+async function renderTeacherResults() {
+  const el = document.getElementById('teacherResultsContent');
+  if (!el) return;
+  const [airSnap, pasSnap] = await Promise.all([
+    db.collection('airfare_airlines').where('sessionCode', '==', sessionCode).get(),
+    db.collection('airfare_passengers').where('sessionCode', '==', sessionCode).get()
+  ]);
+  const airlines = airSnap.docs.map(d => d.data()).filter(a => !a.isAI);
+  const passengers = pasSnap.docs.map(d => d.data());
+  renderResults(el, airlines, passengers, true);
+}
+
+function renderResults(el, airlines, passengers, compact) {
+  if (!airlines.length) { el.innerHTML = '<div style="color:var(--text-muted);">No airline data yet.</div>'; return; }
+  // Compute profit per airline
+  const airlineResults = airlines.map(a => {
+    const sm = getStrategyMult(a.strategy || 'costplus');
+    // Variable cost scales with ACTUAL bookings, not all seats (bug fix)
+    const eb = a.econBookings||0, bb = a.bizBookings||0, fb = a.firstBookings||0;
+    const varCost = (eb * 80) + (bb * 200) + (fb * 400);
+    const revenue = (eb * a.econPrice) + (bb * a.bizPrice) + (fb * a.firstPrice);
+    const profit = revenue - FIXED_COST - varCost;
+    const fillRate = Math.round((eb + bb + fb) / (SEATS.econ + SEATS.biz + SEATS.first) * 100);
+    const passengerCount = passengers.filter(p => p.chosenAirline === a.airlineName && p.submitted).length;
+    // Score out of 100: profit component (max 60) + fill rate component (max 30) + strategy bonus (max 10)
+    const maxPossibleProfit = (SEATS.econ * 1500) + (SEATS.biz * 8000) + (SEATS.first * 20000) - FIXED_COST;
+    const profitScore = Math.min(60, Math.round(Math.max(0, profit) / maxPossibleProfit * 60));
+    const fillScore   = Math.round(fillRate * 0.30);
+    const stratBonus  = {dynamic:10, penetration:8, skimming:7, costplus:5, budget:4}[a.strategy||'costplus'] || 5;
+    const score = Math.min(100, profitScore + fillScore + stratBonus);
+    return { ...a, revenue, profit, fillRate, passengerCount, score };
+  }).sort((a, b) => b.score - a.score);
+
+  const totalSurplus = passengers.filter(p => p.submitted && p.surplus > 0).reduce((s, p) => s + p.surplus, 0);
+  const booked = passengers.filter(p => p.submitted).length;
+  const totalRevenue = airlineResults.reduce((s, a) => s + a.revenue, 0);
+  const medals = ['🥇', '🥈', '🥉'];
+  const rowClass = ['gold', 'silver', 'bronze'];
+
+  const lbHtml = airlineResults.map((a, i) => `
+    <div class="lb-row ${rowClass[i] || ''}">
+      <div class="lb-rank">${medals[i] || i + 1}</div>
+      <div>
+        <div class="lb-name">✈️ ${a.airlineName}</div>
+        <div class="lb-detail">${a.econBookings||0} econ · ${a.bizBookings||0} biz · ${a.firstBookings||0} first · ${a.fillRate}% fill · ${a.passengerCount} passengers</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="lb-score" style="color:${a.profit>0?'var(--green)':'var(--red);'};">${fmtMoney(a.profit)}</div>
+        <div class="lb-detail">profit</div>
+      </div>
+    </div>`).join('');
+
+  const passengerLeaderboard = passengers.filter(p => p.submitted && !p.isAI)
+    .sort((a, b) => b.surplus - a.surplus);
+  const pasLbHtml = passengerLeaderboard.length ? passengerLeaderboard.map((p, i) => `
+    <div class="lb-row ${rowClass[i]||''}">
+      <div class="lb-rank">${medals[i]||i+1}</div>
+      <div>
+        <div class="lb-name">${(PASSENGER_TYPES[p.passengerType]||{}).label||p.passengerType}</div>
+        <div class="lb-detail">Chose ${p.chosenAirline} — ${p.chosenCabin} at ${fmtMoney(p.pricePaid)}</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="lb-score" style="color:${p.surplus>=0?'var(--green)':'var(--red)'};">${fmtMoney(p.surplus)}</div>
+        <div class="lb-detail">surplus</div>
+      </div>
+    </div>`).join('') : '<div style="color:var(--text-muted);font-size:0.85rem;">No human passenger data.</div>';
+
+  el.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" style="color:var(--blue);">${airlineResults.length}</div><div class="stat-lbl">Airlines</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--green);">${booked}</div><div class="stat-lbl">Bookings Made</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--yellow);">${fmtMoney(totalRevenue)}</div><div class="stat-lbl">Total Revenue</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--secondary);">${fmtMoney(totalSurplus)}</div><div class="stat-lbl">Total Consumer Surplus</div></div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:1.5rem;">
+      <div class="card">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--blue);margin-bottom:1rem;">✈️ Airline Profit Leaderboard</div>
+        ${lbHtml}
+      </div>
+      <div class="card">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);margin-bottom:1rem;">🧳 Best Passenger Deals</div>
+        ${pasLbHtml}
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--primary);margin-bottom:1rem;">📊 Price Comparison by Airline</div>
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.83rem;">
+          <tr>
+            <th style="text-align:left;padding:0.5rem;color:var(--text-muted);border-bottom:1px solid var(--border);">Airline</th>
+            <th style="text-align:center;padding:0.5rem;color:var(--green);border-bottom:1px solid var(--border);">Economy</th>
+            <th style="text-align:center;padding:0.5rem;color:var(--blue);border-bottom:1px solid var(--border);">Business</th>
+            <th style="text-align:center;padding:0.5rem;color:var(--yellow);border-bottom:1px solid var(--border);">First</th>
+            <th style="text-align:center;padding:0.5rem;color:var(--text-muted);border-bottom:1px solid var(--border);">Fill Rate</th>
+            <th style="text-align:right;padding:0.5rem;color:var(--text-muted);border-bottom:1px solid var(--border);">Profit</th>
+          </tr>
+          ${airlineResults.map(a => `<tr>
+            <td style="padding:0.5rem;font-weight:600;">${a.airlineName}</td>
+            <td style="text-align:center;padding:0.5rem;">${fmtMoney(a.econPrice)} <span style="font-size:0.72rem;color:var(--text-muted);">(${a.econBookings||0})</span></td>
+            <td style="text-align:center;padding:0.5rem;">${fmtMoney(a.bizPrice)} <span style="font-size:0.72rem;color:var(--text-muted);">(${a.bizBookings||0})</span></td>
+            <td style="text-align:center;padding:0.5rem;">${fmtMoney(a.firstPrice)} <span style="font-size:0.72rem;color:var(--text-muted);">(${a.firstBookings||0})</span></td>
+            <td style="text-align:center;padding:0.5rem;">${a.fillRate}%</td>
+            <td style="text-align:right;padding:0.5rem;font-weight:700;color:${a.profit>0?'var(--green)':'var(--red)'};">${fmtMoney(a.profit)}</td>
+          </tr>`).join('')}
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--teal);margin-bottom:0.75rem;">💡 Key Economics Concepts</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">
+        <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:var(--radius-sm);padding:0.9rem;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--green);margin-bottom:0.3rem;">💰 Producer Surplus</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);">Total profit earned by airlines = <strong style="color:var(--green);">${fmtMoney(airlineResults.reduce((s,a)=>s+Math.max(0,a.profit),0))}</strong></div>
+        </div>
+        <div style="background:rgba(129,140,248,0.05);border:1px solid rgba(129,140,248,0.15);border-radius:var(--radius-sm);padding:0.9rem;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--primary);margin-bottom:0.3rem;">🧳 Consumer Surplus</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);">Total surplus earned by passengers = <strong style="color:var(--primary);">${fmtMoney(totalSurplus)}</strong></div>
+        </div>
+        <div style="background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.15);border-radius:var(--radius-sm);padding:0.9rem;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--red);margin-bottom:0.3rem;">⚖️ Deadweight Loss</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);">Passengers who wanted to fly but couldn't afford any ticket = <strong style="color:var(--red);">${passengers.filter(p=>p.submitted===false||!p.chosenAirline).length}</strong></div>
+        </div>
+        <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:var(--radius-sm);padding:0.9rem;">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--yellow);margin-bottom:0.3rem;">🏆 Price Discrimination</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);">Same route, different prices per cabin = 3rd degree price discrimination. Did it maximise revenue?</div>
+        </div>
+      </div>
+    </div>`;
+}
+</script>
+
+<!-- TEACHER PIN MODAL -->
+<div id="teacherPinOverlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(192,132,252,0.3);border-radius:24px;padding:2.5rem;max-width:360px;width:90%;text-align:center;box-shadow:0 0 60px rgba(192,132,252,0.15);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔒</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:0.5rem;">Teacher Access</div>
+    <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:1.5rem;">Enter your teacher PIN to continue</div>
+    <input id="teacherPinInput" type="password" inputmode="numeric" maxlength="6"
+      style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#f1f5f9;padding:0.85rem;font-size:1.5rem;font-weight:800;text-align:center;letter-spacing:0.3em;font-family:'Outfit',sans-serif;margin-bottom:0.75rem;"
+      placeholder="••••" onkeydown="if(event.key==='Enter')confirmTeacherPin()">
+    <div id="teacherPinMsg" style="color:#f87171;font-size:0.82rem;margin-bottom:1rem;min-height:1.2em;"></div>
+    <button onclick="confirmTeacherPin()" style="width:100%;background:linear-gradient(135deg,#9333ea,#c084fc);color:white;border:none;border-radius:12px;padding:0.85rem;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:0.75rem;">Unlock Dashboard</button>
+    <button onclick="document.getElementById('teacherPinOverlay').classList.add('hidden')" style="background:none;border:none;color:#64748b;font-size:0.82rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+</body>
+</html>

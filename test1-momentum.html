@@ -1,0 +1,2228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>3D Momentum Portrait — SA vs NZ Test 1 | DATATRENDS</title>
+<script src="https://unpkg.com/three@0.160.0/build/three.min.js">
+// ============================================================
+// WIDESCREEN SIDEBAR SYNC & EVENT FEED POPULATION
+// ============================================================
+function initSidebarEventsFeed() {
+  const listEl = document.getElementById('matchEventsList');
+  if (!listEl || typeof MATCH_EVENTS_PITCH === 'undefined') return;
+
+  listEl.innerHTML = '';
+  MATCH_EVENTS_PITCH.forEach((ev, idx) => {
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    item.id = 'feed-item-' + ev.id;
+    item.onclick = function() {
+      skipTo(ev.min);
+      highlightFeedItem(ev.id);
+    };
+
+    const teamClass = ev.team === 'SA' ? 'fi-team-sa' : 'fi-team-nz';
+    const teamName = ev.team === 'SA' ? '🇿🇦 South Africa' : '🇳🇿 New Zealand';
+    const icon = ev.type === 'scrum' ? '💥' : (ev.type === 'lineout' ? '🌲' : (ev.type === 'penalty' ? '🎯' : (ev.type === 'card' ? '🟨' : '⚡')));
+
+    item.innerHTML = `
+      <div class="fi-top">
+        <span class="fi-min">${ev.min}' Match Min</span>
+        <span class="${teamClass}">${icon} ${teamName}</span>
+      </div>
+      <div class="fi-title">${ev.label || ev.title || (ev.min + "' Match Event")}</div>
+      <div class="fi-desc">${ev.desc || ev.zone || ''}</div>
+    `;
+    listEl.appendChild(item);
+  });
+}
+
+function highlightFeedItem(eventId) {
+  document.querySelectorAll('.feed-item').forEach(el => el.classList.remove('active-event'));
+  const activeEl = document.getElementById('feed-item-' + eventId);
+  if (activeEl) {
+    activeEl.classList.add('active-event');
+    activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function updateTelemetryHUD(curMin, curState) {
+  const minBadge = document.getElementById('telMinBadge');
+  const phaseEl = document.getElementById('telPhase');
+  const terrEl = document.getElementById('telTerritory');
+
+  if (minBadge) minBadge.textContent = Math.floor(curMin) + "' MATCH MIN";
+  
+  if (phaseEl && curState && curState.ev) {
+    phaseEl.textContent = curState.ev.t || curState.ev.type || "Live Contest";
+  } else if (phaseEl) {
+    if (curMin < 40) phaseEl.textContent = "1st Half Momentum";
+    else if (curMin === 40) phaseEl.textContent = "Half-Time Break";
+    else if (curMin >= 80) phaseEl.textContent = "Full-Time (80')";
+    else phaseEl.textContent = "2nd Half Contest";
+  }
+
+  if (terrEl && curState) {
+    const saTerr = Math.round(curState.base);
+    const nzTerr = 100 - saTerr;
+    if (saTerr > 55) terrEl.textContent = "🇿🇦 SA " + saTerr + "% Dominant";
+    else if (nzTerr > 55) terrEl.textContent = "🇳🇿 NZ " + nzTerr + "% Dominant";
+    else terrEl.textContent = "50% - 50% Balanced";
+  }
+
+  if (typeof MATCH_EVENTS_PITCH !== 'undefined') {
+    const currentM = Math.floor(curMin);
+    const nearest = MATCH_EVENTS_PITCH.find(ev => ev.min === currentM);
+    if (nearest) highlightFeedItem(nearest.id);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  initSidebarEventsFeed();
+});
+setTimeout(initSidebarEventsFeed, 200);
+
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    background: #04020e;
+    font-family: 'Segoe UI', sans-serif;
+    color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0.75rem 1.25rem 1.5rem;
+    overflow-x: hidden;
+  }
+
+
+  .header { text-align: center; margin-bottom: 0.75rem; }
+  .badge {
+    display: inline-block;
+    background: rgba(192,132,252,0.12);
+    border: 1px solid rgba(192,132,252,0.35);
+    border-radius: 999px;
+    padding: 0.25rem 0.85rem;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #c084fc;
+    margin-bottom: 0.45rem;
+  }
+  h1 { font-size: clamp(1rem, 2.5vw, 1.45rem); font-weight: 900; color: #f8fafc; }
+  .sub { font-size: 0.7rem; color: #475569; margin-top: 0.15rem; }
+
+  
+  /* EXPANDED PRO WIDESCREEN DASHBOARD STYLES */
+  
+  .dashboard-container {
+    width: 100%;
+    max-width: 98vw;
+    margin: 0 auto;
+    padding: 0 0.5rem;
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+    gap: 1.25rem;
+    margin-top: 0.5rem;
+  }
+  @media (min-width: 1100px) {
+    .dashboard-grid {
+      grid-template-columns: minmax(0, 1fr) 390px;
+      align-items: start;
+    }
+  }
+
+  .stage-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  #three-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.95), 0 0 40px rgba(100,50,200,0.15);
+    background: #000;
+  }
+
+  #waveWrap {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0.5rem;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 0.65rem;
+    overflow: hidden;
+  }
+
+  .controls {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* TELEMETRY & FEED SIDEBAR */
+  .telemetry-col {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .telemetry-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.85rem;
+    padding: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  }
+
+  .tc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .tc-title {
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    color: #c084fc;
+    text-transform: uppercase;
+  }
+  .tc-badge {
+    background: rgba(52, 211, 153, 0.15);
+    border: 1px solid #34d399;
+    color: #34d399;
+    font-size: 0.68rem;
+    font-weight: 900;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+  }
+  .tc-sub {
+    font-size: 0.65rem;
+    color: #94a3b8;
+  }
+
+  .tc-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+  .tc-stat {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 0.6rem;
+    padding: 0.6rem 0.75rem;
+  }
+  .tcs-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: #94a3b8;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+  }
+  .tcs-val {
+    font-size: 0.88rem;
+    font-weight: 900;
+    color: #f8fafc;
+  }
+
+  .events-feed-card {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 0.85rem;
+    padding: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .events-list-scroll {
+    max-height: 460px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding-right: 0.35rem;
+  }
+  .events-list-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .events-list-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+  }
+
+  .feed-item {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 0.55rem;
+    padding: 0.55rem 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .feed-item:hover {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.2);
+    transform: translateX(2px);
+  }
+  .feed-item.active-event {
+    background: rgba(192, 132, 252, 0.15);
+    border-color: #c084fc;
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.3);
+  }
+  .fi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    font-weight: 900;
+    margin-bottom: 0.2rem;
+  }
+  .fi-min { color: #fbbf24; }
+  .fi-team-sa { color: #34d399; }
+  .fi-team-nz { color: #38bdf8; }
+  .fi-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #f1f5f9;
+    line-height: 1.3;
+  }
+  .fi-desc {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 0.15rem;
+  }
+
+  /* Three.js canvas container */
+  #three-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 0 80px rgba(0,0,0,0.95), 0 0 40px rgba(100,50,200,0.1);
+  }
+  #threeCanvas { display: block; width: 100%; }
+
+  /* Scoreboard overlay */
+  .scoreboard {
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.78);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.65rem;
+    padding: 0.4rem 1.3rem;
+    display: flex; gap: 1rem; align-items: center;
+    backdrop-filter: blur(10px);
+    pointer-events: none; white-space: nowrap;
+  }
+  .sc-t { font-size: 0.68rem; font-weight: 900; }
+  .sc-n { font-size: 1.25rem; font-weight: 900; line-height: 1; }
+
+  /* Event toast */
+  #toast {
+    position: absolute; bottom: 14px; left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.88);
+    border-radius: 0.5rem; padding: 0.35rem 0.9rem;
+    font-size: 0.75rem; font-weight: 800;
+    white-space: nowrap; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s;
+  }
+
+  /* Waveform canvas */
+  #waveWrap {
+    width: 100%; max-width: 100%;
+    margin-top: 0.5rem;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 0.65rem;
+    overflow: hidden;
+  }
+  #waveCanvas { display: block; width: 100%; height: 70px; }
+
+  
+  /* Event Filter Bar */
+  .event-filter-bar {
+    display: flex; align-items: center;
+    gap: 0.45rem; flex-wrap: wrap; justify-content: center;
+    padding: 0.45rem 0.8rem;
+    background: rgba(15,23,42,0.75);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.6rem;
+    margin-top: 0.4rem;
+  }
+  .ev-filter-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #94a3b8; font-weight: 800;
+    font-size: 0.68rem; padding: 0.3rem 0.65rem;
+    border-radius: 0.45rem; cursor: pointer;
+    font-family: 'Segoe UI', sans-serif; transition: all 0.2s;
+  }
+  .ev-filter-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-1px); }
+  .ev-filter-btn.active { background: #3b82f6; color: #ffffff; border-color: #60a5fa; box-shadow: 0 0 10px rgba(59,130,246,0.5); }
+
+  /* 3D Tooltip */
+  #eventTooltip {
+    position: absolute;
+    pointer-events: none;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0.55rem;
+    padding: 0.55rem 0.85rem;
+    color: #ffffff;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 0.75rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8), 0 0 15px rgba(192, 132, 252, 0.3);
+    transform: translate(-50%, -125%);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    opacity: 0;
+    z-index: 100;
+    max-width: 270px;
+  }
+  #eventTooltip.visible { opacity: 1; transform: translate(-50%, -135%); }
+  .tt-min { font-size: 0.65rem; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tt-title { font-weight: 800; font-size: 0.82rem; margin: 0.15rem 0; }
+  .tt-desc { font-size: 0.7rem; color: #cbd5e1; line-height: 1.35; }
+  .tt-loc { font-size: 0.62rem; color: #94a3b8; margin-top: 0.3rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 0.25rem; }
+
+  /* Controls */
+  .controls {
+    width: 100%; max-width: 100%;
+    margin-top: 0.6rem;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .btn-row {
+    display: flex; align-items: center;
+    gap: 0.55rem; flex-wrap: wrap; justify-content: center;
+  }
+  .ctrl-btn {
+    background: rgba(192,132,252,0.1);
+    border: 1px solid rgba(192,132,252,0.3);
+    color: #c084fc; font-weight: 900;
+    font-size: 0.77rem; padding: 0.42rem 1rem;
+    border-radius: 0.55rem; cursor: pointer;
+    font-family: 'Segoe UI', sans-serif; transition: all 0.2s;
+  }
+  .ctrl-btn:hover { background: rgba(192,132,252,0.22); }
+  .ctrl-btn.active { background: #c084fc; color: #04020e; }
+  .spd-btn {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #94a3b8; font-weight: 800;
+    font-size: 0.7rem; padding: 0.32rem 0.7rem;
+    border-radius: 0.4rem; cursor: pointer;
+    font-family: 'Segoe UI', sans-serif; transition: all 0.2s;
+  }
+  .spd-btn.active { background: #fbbf24; color: #04020e; border-color: #fbbf24; }
+  .min-disp {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem; font-weight: 900;
+    color: #fbbf24; min-width: 44px; text-align: center;
+  }
+
+  /* Legend */
+  .legend-strip {
+    display: flex; justify-content: center;
+    gap: 1.1rem; flex-wrap: wrap;
+    padding: 0.5rem 1rem;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 0.6rem;
+    font-size: 0.68rem; font-weight: 700;
+  }
+  .li { display: flex; align-items: center; gap: 0.3rem; }
+  .ls { width: 22px; height: 8px; border-radius: 2px; }
+
+  /* Phase log */
+  .phase-log {
+    width: 100%; max-width: 100%;
+    background: rgba(10,5,25,0.8);
+    border: 1px solid rgba(192,132,252,0.15);
+    border-radius: 0.85rem; padding: 0.75rem;
+    margin-top: 0.5rem;
+    max-height: 110px; overflow-y: auto;
+  }
+  .plt { font-size: 0.66rem; font-weight: 900; color: #c084fc; margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.07em; }
+  .le { font-size: 0.67rem; padding: 0.18rem 0; border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; gap: 0.5rem; }
+  .lm { color: #fbbf24; font-weight: 900; min-width: 22px; }
+  .ld { color: #64748b; }
+
+  /* Attribution */
+  .attrib {
+    font-size: 0.62rem; color: #334155;
+    text-align: center; margin-top: 0.75rem;
+    max-width: 100%;
+  }
+  .attrib a { color: #475569; }
+
+  /* ============================================================
+     MOBILE PHONE RESPONSIVE STYLES (Screen widths <= 640px)
+     ============================================================ */
+  @media (max-width: 640px) {
+    
+  body {
+    background: #04020e;
+    font-family: 'Segoe UI', sans-serif;
+    color: #f1f5f9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0.75rem 1.25rem 1.5rem;
+    overflow-x: hidden;
+  }
+
+    .header {
+      margin-bottom: 0.5rem;
+    }
+    .badge {
+      font-size: 0.56rem;
+      padding: 0.2rem 0.55rem;
+      letter-spacing: 0.04em;
+    }
+    h1 {
+      font-size: 1.12rem;
+      line-height: 1.25;
+    }
+    .sub {
+      font-size: 0.62rem;
+      line-height: 1.4;
+    }
+    #three-wrap {
+      border-radius: 0.75rem;
+      box-shadow: 0 0 40px rgba(0,0,0,0.9);
+    }
+    .scoreboard {
+      top: 6px;
+      padding: 0.25rem 0.75rem;
+      gap: 0.5rem;
+      border-radius: 0.5rem;
+    }
+    .sc-t {
+      font-size: 0.56rem;
+    }
+    .sc-n {
+      font-size: 0.95rem;
+    }
+    #possessionBarWrap {
+      font-size: 0.62rem;
+      padding: 0.3rem 0.6rem;
+    }
+    #saPossDisp, #nzPossDisp {
+      font-size: 0.58rem;
+    }
+    .btn-row {
+      gap: 0.35rem;
+    }
+    .ctrl-btn {
+      font-size: 0.7rem;
+      padding: 0.38rem 0.7rem;
+      border-radius: 0.45rem;
+      min-height: 38px;
+    }
+    .spd-btn {
+      font-size: 0.65rem;
+      padding: 0.28rem 0.5rem;
+      min-height: 34px;
+    }
+    .min-disp {
+      font-size: 0.82rem;
+      min-width: 32px;
+    }
+    .event-filter-bar {
+      gap: 0.3rem;
+      padding: 0.35rem 0.5rem;
+    }
+    .ev-filter-btn {
+      font-size: 0.6rem;
+      padding: 0.26rem 0.48rem;
+      border-radius: 0.35rem;
+    }
+    #eventTooltip {
+      max-width: 240px;
+      padding: 0.45rem 0.65rem;
+      font-size: 0.68rem;
+    }
+    .tt-title {
+      font-size: 0.75rem;
+    }
+    .tt-desc {
+      font-size: 0.65rem;
+    }
+    .phase-log {
+      max-height: 90px;
+      padding: 0.5rem 0.75rem;
+    }
+  }
+
+
+  /* DEDICATED MOBILE & TOUCH OPTIMIZATIONS */
+  @media (max-width: 768px) {
+    body {
+      padding: 0.4rem 0.35rem 1.25rem !important;
+    }
+    .dashboard-container {
+      width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .dashboard-grid {
+      grid-template-columns: 1fr !important;
+      gap: 0.75rem !important;
+    }
+    .header {
+      margin-bottom: 0.4rem !important;
+    }
+    h1 {
+      font-size: 1.05rem !important;
+      line-height: 1.2 !important;
+    }
+    .sub {
+      font-size: 0.65rem !important;
+    }
+    .scoreboard {
+      top: 6px !important;
+      padding: 0.25rem 0.65rem !important;
+      gap: 0.45rem !important;
+    }
+    .sc-t {
+      font-size: 0.58rem !important;
+    }
+    .sc-n {
+      font-size: 1.05rem !important;
+    }
+    .poss-bar {
+      font-size: 0.6rem !important;
+      padding: 0.25rem 0.45rem !important;
+    }
+    #waveCanvas {
+      height: 55px !important;
+    }
+    .btn-row {
+      gap: 0.35rem !important;
+    }
+    .ctrl-btn {
+      padding: 0.35rem 0.75rem !important;
+      font-size: 0.72rem !important;
+      min-height: 38px !important;
+    }
+    .spd-btn {
+      padding: 0.28rem 0.55rem !important;
+      font-size: 0.65rem !important;
+      min-height: 34px !important;
+    }
+    .event-filter-bar {
+      padding: 0.35rem 0.5rem !important;
+      gap: 0.3rem !important;
+    }
+    .ev-filter-btn {
+      padding: 0.25rem 0.5rem !important;
+      font-size: 0.62rem !important;
+    }
+    .telemetry-card, .events-feed-card {
+      padding: 0.75rem !important;
+      border-radius: 0.65rem !important;
+    }
+    .events-list-scroll {
+      max-height: 300px !important;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<!-- TOP GLOBAL SUITE NAV -->
+<nav style="width:100%;max-width:980px;display:flex;align-items:center;justify-content:space-between;padding:0.75rem 0;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;">
+  <a href="index.html" style="font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:900;text-decoration:none;color:#ffffff;letter-spacing:0.04em;">
+    DATA<span style="color:#38bdf8;">TRENDS</span>
+  </a>
+  <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+    <a href="springboks-vs-allblacks.html" style="font-size:0.72rem;font-weight:800;text-decoration:none;color:#fbbf24;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);padding:0.35rem 0.8rem;border-radius:0.45rem;transition:all 0.2s;">
+      🔮 4-Test Match Predictions &amp; Sims →
+    </a>
+    <a href="sentiment.html" style="font-size:0.72rem;font-weight:800;text-decoration:none;color:#c084fc;background:rgba(192,132,252,0.12);border:1px solid rgba(192,132,252,0.3);padding:0.35rem 0.8rem;border-radius:0.45rem;transition:all 0.2s;">
+      💬 Live Social Media Sentiment →
+    </a>
+  </div>
+</nav>
+
+
+
+  <!-- MATCH FIXTURE SELECTOR BAR -->
+  <div style="display:flex;gap:0.45rem;margin-bottom:0.75rem;justify-content:center;flex-wrap:wrap;">
+    <a href="test1-momentum.html" style="text-decoration:none;padding:0.32rem 0.8rem;border-radius:0.5rem;font-size:0.72rem;font-weight:900;background:#38bdf8;color:#04020e;border:1px solid #38bdf8;box-shadow:0 0 12px rgba(56,189,248,0.4);">📍 Test 1: Ellis Park (NZ 33–16) 🇳🇿</a>
+    <a href="test2-momentum.html" style="text-decoration:none;padding:0.32rem 0.8rem;border-radius:0.5rem;font-size:0.72rem;font-weight:900;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.18);color:#34d399;">📍 Test 2: Cape Town (SA 33–26) 🇿🇦</a>
+  </div>
+
+  <div class="header">
+  <div class="badge">⚡ 3D Data Portrait · Three.js · WebGL · Ellis Park · 22 Aug 2026</div>
+  <h1>🇿🇦 Springboks vs All Blacks 🇳🇿 — 3D Momentum Terrain Portrait</h1>
+  <p class="sub">Inspired by Alexander Bogachev's FIFA 2026 World Cup 3D data portraits · ~80 match event keyframes driving terrain displacement</p>
+</div>
+
+<!-- THREE.JS 3D CANVAS -->
+<div class="dashboard-container">
+  <div class="dashboard-grid">
+    <!-- LEFT STAGE COLUMN -->
+    <div class="stage-col">
+      <div id="three-wrap">
+  <canvas id="threeCanvas"></canvas>
+
+  <div class="scoreboard">
+    <div style="text-align:right;">
+      <div class="sc-t" style="color:#34d399;">🇿🇦 SPRINGBOKS</div>
+      <div class="sc-n" style="color:#34d399;" id="saScore">0</div>
+    </div>
+    <div style="font-size:0.65rem;color:#334155;">VS</div>
+    <div style="text-align:left;">
+      <div class="sc-t" style="color:#38bdf8;">ALL BLACKS 🇳🇿</div>
+      <div class="sc-n" style="color:#38bdf8;" id="nzScore">0</div>
+    </div>
+    <div style="margin-left:0.5rem;border-left:1px solid rgba(255,255,255,0.1);padding-left:0.75rem;text-align:left;">
+      <div style="font-size:0.6rem;color:#94a3b8;font-weight:700;">MATCH TIMELINE</div>
+      <div style="font-size:0.82rem;color:#fbbf24;font-weight:900;" id="minDisp">0'</div>
+    </div>
+  </div>
+
+  <!-- LIVE POSSESSION & FRONTIER GAUGE -->
+  <div id="possessionBarWrap" style="width:100%;max-width:980px;display:flex;align-items:center;justify-content:space-between;padding:0.4rem 1rem;background:rgba(15,23,42,0.75);border:1px solid rgba(255,255,255,0.08);border-radius:0.5rem;margin-top:0.35rem;font-size:0.72rem;font-weight:800;">
+    <div style="color:#34d399;display:flex;align-items:center;gap:0.3rem;" id="saPossDisp">🇿🇦 SA POSSESSION: 50%</div>
+    <div style="flex:1;max-width:320px;height:7px;background:rgba(0,0,0,0.5);border-radius:4px;overflow:hidden;margin:0 0.8rem;border:1px solid rgba(255,255,255,0.1);display:flex;">
+      <div id="saPossBar" style="width:50%;background:linear-gradient(90deg,#166534,#34d399);transition:width 0.2s;"></div>
+      <div id="nzPossBar" style="width:50%;background:linear-gradient(90deg,#38bdf8,#0284c7);transition:width 0.2s;"></div>
+    </div>
+    <div style="color:#38bdf8;display:flex;align-items:center;gap:0.3rem;" id="nzPossDisp">50% NZ POSSESSION 🇳🇿</div>
+  </div>
+  <div id="toast"></div>
+</div>
+
+<!-- WAVEFORM TIMELINE -->
+<div id="waveWrap">
+  <canvas id="waveCanvas"></canvas>
+</div>
+
+<!-- CONTROLS -->
+
+  <!-- DYNAMIC MATCH SET-PIECE & TURNOVER HUD -->
+  <div id="matchStatsHud" style="display:flex;justify-content:center;gap:1.2rem;flex-wrap:wrap;padding:0.45rem 1rem;background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:0.6rem;font-size:0.72rem;font-weight:800;margin-top:0.4rem;">
+    <div style="color:#fbbf24;display:flex;align-items:center;gap:0.35rem;">🏉 Scrums: <span id="hudScrums" style="color:#ffffff;">SA 0 · 0 NZ</span></div>
+    <div style="color:#34d399;display:flex;align-items:center;gap:0.35rem;">📐 Lineouts: <span id="hudLineouts" style="color:#ffffff;">SA 0 · 0 NZ</span></div>
+    <div style="color:#c084fc;display:flex;align-items:center;gap:0.35rem;">⚡ Turnovers: <span id="hudTurnovers" style="color:#ffffff;">SA 0 · 0 NZ</span></div>
+    <div style="color:#f87171;display:flex;align-items:center;gap:0.35rem;">🎯 Penalties: <span id="hudPenalties" style="color:#ffffff;">SA 0 · 0 NZ</span></div>
+  </div>
+
+<!-- CONTROLS & TIMELINE ROW -->
+  <div class="controls">
+    <div class="btn-row" style="margin-bottom:0.35rem;">
+      <button class="ctrl-btn" id="playBtn" onclick="togglePlay()" style="min-width:110px;">▶ PLAY</button>
+      <button class="ctrl-btn" onclick="resetMatch()">⏮ RESET</button>
+      <div class="min-disp" id="minDisp2" style="font-size:0.95rem;font-weight:900;color:#fbbf24;">0'</div>
+
+      <div style="display:flex;gap:0.25rem;align-items:center;background:rgba(255,255,255,0.04);padding:0.2rem 0.5rem;border-radius:0.5rem;border:1px solid rgba(255,255,255,0.08);">
+        <span style="font-size:0.6rem;color:#94a3b8;font-weight:800;">PACE:</span>
+        <button class="spd-btn active" onclick="setSpeed(1,this)" title="Normal pace (~65s)">1×</button>
+        <button class="spd-btn" onclick="setSpeed(2,this)" title="Fast pace (~30s)">2×</button>
+        <button class="spd-btn" onclick="setSpeed(4,this)" title="Turbo scan (~15s)">4×</button>
+      </div>
+
+      <button class="ctrl-btn" id="loopBtn" onclick="toggleLoop(this)" style="font-size:0.7rem;padding:0.38rem 0.75rem;">🔁 Loop: Off</button>
+    </div>
+
+    <!-- QUICK JUMP KEY MOMENTS BAR -->
+    <div style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;justify-content:center;padding:0.35rem 0.6rem;background:rgba(0,0,0,0.4);border-radius:0.5rem;border:1px solid rgba(255,255,255,0.05);font-size:0.65rem;">
+      <span style="color:#94a3b8;font-weight:800;">⚡ JUMP TO:</span>
+      <button class="spd-btn" onclick="skipTo(9)">9' Jordan Try</button>
+      <button class="spd-btn" onclick="skipTo(14)">14' Esterhuizen Try</button>
+      <button class="spd-btn" onclick="skipTo(24)">24' Moorby Try</button>
+      <button class="spd-btn" onclick="skipTo(40)">40' Half-Time</button>
+      <button class="spd-btn" onclick="skipTo(48)">48' Holland Try</button>
+      <button class="spd-btn" onclick="skipTo(52)">52' Bomb Squad</button>
+      <button class="spd-btn" onclick="skipTo(70)">70' 🟨 Cards</button>
+      <button class="spd-btn" onclick="skipTo(80)" style="color:#fbbf24;border-color:rgba(251,191,36,0.3);">80' Full-Time (All 95 Pins)</button>
+    </div>
+
+  <!-- EVENT PINS FILTER BAR -->
+  <div class="event-filter-bar" style="display:flex;align-items:center;gap:0.45rem;flex-wrap:wrap;justify-content:center;padding:0.45rem 0.8rem;background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:0.6rem;margin-top:0.4rem;">
+    <span style="font-size:0.65rem;color:#94a3b8;font-weight:800;letter-spacing:0.05em;display:flex;align-items:center;gap:0.3rem;">
+      📍 TEAM BALL & SET PIECES:
+    </span>
+    <button class="ev-filter-btn active" data-team="all" onclick="filterByTeam('all', this)">All (95)</button>
+    <button class="ev-filter-btn" data-team="SA" onclick="filterByTeam('SA', this)" style="border-color:rgba(52,211,153,0.5);color:#34d399;font-weight:900;">🇿🇦 Springbok Ball (40)</button>
+    <button class="ev-filter-btn" data-team="NZ" onclick="filterByTeam('NZ', this)" style="border-color:rgba(56,189,248,0.5);color:#38bdf8;font-weight:900;">🇳🇿 All Black Ball (55)</button>
+    <span style="color:rgba(255,255,255,0.15);margin:0 0.2rem;">|</span>
+    <button class="ev-filter-btn" data-filter="scrum" onclick="filterByType('scrum', this)" style="color:#fbbf24;">🏉 Scrums (15)</button>
+    <button class="ev-filter-btn" data-filter="lineout" onclick="filterByType('lineout', this)" style="color:#34d399;">📐 Lineouts (26)</button>
+    <button class="ev-filter-btn" data-filter="penalty" onclick="filterByType('penalty', this)" style="color:#f87171;">🎯 Penalties (22)</button>
+    <button class="ev-filter-btn" data-filter="turnover" onclick="filterByType('turnover', this)" style="color:#c084fc;">⚡ Turnovers (32)</button>
+    <button class="ev-filter-btn" id="togglePinsBtn" onclick="toggleEventPins(this)" style="margin-left:auto;">👁️ Hide Pins</button>
+  </div>
+</div>
+</div>
+
+<!-- PHASE LOG -->
+<div class="phase-log">
+  <div class="plt">📋 Live Phase Commentary</div>
+  <div id="phaseLog"></div>
+</div>
+
+
+<!-- RUGBY SUITE NAVIGATION CARDS -->
+<div style="width:100%;max-width:980px;display:grid;grid-template-columns:repeat(auto-fit, minmax(290px, 1fr));gap:0.8rem;margin-top:1.1rem;">
+  <!-- Card 1: Predictions & Simulations -->
+  <a href="springboks-vs-allblacks.html" style="text-decoration:none;background:linear-gradient(135deg,rgba(15,23,42,0.95),rgba(30,41,59,0.75));border:1px solid rgba(251,191,36,0.25);border-radius:0.75rem;padding:1.1rem;display:flex;flex-direction:column;gap:0.35rem;transition:transform 0.2s,border-color 0.2s;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:0.68rem;font-weight:900;color:#fbbf24;text-transform:uppercase;letter-spacing:0.05em;">🔮 Tour Analytics Suite</span>
+      <span style="font-size:0.75rem;color:#fbbf24;font-weight:900;">View Predictions →</span>
+    </div>
+    <div style="font-size:0.92rem;font-weight:800;color:#ffffff;">4-Test Match Predictions &amp; 10,000 Monte Carlo Sims</div>
+    <div style="font-size:0.72rem;color:#94a3b8;line-height:1.4;">Explore win probabilities, 30-parameter team metrics, and full match outcome distributions for all 4 test venues.</div>
+  </a>
+
+  <!-- Card 2: Social Media Sentiment -->
+  <a href="sentiment.html" style="text-decoration:none;background:linear-gradient(135deg,rgba(15,23,42,0.95),rgba(30,41,59,0.75));border:1px solid rgba(192,132,252,0.25);border-radius:0.75rem;padding:1.1rem;display:flex;flex-direction:column;gap:0.35rem;transition:transform 0.2s,border-color 0.2s;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:0.68rem;font-weight:900;color:#c084fc;text-transform:uppercase;letter-spacing:0.05em;">💬 NLP Media Pulse</span>
+      <span style="font-size:0.75rem;color:#c084fc;font-weight:900;">View Sentiment →</span>
+    </div>
+    <div style="font-size:0.92rem;font-weight:800;color:#ffffff;">Live Social Media Sentiment &amp; War of Words</div>
+    <div style="font-size:0.72rem;color:#94a3b8;line-height:1.4;">Real-time fan and pundit sentiment tracking across YouTube, SuperSport, NZ Herald, Reddit Rugby, and X.</div>
+  </a>
+</div>
+
+
+<p class="attrib">
+  3D terrain portrait approach inspired by <strong>Alexander Bogachev</strong> (#dataviz #threejs #WorldCup2026) ·
+  Terrain driven by 81 minute-by-minute keyframes (from 9,030 broadcast frames & 530 CV ball tracking events) · Real event data (StatsBomb/Opta) would power 1,500+ vertex events ·
+  Built with <a href="https://threejs.org" target="_blank">Three.js r160</a> WebGL renderer
+</p>
+
+    </div><!-- /stage-col -->
+
+    <!-- RIGHT TELEMETRY & LIVE EVENTS SIDEBAR -->
+    <div class="telemetry-col">
+      <!-- Live Telemetry Stats Card -->
+      <div class="telemetry-card">
+        <div class="tc-header">
+          <span class="tc-title">⚡ REAL-TIME TELEMETRY</span>
+          <span id="telMinBadge" class="tc-badge">0' KICKOFF</span>
+        </div>
+        <div class="tc-grid">
+          <div class="tc-stat">
+            <div class="tcs-label">Current Phase</div>
+            <div id="telPhase" class="tcs-val" style="color:#fbbf24;font-size:0.75rem;line-height:1.2;">Kickoff & Build</div>
+          </div>
+          <div class="tc-stat">
+            <div class="tcs-label">Territory Split</div>
+            <div id="telTerritory" class="tcs-val" style="font-size:0.75rem;">50% Balanced</div>
+          </div>
+          <div class="tc-stat">
+            <div class="tcs-label">Breakdown Speed</div>
+            <div id="telRuckSpeed" class="tcs-val">2.6s Avg</div>
+          </div>
+          <div class="tc-stat">
+            <div class="tcs-label">Set-Piece Differential</div>
+            <div id="telSetPiece" class="tcs-val" style="color:#34d399;font-size:0.75rem;">🇳🇿 +4 Parity</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Interactive Match Events Feed -->
+      <div class="events-feed-card">
+        <div class="tc-header">
+          <div>
+            <span class="tc-title">🏉 95 MATCH EVENT BEACONS</span>
+            <div class="tc-sub">Click any event to jump 3D pitch</div>
+          </div>
+          <span id="feedCountBadge" class="tc-badge">95 Events</span>
+        </div>
+        <div id="matchEventsList" class="events-list-scroll">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </div><!-- /telemetry-col -->
+  </div><!-- /dashboard-grid -->
+</div><!-- /dashboard-container -->
+
+<script>
+// =============================================================
+// FULL 0-80 MIN KEYFRAMES: Real CV touchline + true All Black closing surge
+// =============================================================
+const KF = [
+  {min:  0, base: 50.0, lB: -14.8, rB:  14.8, turb:0.68, saS:  0, nzS:  0, ev:null},
+  {min:  1, base: 53.0, lB: -11.4, rB:  11.4, turb:0.68, saS:  0, nzS:  0, ev:null},
+  {min:  2, base: 56.0, lB:  -2.4, rB:   2.4, turb:0.68, saS:  0, nzS:  0, ev:null},
+  {min:  3, base: 60.0, lB: -11.8, rB:  11.8, turb:0.68, saS:  0, nzS:  0, ev:null},
+  {min:  4, base: 62.0, lB: -15.0, rB:  15.0, turb:0.68, saS:  0, nzS:  0, ev:null},
+  {min:  5, base: 65.0, lB: -13.5, rB:  13.5, turb:0.80, saS:  3, nzS:  0, ev:{type:"pg_sa", t:"5' PENALTY GOAL - Cheslin Kolbe | SA 3-0"}},
+  {min:  6, base: 62.0, lB:  -8.6, rB:   8.6, turb:0.68, saS:  3, nzS:  0, ev:null},
+  {min:  7, base: 57.0, lB: -15.0, rB:  15.0, turb:0.68, saS:  3, nzS:  0, ev:null},
+  {min:  8, base: 50.0, lB: -10.0, rB:  10.0, turb:0.68, saS:  3, nzS:  0, ev:null},
+  {min:  9, base: 38.0, lB: -10.4, rB:  10.4, turb:0.92, saS:  3, nzS:  7, ev:{type:"try_nz", t:"9' TRY Will Jordan (Roigard pass) + conv | SA 3-7"}},
+  {min: 10, base: 42.0, lB:  -0.0, rB:   0.0, turb:0.68, saS:  3, nzS:  7, ev:null},
+  {min: 11, base: 48.0, lB:  -7.9, rB:   7.9, turb:0.68, saS:  3, nzS:  7, ev:null},
+  {min: 12, base: 52.0, lB: -15.0, rB:  15.0, turb:0.68, saS:  3, nzS:  7, ev:null},
+  {min: 13, base: 60.0, lB:  -8.0, rB:   8.0, turb:0.68, saS:  3, nzS:  7, ev:null},
+  {min: 14, base: 68.0, lB:  15.0, rB: -15.0, turb:0.92, saS: 10, nzS:  7, ev:{type:"try_sa", t:"14' TRY Andre Esterhuizen + Kolbe conv | SA 10-7"}},
+  {min: 15, base: 65.0, lB: -12.2, rB:  12.2, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 16, base: 60.0, lB: -12.5, rB:  12.5, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 17, base: 54.0, lB: -15.0, rB:  15.0, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 18, base: 48.0, lB: -13.0, rB:  13.0, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 19, base: 42.0, lB: -14.3, rB:  14.3, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 20, base: 44.0, lB: -15.0, rB:  15.0, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 21, base: 46.0, lB:  -9.8, rB:   9.8, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 22, base: 50.0, lB: -15.0, rB:  15.0, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 23, base: 58.0, lB: -12.9, rB:  12.9, turb:0.68, saS: 10, nzS:  7, ev:null},
+  {min: 24, base: 40.0, lB:  -9.0, rB:   9.0, turb:0.92, saS: 10, nzS: 12, ev:{type:"try_nz", t:"24' TRY Josh Moorby (Vaai break) | SA 10-12"}},
+  {min: 25, base: 48.0, lB: -15.0, rB:  15.0, turb:0.68, saS: 10, nzS: 12, ev:null},
+  {min: 26, base: 50.0, lB: -15.0, rB:  15.0, turb:0.68, saS: 10, nzS: 12, ev:null},
+  {min: 27, base: 56.0, lB: -15.0, rB:  15.0, turb:0.80, saS: 13, nzS: 12, ev:{type:"pg_sa", t:"27' PENALTY GOAL - Cheslin Kolbe | SA 13-12"}},
+  {min: 28, base: 54.0, lB: -15.0, rB:  15.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 29, base: 50.0, lB:  -7.0, rB:   7.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 30, base: 46.0, lB: -11.9, rB:  11.9, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 31, base: 48.0, lB: -14.4, rB:  14.4, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 32, base: 50.0, lB: -15.0, rB:  15.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 33, base: 52.0, lB: -10.2, rB:  10.2, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 34, base: 50.0, lB: -13.5, rB:  13.5, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 35, base: 48.0, lB: -15.0, rB:  15.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 36, base: 46.0, lB: -13.6, rB:  13.6, turb:0.72, saS: 13, nzS: 12, ev:{type:"info", t:"36' Jordie Barrett strips Malcolm Marx near try line"}},
+  {min: 37, base: 48.0, lB: -13.8, rB:  13.8, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 38, base: 50.0, lB: -10.3, rB:  10.3, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 39, base: 49.0, lB:  -4.9, rB:   4.9, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 40, base: 50.0, lB: -15.0, rB:  15.0, turb:0.72, saS: 13, nzS: 12, ev:{type:"ht", t:"HALF TIME - SA 13 NZ 12"}},
+  {min: 41, base: 48.0, lB: -15.0, rB:  15.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 42, base: 46.0, lB:  -5.6, rB:   5.6, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 43, base: 44.0, lB: -14.4, rB:  14.4, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 44, base: 44.0, lB:  -1.9, rB:   1.9, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 45, base: 46.0, lB:  15.0, rB: -15.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 46, base: 48.0, lB: -15.0, rB:  15.0, turb:0.72, saS: 13, nzS: 12, ev:null},
+  {min: 47, base: 52.0, lB: -15.0, rB:  15.0, turb:0.80, saS: 16, nzS: 12, ev:{type:"pg_sa", t:"47' PENALTY GOAL - Cheslin Kolbe | SA 16-12"}},
+  {min: 48, base: 35.0, lB: -15.0, rB:  15.0, turb:0.92, saS: 16, nzS: 19, ev:{type:"try_nz", t:"48' TRY Fabian Holland (charged-down kick) + conv | SA 16-19"}},
+  {min: 49, base: 30.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 50, base: 28.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 51, base: 30.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 52, base: 32.0, lB: -12.9, rB:  12.9, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 53, base: 30.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 54, base: 28.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 55, base: 26.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 56, base: 25.0, lB:  -6.5, rB:   6.5, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 57, base: 24.0, lB:  -9.0, rB:   9.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 58, base: 28.0, lB: -12.6, rB:  12.6, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 59, base: 30.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 19, ev:null},
+  {min: 60, base: 20.0, lB: -15.0, rB:  15.0, turb:0.92, saS: 16, nzS: 26, ev:{type:"try_nz", t:"60' TRY Luke Jacobson (rolling maul) + conv | SA 16-26"}},
+  {min: 61, base: 22.0, lB:  -2.8, rB:   2.8, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 62, base: 24.0, lB: -12.6, rB:  12.6, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 63, base: 26.0, lB: -12.5, rB:  12.5, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 64, base: 25.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 65, base: 22.0, lB:  -8.4, rB:   8.4, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 66, base: 20.0, lB: -10.8, rB:  10.8, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 67, base: 18.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 68, base: 16.0, lB: -12.6, rB:  12.6, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 69, base: 15.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 70, base: 14.0, lB: -13.7, rB:  13.7, turb:0.88, saS: 16, nzS: 26, ev:{type:"yc", t:"70' YELLOW CARD - Marco van Staden (SA)"}},
+  {min: 71, base: 12.0, lB: -11.1, rB:  11.1, turb:0.88, saS: 16, nzS: 26, ev:{type:"yc", t:"71' YELLOW CARD - Cobus Reinach (SA)"}},
+  {min: 72, base: 18.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 73, base: 20.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 74, base: 18.0, lB:  -9.9, rB:   9.9, turb:0.78, saS: 16, nzS: 26, ev:null},
+  {min: 75, base: 15.0, lB: -15.0, rB:  15.0, turb:0.92, saS: 16, nzS: 33, ev:{type:"try_nz", t:"75' TRY Will Jordan (14-man SA) + conv | FULL TIME SA 16-33"}},
+  {min: 76, base: 15.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 33, ev:null},
+  {min: 77, base: 15.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 33, ev:null},
+  {min: 78, base: 15.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 33, ev:null},
+  {min: 79, base: 15.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 33, ev:null},
+  {min: 80, base: 15.0, lB: -15.0, rB:  15.0, turb:0.78, saS: 16, nzS: 33, ev:null},
+];
+
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function getState(min) {
+  if (min <= KF[0].min) return KF[0];
+  if (min >= KF[KF.length - 1].min) return KF[KF.length - 1];
+  let pi = 0;
+  for (let i = 0; i < KF.length - 1; i++) {
+    if (KF[i].min <= min) pi = i;
+  }
+  const p = KF[pi], n = KF[pi + 1];
+  if (p === n || n.min === p.min) return p;
+  let t = (min - p.min) / (n.min - p.min);
+  t = Math.max(0, Math.min(1, t));
+  t = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out
+  return {
+    base:  lerp(p.base, n.base, t),
+    lB:    lerp(p.lB,   n.lB,   t),
+    rB:    lerp(p.rB,   n.rB,   t),
+    turb:  lerp(p.turb, n.turb, t),
+    saS:   p.saS, nzS: p.nzS
+  };
+}
+
+// ============================================================
+// THREE.JS SCENE SETUP
+// ============================================================
+const canvas3d = document.getElementById('threeCanvas');
+const W3 = 980, H3 = 540;
+canvas3d.width  = W3;
+canvas3d.height = H3;
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvas3d, antialias: true });
+renderer.setSize(W3, H3);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x04020e);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0x04020e, 20, 48);
+
+const camera = new THREE.PerspectiveCamera(42, W3/H3, 0.1, 100);
+camera.position.set(-0.5, 10.5, 17);
+camera.lookAt(0, 1.8, -2);
+
+// ---- LIGHTS ----
+const ambLight = new THREE.AmbientLight(0x223344, 1.2);
+scene.add(ambLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff4e0, 1.5);
+sunLight.position.set(4, 12, 6);
+scene.add(sunLight);
+
+const rimLight = new THREE.DirectionalLight(0x1a3a8f, 0.6);
+rimLight.position.set(12, 4, -4);
+scene.add(rimLight);
+
+const saRim = new THREE.DirectionalLight(0x0d4a1f, 0.4);
+saRim.position.set(-12, 4, 0);
+scene.add(saRim);
+
+// ---- TERRAIN MESH ----
+const SEG_X = 80;  // segments along pitch length (SA→NZ)
+const SEG_Z = 36;  // segments across pitch width
+
+// Pitch world dimensions
+const PITCH_L = 22;  // length (x: -11 to +11)
+const PITCH_W = 13;  // width  (z: -6.5 to +6.5)
+const MAX_H   = 3.2; // max terrain height in world units
+
+const geo = new THREE.PlaneGeometry(PITCH_L, PITCH_W, SEG_X, SEG_Z);
+geo.rotateX(-Math.PI / 2);
+
+// Pre-build color attribute
+const nVerts = geo.attributes.position.count;
+const colArr = new Float32Array(nVerts * 3);
+geo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+
+const mat = new THREE.MeshPhongMaterial({
+  vertexColors: true,
+  shininess: 60,
+  specular: new THREE.Color(0x334455),
+});
+const terrain = new THREE.Mesh(geo, mat);
+scene.add(terrain);
+
+// ---- WIREFRAME OVERLAY ----
+const wireMat = new THREE.MeshBasicMaterial({
+  color: 0x334455,
+  wireframe: true,
+  transparent: true,
+  opacity: 0.08,
+});
+const wireframe = new THREE.Mesh(geo, wireMat);
+wireframe.position.y = 0.01;
+scene.add(wireframe);
+
+// ---- FLAT GROUND PLANE (pitch base) ----
+const groundGeo = new THREE.PlaneGeometry(PITCH_L + 6, PITCH_W + 6);
+groundGeo.rotateX(-Math.PI / 2);
+const groundMat = new THREE.MeshPhongMaterial({ color: 0x071109, shininess: 10 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.position.y = -0.06;
+scene.add(ground);
+
+// ============================================================
+// AUTHENTIC RUGBY PITCH MARKINGS & 3D GOALPOSTS
+// ============================================================
+const markingsGroup = new THREE.Group();
+
+const lineMat = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  transparent: true,
+  opacity: 0.4,
+  depthWrite: false
+});
+
+const dashedLineMat = new THREE.MeshBasicMaterial({
+  color: 0xffffff,
+  transparent: true,
+  opacity: 0.25,
+  depthWrite: false
+});
+
+function createPitchLine(x, z, width, length, isDashed = false) {
+  if (!isDashed) {
+    const lGeo = new THREE.PlaneGeometry(width, length);
+    lGeo.rotateX(-Math.PI / 2);
+    const line = new THREE.Mesh(lGeo, lineMat);
+    line.position.set(x, 0.02, z);
+    return line;
+  }
+  const dashGroup = new THREE.Group();
+  const numDashes = 14;
+  const dashLen = length / (numDashes * 2);
+  for (let i = 0; i < numDashes; i++) {
+    const dGeo = new THREE.PlaneGeometry(width, dashLen);
+    dGeo.rotateX(-Math.PI / 2);
+    const dash = new THREE.Mesh(dGeo, dashedLineMat);
+    const zOffset = -length / 2 + (i * 2 + 0.5) * dashLen;
+    dash.position.set(x, 0.02, z + zOffset);
+    dashGroup.add(dash);
+  }
+  return dashGroup;
+}
+
+// 1. Touchlines (Side boundaries)
+markingsGroup.add(createPitchLine(0, -PITCH_W / 2, PITCH_L, 0.07));
+markingsGroup.add(createPitchLine(0,  PITCH_W / 2, PITCH_L, 0.07));
+
+// 2. Goal / Try Lines (x = -11.0 & +11.0)
+const saGL = createPitchLine(-PITCH_L / 2, 0, 0.12, PITCH_W);
+const nzGL = createPitchLine( PITCH_L / 2, 0, 0.12, PITCH_W);
+markingsGroup.add(saGL);
+markingsGroup.add(nzGL);
+
+// 3. In-Goal / Dead-Ball Lines (x = -12.5 & +12.5)
+markingsGroup.add(createPitchLine(-PITCH_L / 2 - 1.5, 0, 0.06, PITCH_W));
+markingsGroup.add(createPitchLine( PITCH_L / 2 + 1.5, 0, 0.06, PITCH_W));
+
+// 4. Halfway Line (50m, x = 0)
+markingsGroup.add(createPitchLine(0, 0, 0.09, PITCH_W));
+
+// 5. 22-Metre Lines (x = -6.16 & +6.16)
+markingsGroup.add(createPitchLine(-PITCH_L / 2 + 4.84, 0, 0.07, PITCH_W));
+markingsGroup.add(createPitchLine( PITCH_L / 2 - 4.84, 0, 0.07, PITCH_W));
+
+// 6. 10-Metre Lines (Dashed, x = -2.2 & +2.2)
+markingsGroup.add(createPitchLine(-2.2, 0, 0.05, PITCH_W, true));
+markingsGroup.add(createPitchLine( 2.2, 0, 0.05, PITCH_W, true));
+
+// 7. 5m and 15m Lengthwise Tramlines
+function createLengthwiseDash(zPos) {
+  const dashGroup = new THREE.Group();
+  const numDashes = 22;
+  const dashLen = PITCH_L / (numDashes * 2);
+  for (let i = 0; i < numDashes; i++) {
+    const dGeo = new THREE.PlaneGeometry(dashLen, 0.04);
+    dGeo.rotateX(-Math.PI / 2);
+    const dash = new THREE.Mesh(dGeo, dashedLineMat);
+    dash.position.set(-PITCH_L / 2 + (i * 2 + 0.5) * dashLen, 0.02, zPos);
+    dashGroup.add(dash);
+  }
+  return dashGroup;
+}
+markingsGroup.add(createLengthwiseDash(-5.54)); // 5m near
+markingsGroup.add(createLengthwiseDash( 5.54)); // 5m far
+markingsGroup.add(createLengthwiseDash(-3.63)); // 15m near
+markingsGroup.add(createLengthwiseDash( 3.63)); // 15m far
+
+// 8. Corner & In-Goal Flags
+function createCornerFlag(x, z, colorHex) {
+  const flagGroup = new THREE.Group();
+  const poleGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.5, 8);
+  const poleMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const pole = new THREE.Mesh(poleGeo, poleMat);
+  pole.position.y = 0.25;
+  flagGroup.add(pole);
+
+  const flagGeo = new THREE.PlaneGeometry(0.16, 0.11);
+  const flagMat = new THREE.MeshBasicMaterial({ color: colorHex, side: THREE.DoubleSide });
+  const flag = new THREE.Mesh(flagGeo, flagMat);
+  flag.position.set(0.08, 0.42, 0);
+  flagGroup.add(flag);
+
+  flagGroup.position.set(x, 0, z);
+  return flagGroup;
+}
+markingsGroup.add(createCornerFlag(-PITCH_L / 2, -PITCH_W / 2, 0xef4444));
+markingsGroup.add(createCornerFlag(-PITCH_L / 2,  PITCH_W / 2, 0xef4444));
+markingsGroup.add(createCornerFlag( PITCH_L / 2, -PITCH_W / 2, 0x38bdf8));
+markingsGroup.add(createCornerFlag( PITCH_L / 2,  PITCH_W / 2, 0x38bdf8));
+
+scene.add(markingsGroup);
+
+// 9. 3D RUGBY GOALPOSTS (H-Posts with Padding)
+function createRugbyPosts(xPos, isSA) {
+  const postGroup = new THREE.Group();
+  const postRadius = 0.038;
+  const postHeight = 4.2;
+  const crossbarY = 0.85;
+  const postWidth = 1.25; // ~5.6m in pitch scale
+
+  const postMat = new THREE.MeshStandardMaterial({
+    color: 0xf8fafc,
+    metalness: 0.35,
+    roughness: 0.15,
+    emissive: 0x1e293b
+  });
+
+  const padMat = new THREE.MeshStandardMaterial({
+    color: isSA ? 0x15803d : 0x0f172a, // SA Bok green or NZ All Black padding
+    roughness: 0.5,
+    metalness: 0.1
+  });
+
+  // Uprights (Left & Right)
+  const uprightGeo = new THREE.CylinderGeometry(postRadius, postRadius, postHeight, 16);
+  
+  const leftUpright = new THREE.Mesh(uprightGeo, postMat);
+  leftUpright.position.set(0, postHeight / 2, -postWidth / 2);
+  postGroup.add(leftUpright);
+
+  const rightUpright = new THREE.Mesh(uprightGeo, postMat);
+  rightUpright.position.set(0, postHeight / 2, postWidth / 2);
+  postGroup.add(rightUpright);
+
+  // Crossbar
+  const crossbarGeo = new THREE.CylinderGeometry(postRadius * 0.95, postRadius * 0.95, postWidth, 16);
+  crossbarGeo.rotateX(Math.PI / 2);
+  const crossbar = new THREE.Mesh(crossbarGeo, postMat);
+  crossbar.position.set(0, crossbarY, 0);
+  postGroup.add(crossbar);
+
+  // Protective Padding Sleeves at base
+  const padGeo = new THREE.BoxGeometry(0.18, 0.48, 0.18);
+  const leftPad = new THREE.Mesh(padGeo, padMat);
+  leftPad.position.set(0, 0.24, -postWidth / 2);
+  postGroup.add(leftPad);
+
+  const rightPad = new THREE.Mesh(padGeo, padMat);
+  rightPad.position.set(0, 0.24, postWidth / 2);
+  postGroup.add(rightPad);
+
+  postGroup.position.set(xPos, 0, 0);
+  return postGroup;
+}
+
+const saPosts = createRugbyPosts(-PITCH_L / 2, true);
+const nzPosts = createRugbyPosts( PITCH_L / 2, false);
+scene.add(saPosts);
+scene.add(nzPosts);
+
+// ============================================================
+// HEIGHT + COLOR FUNCTIONS
+// ============================================================
+function getHeight(cf, rf, state, animT) {
+  // cf: 0=SA goal → 1=NZ goal
+  // rf: 0=near → 1=far touchline
+  const frontier = state.base / 100;
+  const dominance = (state.base - 50) / 50;  // -1 NZ full, +1 SA full
+  const intensity  = state.turb;
+
+  // Left/right touchline asymmetric pressure
+  const lWeight = Math.pow(Math.max(0, 1 - rf), 1.4);
+  const rWeight = Math.pow(Math.max(0, rf), 1.4);
+  const frontierAdj = frontier + (state.lB / 100) * lWeight + (state.rB / 100) * rWeight;
+  const frontierC = Math.max(0.05, Math.min(0.95, frontierAdj));
+
+  let h = 0;
+  if (dominance >= 0) {
+    // SA pushes: wave peaks near frontier on SA side
+    if (cf <= frontierC) {
+      const pos = cf / frontierC;
+      h = dominance * Math.exp(-Math.pow(pos - 0.82, 2) / 0.12) * intensity;
+    }
+  } else {
+    // NZ pushes: wave peaks near frontier on NZ side
+    if (cf >= frontierC) {
+      const pos = (cf - frontierC) / (1 - frontierC);
+      h = (-dominance) * Math.exp(-Math.pow(pos - 0.82, 2) / 0.12) * intensity;
+    }
+  }
+
+  // Organic multi-layer wave turbulence — creates the flowing fabric feel
+  const t1 = Math.sin(cf * Math.PI * 3.8 + rf * Math.PI * 2.2 + animT * 1.55) * 0.038;
+  const t2 = Math.sin(cf * Math.PI * 6.5 - rf * Math.PI * 3.8 - animT * 2.35) * 0.022;
+  const t3 = Math.cos(cf * Math.PI * 2.2 + rf * Math.PI * 1.6 + animT * 0.95) * 0.030;
+  const t4 = Math.sin(cf * Math.PI * 9 + animT * 1.85 - rf * 2.5) * 0.015;
+  const t5 = Math.cos(rf * Math.PI * 4 + animT * 1.2 + cf * 3) * 0.018;
+
+  h += (t1 + t2 + t3 + t4 + t5) * intensity;
+  return Math.max(0, h);
+}
+
+function getColor(cf, h, frontier, intensity) {
+  const isSA = cf < frontier;
+  const nearFrontier = Math.exp(-Math.pow((cf - frontier), 2) / 0.004);
+  const bright = 0.18 + h * 0.82;
+
+  let r, g, b;
+  if (isSA) {
+    // SA: dark forest green → bright lime at peaks
+    r = 0.04 + bright * 0.38 + nearFrontier * 0.45;
+    g = 0.28 + bright * 0.72 + nearFrontier * 0.30;
+    b = 0.06 + bright * 0.22 + nearFrontier * 0.45;
+  } else {
+    // NZ: dark navy → bright sky-blue at peaks
+    r = 0.03 + bright * 0.28 + nearFrontier * 0.45;
+    g = 0.12 + bright * 0.52 + nearFrontier * 0.35;
+    b = 0.38 + bright * 0.62 + nearFrontier * 0.40;
+  }
+  return [Math.min(1,r), Math.min(1,g), Math.min(1,b)];
+}
+
+
+
+
+// ============================================================
+// FULLY VALIDATED MATCH SET PIECES & BREAKDOWN EVENT REGISTER (95 Total Events)
+// Scrums: 15 | Lineouts: 26 | Penalties & Cards: 22 | Turnovers: 32 (23 NZ / 9 SA)
+// ============================================================
+const MATCH_EVENTS_PITCH = [
+  // ==================== 1. SCRUMS (15 Total) ====================
+  { id: 's1',  min: 3,  type: 'scrum', team: 'SA', label: "3' Scrum — Knock-on NZ", desc: "First set piece. SA dominant shove on NZ put-in.", zone: "NZ 22m Center", x: 6.2, z: 0.0 },
+  { id: 's2',  min: 10, type: 'scrum', team: 'NZ', label: "10' Scrum — SA Knock-on Restart", desc: "NZ feed inside halfway following Jordan\'s try.", zone: "Halfway Center", x: 0.2, z: -0.5 },
+  { id: 's3',  min: 15, type: 'scrum', team: 'SA', label: "15' Scrum — NZ Handling Error", desc: "SA feed on NZ 10m after restart collision.", zone: "NZ 10m Center", x: 2.2, z: 1.0 },
+  { id: 's4',  min: 18, type: 'scrum', team: 'SA', label: "18' Scrum — Forward Pass NZ", desc: "Midfield set piece on 15m line.", zone: "Halfway (Left Tramline)", x: 1.5, z: -3.6 },
+  { id: 's5',  min: 25, type: 'scrum', team: 'NZ', label: "25' Scrum — SA Handling Error", desc: "NZ scrum feed after Moorby try.", zone: "SA 22m Center", x: -5.0, z: -1.2 },
+  { id: 's6',  min: 27, type: 'scrum', team: 'SA', label: "27' Scrum Penalty -> Kolbe PG", desc: "Massive SA front-row shove wins penalty -> Kolbe PG (13-12).", zone: "NZ 40m Center", x: 4.0, z: 0.0 },
+  { id: 's7',  min: 31, type: 'scrum', team: 'NZ', label: "31' Scrum — Knock-on SA", desc: "NZ feed inside SA territory.", zone: "SA 10m Right", x: -2.8, z: 2.5 },
+  { id: 's8',  min: 37, type: 'scrum', team: 'SA', label: "37' 5m Scrum — SA Try Attack", desc: "Boks 5m scrum assault following Marx tryline strip.", zone: "NZ 5m Center", x: 9.8, z: 0.2 },
+  { id: 's9',  min: 43, type: 'scrum', team: 'SA', label: "43' Scrum — NZ 2nd Half Knock-on", desc: "Tamaiti Williams knock-on off restart.", zone: "Halfway Line", x: -0.5, z: -1.0 },
+  { id: 's10', min: 52, type: 'scrum', team: 'SA', label: "52' Scrum Penalty — Bomb Squad Shove", desc: "New Bok front row engages; penalty won against the head.", zone: "NZ 22m Midfield", x: 7.2, z: -0.5 },
+  { id: 's11', min: 54, type: 'scrum', team: 'SA', label: "54' Reset Scrum", desc: "Front row collapse reset on NZ 22m.", zone: "NZ 22m Left", x: 6.8, z: -2.2 },
+  { id: 's12', min: 61, type: 'scrum', team: 'NZ', label: "61' Scrum — SA Restart Spill", desc: "NZ feed following Luke Jacobson's maul try.", zone: "Halfway Center", x: 0.5, z: 1.5 },
+  { id: 's13', min: 66, type: 'scrum', team: 'NZ', label: "66' Scrum — SA Handling Error", desc: "NZ attacking scrum platform inside SA 22m.", zone: "SA 22m Center", x: -5.5, z: 1.2 },
+  { id: 's14', min: 72, type: 'scrum', team: 'NZ', label: "72' Scrum — SA 13-Man Handling Error", desc: "NZ scrum feed under yellow card advantage.", zone: "SA 10m Right", x: -3.2, z: 3.0 },
+  { id: 's15', min: 74, type: 'scrum', team: 'NZ', label: "74' Scrum (13-Man SA Defense)", desc: "NZ feed against 7-man SA pack -> Jordan Try #2.", zone: "SA 5m Line", x: -9.0, z: 3.2 },
+
+  // ==================== 2. LINEOUTS (26 Total) ====================
+  { id: 'l1',  min: 1,  type: 'lineout', team: 'NZ', label: "1' Lineout — NZ Throw", desc: "SA clearance kick to touch; NZ win clean ball.", zone: "SA 22m Touchline", x: -5.5, z: -5.54 },
+  { id: 'l2',  min: 5,  type: 'lineout', team: 'SA', label: "5' Lineout — SA Throw", desc: "SA attacking lineout preceding Kolbe PG #1.", zone: "NZ 22m Tramline", x: 6.0, z: 5.54 },
+  { id: 'l3',  min: 7,  type: 'lineout', team: 'SA', label: "7' Lineout — SA Throw", desc: "Eben Etzebeth clean take on 5m tramline.", zone: "NZ 22m Tramline", x: 4.8, z: 5.54 },
+  { id: 'l4',  min: 9,  type: 'lineout', team: 'NZ', label: "9' Lineout — NZ Attacking Throw", desc: "Codie Taylor lineout setup leading to Jordan Try #1.", zone: "NZ 10m Touchline", x: 3.2, z: -5.54 },
+  { id: 'l5',  min: 12, type: 'lineout', team: 'NZ', label: "12' Lineout — NZ Throw", desc: "Codie Taylor to Scott Barrett.", zone: "NZ 10m Touchline", x: 2.2, z: -5.54 },
+  { id: 'l6',  min: 14, type: 'lineout', team: 'SA', label: "14' Quick Lineout -> Esterhuizen Try", desc: "Quick lineout tap initiating 60m breakout try.", zone: "SA 10m Touchline", x: -2.5, z: 5.54 },
+  { id: 'l7',  min: 17, type: 'lineout', team: 'SA', label: "17' Lineout — SA Midfield Throw", desc: "Etzebeth secured ball at halfway.", zone: "Halfway Tramline", x: 0.2, z: 5.54 },
+  { id: 'l8',  min: 20, type: 'lineout', team: 'NZ', label: "20' Lineout — NZ Touch Finder", desc: "NZ kick finds touch in SA 22m.", zone: "SA 22m Touchline", x: -6.2, z: -5.54 },
+  { id: 'l9',  min: 22, type: 'lineout', team: 'SA', label: "22' Lineout — SA Defensive Exit", desc: "Lineout drive set from SA 22m.", zone: "SA 22m Touchline", x: -4.5, z: 5.54 },
+  { id: 'l10', min: 24, type: 'lineout', team: 'NZ', label: "24' Lineout Steal -> Moorby Try", desc: "Vaa'i intercepts tap down, breaks gainline -> Try.", zone: "NZ 10m Tramline", x: 2.5, z: -5.54 },
+  { id: 'l11', min: 28, type: 'lineout', team: 'SA', label: "28' Lineout — SA Penalty Touch", desc: "Kolbe kick to touch on NZ 40m.", zone: "NZ 40m Touchline", x: 3.8, z: 5.54 },
+  { id: 'l12', min: 32, type: 'lineout', team: 'NZ', label: "32' Lineout — NZ Clearance", desc: "Defensive lineout secured by Sititi.", zone: "SA 40m Touchline", x: -3.5, z: -5.54 },
+  { id: 'l13', min: 34, type: 'lineout', team: 'SA', label: "34' Lineout — SA Maul Platform", desc: "Boks lineout drive inside NZ 22m.", zone: "NZ 22m Touchline", x: 6.8, z: 5.54 },
+  { id: 'l14', min: 38, type: 'lineout', team: 'NZ', label: "38' Lineout — NZ 5m Attack", desc: "Maul set up near corner flag before SA defensive turnover.", zone: "NZ 5m Corner", x: 8.5, z: -5.54 },
+  { id: 'l15', min: 39, type: 'lineout', team: 'SA', label: "39' Lineout Overthrow (NZ Steal)", desc: "Overthrown SA tap stolen by Scott Barrett.", zone: "NZ 5m Touchline", x: 8.2, z: 5.54 },
+  { id: 'l16', min: 41, type: 'lineout', team: 'NZ', label: "41' Lineout — 2nd Half Opening", desc: "NZ take clean throw at halfway.", zone: "Halfway Tramline", x: -0.2, z: -5.54 },
+  { id: 'l17', min: 45, type: 'lineout', team: 'SA', label: "45' Lineout — Midfield Contest", desc: "Boks contest halfway lineout.", zone: "Halfway Tramline", x: 1.0, z: 5.54 },
+  { id: 'l18', min: 47, type: 'lineout', team: 'SA', label: "47' Lineout — SA Exit Touch", desc: "Touchline kick preceding Kolbe PG #3.", zone: "SA 22m Touchline", x: -7.0, z: 5.54 },
+  { id: 'l19', min: 49, type: 'lineout', team: 'NZ', label: "49' Lineout — Post-Try Restart", desc: "NZ throw following Holland charge-down try.", zone: "NZ 40m Touchline", x: 3.5, z: -5.54 },
+  { id: 'l20', min: 55, type: 'lineout', team: 'NZ', label: "55' Lineout — Arendse Touch Carry", desc: "NZ lineout after Arendse tackled into touch.", zone: "NZ 22m Touchline", x: 5.5, z: -5.54 },
+  { id: 'l21', min: 58, type: 'lineout', team: 'SA', label: "58' Lineout — SA 5m Maul Setup", desc: "Malcolm Marx throw to Mostert on 5m line.", zone: "NZ 5m Tramline", x: 8.8, z: 5.54 },
+  { id: 'l22', min: 60, type: 'lineout', team: 'NZ', label: "60' 5m Lineout Maul -> Jacobson Try", desc: "All Blacks 10-man rolling maul drives over for 7 points.", zone: "SA 5m Corner Flag", x: 9.5, z: 5.54 },
+  { id: 'l23', min: 63, type: 'lineout', team: 'SA', label: "63' Lineout — SA 22m Clearance", desc: "Grant Williams kick to touch in SA 22m.", zone: "SA 22m Touchline", x: -6.0, z: 5.54 },
+  { id: 'l24', min: 68, type: 'lineout', team: 'NZ', label: "68' Lineout Steal — Scott Barrett", desc: "Scott Barrett picks off SA lineout call on defensive throw.", zone: "SA 22m Touchline", x: -5.8, z: 5.54 },
+  { id: 'l25', min: 73, type: 'lineout', team: 'NZ', label: "73' Lineout — Overlap Setup", desc: "Quick ball off top to Roigard exploiting 13-man SA defense.", zone: "SA 10m Touchline", x: 8.8, z: -5.54 },
+  { id: 'l26', min: 78, type: 'lineout', team: 'SA', label: "78' Lineout — SA Final Exit", desc: "Desperate final lineout throw in SA 22m.", zone: "SA 22m Touchline", x: -7.5, z: 5.54 },
+
+  // ==================== 3. PENALTIES & CARDS (22 Total) ====================
+  { id: 'p1',  min: 5,  type: 'penalty', team: 'SA', label: "5' Penalty Goal — Cheslin Kolbe", desc: "NZ offside at breakdown in 22m. Kolbe slots 3-0.", zone: "NZ 22m Right", x: 5.3, z: 2.2 },
+  { id: 'p2',  min: 8,  type: 'penalty', team: 'SA', label: "8' Penalty — NZ High Tackle", desc: "High shot on Jesse Kriel in midfield.", zone: "NZ 40m Center", x: 3.5, z: 0.5 },
+  { id: 'p3',  min: 13, type: 'penalty', team: 'SA', label: "13' Penalty — NZ Not Rolling Away", desc: "Breakdown penalty won by Marx jackal.", zone: "NZ 22m Left", x: 6.2, z: -2.5 },
+  { id: 'p4',  min: 16, type: 'penalty', team: 'NZ', label: "16' Penalty — SA Holding On", desc: "Savea jackal forces holding-on penalty.", zone: "NZ 22m Left", x: 4.2, z: -4.0 },
+  { id: 'p5',  min: 21, type: 'penalty', team: 'NZ', label: "21' Penalty — SA Ruck Offside", desc: "Defensive offside on 10m line.", zone: "SA 40m Right", x: -3.5, z: 2.8 },
+  { id: 'p6',  min: 26, type: 'penalty', team: 'NZ', label: "26' Penalty — SA Breakdown Isolation", desc: "Holding on penalty conceded under posts.", zone: "NZ 40m Center", x: 3.8, z: 0.2 },
+  { id: 'p7',  min: 27, type: 'penalty', team: 'SA', label: "27' Penalty Goal — Cheslin Kolbe", desc: "NZ scrum collapse under SA pressure. Kolbe 3-pointer (SA 13-12).", zone: "NZ 40m Center", x: 4.0, z: 0.0 },
+  { id: 'p8',  min: 30, type: 'penalty', team: 'SA', label: "30' Penalty — NZ Kick Chase Obstruction", desc: "Blocker line run against Kolbe kick chase.", zone: "Halfway Center", x: 0.0, z: 1.2 },
+  { id: 'p9',  min: 35, type: 'penalty', team: 'SA', label: "35' Penalty — NZ Holding On", desc: "Du Toit pilfer over tackled runner.", zone: "SA 22m Center", x: -4.8, z: 1.5 },
+  { id: 'p10', min: 40, type: 'penalty', team: 'NZ', label: "40' Free Kick — SA Lineout Gap", desc: "Free kick for closing gap on lineout.", zone: "NZ 40m Left", x: 3.2, z: -5.54 },
+  { id: 'p11', min: 46, type: 'penalty', team: 'SA', label: "47' Penalty Goal — Cheslin Kolbe", desc: "NZ breakdown obstruction on SA exit. Kolbe kicks from deep (SA 16-12).", zone: "SA 22m Left", x: -8.5, z: -3.2 },
+  { id: 'p12', min: 50, type: 'penalty', team: 'NZ', label: "50' Penalty — SA Holding On", desc: "Dalton Papali'i breakdown turnover penalty.", zone: "SA 40m Left", x: -3.8, z: -2.2 },
+  { id: 'p13', min: 52, type: 'penalty', team: 'SA', label: "52' Penalty — NZ Scrum Collapse", desc: "Bomb squad shove wins penalty.", zone: "NZ 22m Center", x: 7.2, z: -0.5 },
+  { id: 'p14', min: 57, type: 'penalty', team: 'SA', label: "57' Penalty — NZ Maul Collapse", desc: "NZ pack collapses SA 5m rolling maul.", zone: "NZ 5m Line", x: 9.0, z: 3.5 },
+  { id: 'p15', min: 60, type: 'penalty', team: 'NZ', label: "60' Penalty Advantage -> Try", desc: "Maul collapse advantage converted to Jacobson try.", zone: "SA 5m Line", x: 9.5, z: 5.54 },
+  { id: 'p16', min: 65, type: 'penalty', team: 'NZ', label: "65' Penalty — SA Holding On", desc: "Savea isolates Esterhuizen on carry.", zone: "NZ 22m Left", x: 5.8, z: -2.4 },
+  { id: 'p17', min: 67, type: 'penalty', team: 'NZ', label: "67' Penalty — SA Offside", desc: "Defensive offside inside SA 22m.", zone: "SA 22m Right", x: -6.2, z: 3.2 },
+  { id: 'p18', min: 69, type: 'penalty', team: 'NZ', label: "69' Penalty — SA Not Releasing", desc: "Tackled player not releasing on 5m line.", zone: "SA 10m Center", x: -7.5, z: 0.5 },
+  { id: 'p19', min: 70, type: 'penalty', team: 'NZ', label: "70' Yellow Card — Marco van Staden", desc: "Cynical ruck kill on NZ tryline attack. SA down to 14 men.", zone: "SA 5m Line Right", x: 7.9, z: 2.8 },
+  { id: 'p20', min: 71, type: 'penalty', team: 'NZ', label: "71' Yellow Card — Cobus Reinach", desc: "Deliberate knockdown stopping wide overlap. SA down to 13 men.", zone: "SA Tryline Channel", x: 9.2, z: 3.5 },
+  { id: 'p21', min: 73, type: 'penalty', team: 'SA', label: "73' Penalty — NZ Holding On", desc: "Kwagga Smith goal-line jackal penalty.", zone: "SA 5m Center", x: -8.0, z: -1.8 },
+  { id: 'p22', min: 76, type: 'penalty', team: 'NZ', label: "76' Penalty — SA Offside", desc: "13-man SA defense offside in midfield.", zone: "NZ 40m Center", x: 2.5, z: 0.0 },
+
+  // ==================== 4. TURNOVERS (32 Total: 23 NZ / 9 SA) ====================
+  { id: 'to1',  min: 2,  type: 'turnover', team: 'NZ', subType: 'Knock-on', x: -3.5, z: 2.4, label: "2' Handling Turnover — NZ Knock-on", desc: "Dropped high ball in collision under pressure from Arendse.", zone: "SA 40m Right Channel" },
+  { id: 'to2',  min: 4,  type: 'turnover', team: 'SA', subType: 'Jackal Steal', x: 6.8, z: -3.2, label: "4' Ruck Turnover — Eben Etzebeth Jackal", desc: "Etzebeth clamps over isolated carrier, winning holding-on turnover.", zone: "NZ 22m Left Tramline" },
+  { id: 'to3',  min: 8,  type: 'turnover', team: 'SA', subType: 'Handling Error', x: 3.5, z: 5.2, label: "8' Handling Turnover — SA Unforced Error", desc: "Spilled pass in wide backline sweep across the 15m line.", zone: "NZ 10m Near Touchline" },
+  { id: 'to4',  min: 11, type: 'turnover', team: 'SA', subType: 'Tackle Turnover', x: -1.2, z: -1.5, label: "11' Contact Turnover — De Allende Hit", desc: "Dominant tackle dislodges ball from Rieko Ioane in midfield.", zone: "Halfway Center" },
+  { id: 'to5',  min: 16, type: 'turnover', team: 'NZ', subType: 'Jackal Steal', x: 4.2, z: -4.0, label: "16' Ruck Turnover — Ardie Savea Jackal", desc: "Savea locks onto Esterhuizen after carry, winning clean breakdown steal.", zone: "NZ 22m Left Flank" },
+  { id: 'to6',  min: 19, type: 'turnover', team: 'SA', subType: 'Knock-on', x: 0.5, z: 0.8, label: "19' Handling Turnover — SA Knock-on", desc: "Fumble at base of ruck under heavy All Black counter-ruck pressure.", zone: "Halfway Corridor" },
+  { id: 'to7',  min: 21, type: 'turnover', team: 'NZ', subType: 'Forward Pass', x: -6.0, z: 3.5, label: "21' Handling Turnover — NZ Forward Pass", desc: "Forward pass on phase 4 attack inside SA 22m.", zone: "SA 22m Right Channel" },
+  { id: 'to8',  min: 24, type: 'turnover', team: 'NZ', subType: 'Set Piece Steal', x: 2.5, z: -5.54, label: "24' Lineout Steal & Try — Tupou Vaa'i", desc: "Vaa'i intercepts tap down, breaks gainline -> Josh Moorby Try.", zone: "NZ 10m Tramline" },
+  { id: 'to9',  min: 26, type: 'turnover', team: 'SA', subType: 'Ruck Penalty', x: 3.8, z: 0.2, label: "26' Breakdown Turnover — SA Isolated Carrier", desc: "Holding on penalty conceded by SA forward pod under NZ posts.", zone: "NZ 40m Center" },
+  { id: 'to10', min: 29, type: 'turnover', team: 'NZ', subType: 'Kick Turnover', x: -7.5, z: 4.8, label: "29' Kicking Turnover — Barrett Box Kick", desc: "Contestable box kick claimed cleanly by Cheslin Kolbe.", zone: "SA 22m Touchline" },
+  { id: 'to11', min: 33, type: 'turnover', team: 'SA', subType: 'Handling Error', x: -2.0, z: -2.8, label: "33' Handling Turnover — SA Knock-on", desc: "Grant Williams pass bobbles to ground off forward runner.", zone: "SA 10m Left" },
+  { id: 'to12', min: 35, type: 'turnover', team: 'SA', subType: 'Jackal Steal', x: -4.8, z: 1.5, label: "35' Ruck Turnover — Pieter-Steph du Toit", desc: "Du Toit pilfer over tackled NZ runner, forcing penalty.", zone: "SA 22m Center-Right" },
+  { id: 'to13', min: 36, type: 'turnover', team: 'NZ', subType: 'Tryline Strip', x: 10.4, z: 1.8, label: "36' Tryline Strip Turnover — Jordie Barrett", desc: "Malcolm Marx powers for line; Jordie Barrett rips ball in-goal to save try.", zone: "NZ In-Goal / Tryline" },
+  { id: 'to14', min: 39, type: 'turnover', team: 'SA', subType: 'Lineout Overthrow', x: 8.2, z: 5.54, label: "39' Set Piece Turnover — Lost Lineout", desc: "Overthrown SA lineout tap stolen at back of lineout by Scott Barrett.", zone: "NZ 5m Touchline" },
+  { id: 'to15', min: 42, type: 'turnover', team: 'NZ', subType: 'Knock-on', x: -1.5, z: -1.0, label: "42' Handling Turnover — Tamaiti Williams", desc: "Heavy collision knock-on in opening 2nd half carry.", zone: "Halfway Line" },
+  { id: 'to16', min: 44, type: 'turnover', team: 'SA', subType: 'Dropped High Ball', x: 1.8, z: 4.5, label: "44' Aerial Turnover — SA Dropped Ball", desc: "Dropped up-and-under kick contest near 15m line.", zone: "NZ 10m Flank" },
+  { id: 'to17', min: 48, type: 'turnover', team: 'NZ', subType: 'Charge-Down Try', x: -7.7, z: 3.8, label: "48' Charge-Down Turnover Try — Fabian Holland", desc: "Holland charges down Grant Williams box kick inside SA 22m -> Try.", zone: "SA 22m Right Flank" },
+  { id: 'to18', min: 50, type: 'turnover', team: 'NZ', subType: 'Jackal Steal', x: -3.8, z: -2.2, label: "50' Ruck Turnover — Dalton Papali'i", desc: "Papali'i jackal wins holding-on penalty over isolated Bok runner.", zone: "SA 40m Left" },
+  { id: 'to19', min: 53, type: 'turnover', team: 'SA', subType: 'Scrum Steal', x: 7.2, z: -0.5, label: "53' Set Piece Turnover — Bomb Squad Scrum Shove", desc: "New front row wins penalty against the head on NZ feed.", zone: "NZ 22m Midfield" },
+  { id: 'to20', min: 55, type: 'turnover', team: 'SA', subType: 'Handling Error', x: 5.5, z: -5.0, label: "55' Handling Turnover — Arendse Knock-on", desc: "Fumble on wide counter-attack attempt near left touchline.", zone: "NZ 22m Touchline" },
+  { id: 'to21', min: 56, type: 'turnover', team: 'SA', subType: 'Counter-Ruck', x: -3.2, z: 0.5, label: "56' Ruck Turnover — Malcolm Marx Jackal", desc: "Marx explosive counter-ruck over Cam Roigard, stealing ball.", zone: "SA 40m Center" },
+  { id: 'to22', min: 59, type: 'turnover', team: 'NZ', subType: 'Maul Defense', x: 8.8, z: -5.54, label: "59' Maul Turnover — NZ Defensive Sack", desc: "SA rolling maul collapsed legally and held up by NZ pack.", zone: "NZ 5m Tramline" },
+  { id: 'to23', min: 62, type: 'turnover', team: 'SA', subType: 'Handling Error', x: -6.8, z: 2.2, label: "62' Handling Turnover — Kwagga Smith Fumble", desc: "Loose ball at base of breakdown inside SA 22m.", zone: "SA 22m Channel" },
+  { id: 'to24', min: 64, type: 'turnover', team: 'NZ', subType: 'Tackle Spill', x: 0.8, z: 5.0, label: "64' Contact Turnover — NZ Attack Tackle", desc: "Etzebeth hit causes spill on NZ counter-attack.", zone: "Halfway Tramline" },
+  { id: 'to25', min: 65, type: 'turnover', team: 'NZ', subType: 'Jackal Steal', x: 5.8, z: -2.4, label: "65' Ruck Turnover — Ardie Savea", desc: "Savea isolates Esterhuizen on carry, winning holding-on penalty.", zone: "NZ 22m Left" },
+  { id: 'to26', min: 68, type: 'turnover', team: 'NZ', subType: 'Lineout Steal', x: -5.8, z: 5.54, label: "68' Set Piece Turnover — NZ Lineout Steal", desc: "Scott Barrett picks off SA lineout call on defensive throw.", zone: "SA 22m Touchline" },
+  { id: 'to27', min: 70, type: 'turnover', team: 'NZ', subType: 'Cynical Ruck Kill', x: 7.9, z: 2.8, label: "70' Breakdown Turnover & Card — Marco van Staden", desc: "Van Staden kills ball on tryline attack -> Yellow Card (14 men).", zone: "SA 5m Line Right" },
+  { id: 'to28', min: 71, type: 'turnover', team: 'NZ', subType: 'Deliberate Knockdown', x: 9.2, z: 3.5, label: "71' Turnover & Card — Cobus Reinach", desc: "Reinach bats down wide pass -> Yellow Card (13 men).", zone: "SA Tryline Channel" },
+  { id: 'to29', min: 73, type: 'turnover', team: 'SA', subType: 'Jackal Steal', x: -8.0, z: -1.8, label: "73' Ruck Turnover — Kwagga Smith Jackal", desc: "Desperate goal-line jackal penalty won by Kwagga Smith.", zone: "SA 5m Center" },
+  { id: 'to30', min: 75, type: 'turnover', team: 'NZ', subType: 'Breakout Try', x: 9.5, z: 4.8, label: "75' Turnover Counter Try — Will Jordan", desc: "NZ exploit 2-man overlap on turnover ball -> Try #2 (SA 16-33).", zone: "SA Corner Flag" },
+  { id: 'to31', min: 77, type: 'turnover', team: 'SA', subType: 'Knock-on', x: -4.5, z: -3.0, label: "77' Handling Turnover — 13-Man Desperation Pass", desc: "Wild offload goes forward on SA counter-attack.", zone: "SA 22m Left" },
+  { id: 'to32', min: 79, type: 'turnover', team: 'NZ', subType: 'Kick into Touch', x: 8.5, z: 5.54, label: "79' Final Turnover — Match Ending Touch Finder", desc: "Damian McKenzie kicks dead into touch to seal 16-33 victory.", zone: "SA 10m Touchline" }
+];
+
+
+
+// Color mapping for event types
+// ============================================================
+// 3D ON-FIELD PINS WITH TEAM POSSESSION CODING
+// ============================================================
+const TEAM_PIN_COLORS = {
+  SA: { primary: 0x22c55e, glow: 0x4ade80, ring: 0xfbbf24, sleeve: 0x15803d },
+  NZ: { primary: 0x0284c7, glow: 0x38bdf8, ring: 0xffffff, sleeve: 0x0f172a }
+};
+
+const EVENT_TYPE_DOTS = {
+  scrum:    0xf59e0b, // Amber Gold
+  lineout:  0x10b981, // Emerald Green
+  penalty:  0xef4444, // Ruby Red
+  turnover: 0xa855f7  // Violet Purple
+};
+
+const eventPinsGroup = new THREE.Group();
+const pinMeshes = [];
+
+function createEventPins() {
+  MATCH_EVENTS_PITCH.forEach(ev => {
+    const isSA = (ev.team === 'SA');
+    const tCol = isSA ? TEAM_PIN_COLORS.SA : TEAM_PIN_COLORS.NZ;
+    const typeCol = EVENT_TYPE_DOTS[ev.type] || 0x3b82f6;
+
+    const pinGroup = new THREE.Group();
+    pinGroup.userData = ev;
+
+    // 1. Team-Colored Upright Beacon Pole
+    const poleGeo = new THREE.CylinderGeometry(0.022, 0.022, 1.4, 8);
+    const poleMat = new THREE.MeshBasicMaterial({ color: tCol.primary, transparent: true, opacity: 0.85 });
+    const pole = new THREE.Mesh(poleGeo, poleMat);
+    pole.position.y = 0.7;
+    pinGroup.add(pole);
+
+    // 2. Base Sleeve
+    const sleeveGeo = new THREE.CylinderGeometry(0.045, 0.045, 0.25, 8);
+    const sleeveMat = new THREE.MeshBasicMaterial({ color: tCol.sleeve });
+    const sleeve = new THREE.Mesh(sleeveGeo, sleeveMat);
+    sleeve.position.y = 0.125;
+    pinGroup.add(sleeve);
+
+    // 3. Team-Coded Glowing Beacon Head (Diamond)
+    const headGeo = new THREE.OctahedronGeometry(0.18, 0);
+    const headMat = new THREE.MeshStandardMaterial({
+      color: tCol.glow,
+      emissive: tCol.primary,
+      emissiveIntensity: 0.9,
+      roughness: 0.2,
+      metalness: 0.4
+    });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 1.45;
+    pinGroup.add(head);
+
+    // 4. Event-Type Indicator Sphere on top of Beacon
+    const capGeo = new THREE.SphereGeometry(0.075, 8, 8);
+    const capMat = new THREE.MeshBasicMaterial({ color: typeCol });
+    const cap = new THREE.Mesh(capGeo, capMat);
+    cap.position.y = 1.72;
+    pinGroup.add(cap);
+
+    // 5. Ground Target Ring
+    const ringGeo = new THREE.RingGeometry(0.14, 0.28, 16);
+    ringGeo.rotateX(-Math.PI / 2);
+    const ringMat = new THREE.MeshBasicMaterial({ color: tCol.ring, side: THREE.DoubleSide, transparent: true, opacity: 0.7 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.y = 0.03;
+    pinGroup.add(ring);
+
+    pinGroup.position.set(ev.x, 0, ev.z);
+    pinGroup.visible = false;
+    eventPinsGroup.add(pinGroup);
+    pinMeshes.push(head);
+  });
+  scene.add(eventPinsGroup);
+}
+createEventPins();
+
+// Interactive Raycaster for Hover Cards & Clicking Pins
+const raycaster = new THREE.Raycaster();
+const mouseVec = new THREE.Vector2();
+const tooltip = document.getElementById('eventTooltip');
+let hoveredPin = null;
+
+canvas3d.addEventListener('mousemove', (e) => {
+  const rect = canvas3d.getBoundingClientRect();
+  mouseVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouseVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouseVec, camera);
+  const visibleHeads = pinMeshes.filter(m => m.parent && m.parent.visible);
+  const intersects = raycaster.intersectObjects(visibleHeads);
+
+  if (intersects.length > 0) {
+    const hitHead = intersects[0].object;
+    const parentPin = hitHead.parent;
+    const ev = parentPin.userData;
+
+    if (hoveredPin !== parentPin) {
+      if (hoveredPin) hoveredPin.scale.set(1, 1, 1);
+      hoveredPin = parentPin;
+      hoveredPin.scale.set(1.4, 1.4, 1.4);
+    }
+
+    const isSA = (ev.team === 'SA');
+    const teamBadgeHtml = isSA
+      ? '<span style="background:rgba(22,101,52,0.8);border:1px solid #34d399;color:#4ade80;padding:0.18rem 0.5rem;border-radius:4px;font-weight:900;">🇿🇦 SPRINGBOKS BALL</span>'
+      : '<span style="background:rgba(2,132,199,0.8);border:1px solid #38bdf8;color:#7dd3fc;padding:0.18rem 0.5rem;border-radius:4px;font-weight:900;">🇳🇿 ALL BLACKS BALL</span>';
+
+    let typeIcon = '⚡ Turnover';
+    if (ev.type === 'scrum')   typeIcon = '🏉 Scrum Feed';
+    if (ev.type === 'lineout') typeIcon = '📐 Lineout Throw';
+    if (ev.type === 'penalty') typeIcon = '🎯 Penalty Awarded';
+
+    canvas3d.style.cursor = 'pointer';
+    tooltip.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+        ${teamBadgeHtml}
+        <span style="font-size:0.75rem;color:#fbbf24;font-weight:900;">${ev.min}' MIN</span>
+      </div>
+      <div class="tt-title" style="color:#ffffff;font-size:0.85rem;">${ev.label}</div>
+      <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:0.25rem;">📌 Phase: <strong style="color:#f8fafc;">${typeIcon}</strong></div>
+      <div class="tt-desc">${ev.desc}</div>
+      <div class="tt-loc">📍 Field Zone: <strong style="color:#f8fafc;">${ev.zone}</strong><br><span style="color:#60a5fa;font-weight:700;">👆 Click pin to jump timeline to ${ev.min}'</span></div>
+    `;
+    tooltip.style.left = `${e.clientX - rect.left}px`;
+    tooltip.style.top  = `${e.clientY - rect.top}px`;
+    tooltip.classList.add('visible');
+  } else {
+    if (hoveredPin) {
+      hoveredPin.scale.set(1, 1, 1);
+      hoveredPin = null;
+    }
+    canvas3d.style.cursor = 'default';
+    tooltip.classList.remove('visible');
+  }
+});
+
+canvas3d.addEventListener('click', (e) => {
+  if (hoveredPin && hoveredPin.userData) {
+    skipTo(hoveredPin.userData.min);
+  }
+});
+
+// ============================================================
+// EVENT FILTERING CONTROLS & LIVE STATS HUD ENGINE
+// ============================================================
+let currentTeamFilter = 'all';
+let currentTypeFilter = 'all';
+let pinsVisible = true;
+
+function filterByTeam(team, btn) {
+  currentTeamFilter = team;
+  document.querySelectorAll('.ev-filter-btn[data-team]').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  updateMatchStatsHud(currentMin);
+}
+
+function filterByType(type, btn) {
+  currentTypeFilter = (currentTypeFilter === type) ? 'all' : type;
+  document.querySelectorAll('.ev-filter-btn[data-filter]').forEach(b => {
+    if (b.dataset.filter === currentTypeFilter) b.classList.add('active');
+    else b.classList.remove('active');
+  });
+  updateMatchStatsHud(currentMin);
+}
+
+function toggleEventPins(btn) {
+  pinsVisible = !pinsVisible;
+  btn.textContent = pinsVisible ? '👁️ Hide Pins' : '👁️ Show Pins';
+  btn.classList.toggle('active', !pinsVisible);
+  updateMatchStatsHud(currentMin);
+}
+
+// Update Live Match Stats Counters and Chronological Pin Visibility
+function updateMatchStatsHud(min) {
+  let saScrum = 0, nzScrum = 0;
+  let saLine  = 0, nzLine  = 0;
+  let saTurn  = 0, nzTurn  = 0;
+  let saPen   = 0, nzPen   = 0;
+
+  const isFullTime = (min >= 79.5);
+
+  if (typeof MATCH_EVENTS_PITCH !== 'undefined') {
+    MATCH_EVENTS_PITCH.forEach(ev => {
+      if (ev.min <= min || isFullTime) {
+        if (ev.type === 'scrum') {
+          if (ev.team === 'SA') saScrum++; else nzScrum++;
+        } else if (ev.type === 'lineout') {
+          if (ev.team === 'SA') saLine++; else nzLine++;
+        } else if (ev.type === 'turnover') {
+          if (ev.team === 'SA') saTurn++; else nzTurn++;
+        } else if (ev.type === 'penalty') {
+          if (ev.team === 'SA') saPen++; else nzPen++;
+        }
+      }
+    });
+  }
+
+  const hS = document.getElementById('hudScrums');
+  const hL = document.getElementById('hudLineouts');
+  const hT = document.getElementById('hudTurnovers');
+  const hP = document.getElementById('hudPenalties');
+
+  if (hS) hS.textContent = `SA ${saScrum} · ${nzScrum} NZ`;
+  if (hL) hL.textContent = `SA ${saLine} · ${nzLine} NZ`;
+  if (hT) hT.textContent = `SA ${saTurn} · ${nzTurn} NZ`;
+  if (hP) hP.textContent = `SA ${saPen} · ${nzPen} NZ`;
+
+  // CHRONOLOGICAL TIMED PIN VISIBILITY:
+  if (typeof eventPinsGroup !== 'undefined' && eventPinsGroup.children) {
+    eventPinsGroup.children.forEach(pin => {
+      const ev = pin.userData;
+      if (!ev) return;
+      const matchTeam = (currentTeamFilter === 'all' || ev.team === currentTeamFilter);
+      const matchType = (currentTypeFilter === 'all' || ev.type === currentTypeFilter);
+
+      if (!pinsVisible || !matchTeam || !matchType) {
+        pin.visible = false;
+        return;
+      }
+
+      if (isFullTime) {
+        pin.visible = true;
+      } else {
+        pin.visible = (ev.min <= min);
+      }
+
+      // Dynamic 3D Pin Beacon Pulse for active event happening in current minute
+      const isNow = Math.abs(min - ev.min) < 1.0;
+      if (isNow && pin.visible) {
+        const pulse = 1.0 + Math.sin(Date.now() * 0.008) * 0.45;
+        pin.scale.set(pulse, pulse, pulse);
+      } else if (typeof hoveredPin !== 'undefined' && pin !== hoveredPin) {
+        pin.scale.set(1, 1, 1);
+      }
+    });
+  }
+}
+
+// ============================================================
+// UPDATE TERRAIN VERTICES EVERY FRAME
+// ============================================================
+function updateTerrain(state, animT) {
+  const pos   = geo.attributes.position.array;
+  const col   = geo.attributes.color.array;
+  const frontier = state.base / 100;
+
+  for (let vi = 0; vi < nVerts; vi++) {
+    const px = pos[vi * 3];      // x: -PITCH_L/2 to +PITCH_L/2
+    const pz = pos[vi * 3 + 2]; // z: -PITCH_W/2 to +PITCH_W/2
+
+    const cf = (px + PITCH_L/2) / PITCH_L;   // 0=SA, 1=NZ
+    const rf = (pz + PITCH_W/2) / PITCH_W;   // 0=near, 1=far
+
+    const h = getHeight(cf, rf, state, animT);
+    pos[vi * 3 + 1] = h * MAX_H;  // displace Y upward
+
+    const [r, g, b] = getColor(cf, h, frontier, state.turb);
+    col[vi * 3]     = r;
+    col[vi * 3 + 1] = g;
+    col[vi * 3 + 2] = b;
+  }
+
+  geo.attributes.position.needsUpdate = true;
+  geo.attributes.color.needsUpdate = true;
+  geo.computeVertexNormals();
+}
+
+// ============================================================
+// WAVEFORM CANVAS (2D)
+// ============================================================
+const wCanvas = document.getElementById('waveCanvas');
+const wCtx    = wCanvas.getContext('2d');
+const WW = 980, WH = 70;
+wCanvas.width  = WW;
+wCanvas.height = WH;
+
+// Pre-compute full waveform (sample every 0.5 min)
+const waveData = [];
+for (let m = 0; m <= 80; m += 0.5) {
+  const s = getState(m);
+  waveData.push((s.base - 50) / 50); // -1 to +1
+}
+
+function drawWaveform(currentMin) {
+  wCtx.clearRect(0, 0, WW, WH);
+  wCtx.fillStyle = 'rgba(0,0,0,0.55)';
+  wCtx.fillRect(0, 0, WW, WH);
+
+  const midY   = WH / 2;
+  const padX   = 14;
+  const drawW  = WW - padX * 2;
+  const maxAmp = WH * 0.42;
+
+  // SA area (above centre — positive values)
+  wCtx.beginPath();
+  wCtx.moveTo(padX, midY);
+  waveData.forEach((v, i) => {
+    const x = padX + (i / (waveData.length - 1)) * drawW;
+    const y = v >= 0 ? midY - v * maxAmp : midY;
+    wCtx.lineTo(x, y);
+  });
+  wCtx.lineTo(padX + drawW, midY);
+  wCtx.closePath();
+  const saGrad = wCtx.createLinearGradient(0, 0, 0, midY);
+  saGrad.addColorStop(0, 'rgba(52,211,153,0.7)');
+  saGrad.addColorStop(1, 'rgba(52,211,153,0.15)');
+  wCtx.fillStyle = saGrad;
+  wCtx.fill();
+
+  // NZ area (below centre — negative values)
+  wCtx.beginPath();
+  wCtx.moveTo(padX, midY);
+  waveData.forEach((v, i) => {
+    const x = padX + (i / (waveData.length - 1)) * drawW;
+    const y = v < 0 ? midY - v * maxAmp : midY;
+    wCtx.lineTo(x, y);
+  });
+  wCtx.lineTo(padX + drawW, midY);
+  wCtx.closePath();
+  const nzGrad = wCtx.createLinearGradient(0, midY, 0, WH);
+  nzGrad.addColorStop(0, 'rgba(56,189,248,0.15)');
+  nzGrad.addColorStop(1, 'rgba(56,189,248,0.70)');
+  wCtx.fillStyle = nzGrad;
+  wCtx.fill();
+
+  // Wave line
+  wCtx.beginPath();
+  waveData.forEach((v, i) => {
+    const x = padX + (i / (waveData.length - 1)) * drawW;
+    const y = midY - v * maxAmp;
+    i === 0 ? wCtx.moveTo(x, y) : wCtx.lineTo(x, y);
+  });
+  wCtx.strokeStyle = '#ffffff';
+  wCtx.lineWidth = 1.8;
+  wCtx.stroke();
+
+  // Centre dashed line
+  wCtx.beginPath();
+  wCtx.moveTo(padX, midY);
+  wCtx.lineTo(padX + drawW, midY);
+  wCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+  wCtx.lineWidth = 1;
+  wCtx.setLineDash([4, 4]);
+  wCtx.stroke();
+  wCtx.setLineDash([]);
+
+  // Time markers (10min intervals)
+  for (let m = 0; m <= 80; m += 10) {
+    const x = padX + (m / 80) * drawW;
+    wCtx.strokeStyle = 'rgba(255,255,255,0.08)';
+    wCtx.lineWidth = 1;
+    wCtx.beginPath(); wCtx.moveTo(x, 0); wCtx.lineTo(x, WH); wCtx.stroke();
+    wCtx.fillStyle = 'rgba(255,255,255,0.25)';
+    wCtx.font = '8px Segoe UI';
+    wCtx.textAlign = 'center';
+    wCtx.fillText(m + "'", x, WH - 4);
+  }
+
+  // Draw 95 Event Glyphs / Pins on Waveform Timeline
+  const isFullTime = currentMin >= 79.5;
+  MATCH_EVENTS_PITCH.forEach(ev => {
+    // Only show event dot on waveform if it has occurred OR at full-time
+    if (!isFullTime && ev.min > currentMin + 0.5) return;
+
+    const evX = padX + (ev.min / 80) * drawW;
+    let dotCol = '#ffffff';
+    if (ev.type === 'scrum')    dotCol = '#fbbf24'; // Gold
+    if (ev.type === 'lineout')  dotCol = '#34d399'; // Emerald
+    if (ev.type === 'penalty')  dotCol = '#ef4444'; // Red
+    if (ev.type === 'turnover') dotCol = '#c084fc'; // Purple
+
+    const isCurrent = Math.abs(currentMin - ev.min) < 0.8;
+
+    wCtx.beginPath();
+    wCtx.arc(evX, midY, isCurrent ? 4.5 : 2.2, 0, Math.PI * 2);
+    wCtx.fillStyle = dotCol;
+    wCtx.fill();
+    if (isCurrent) {
+      wCtx.strokeStyle = '#ffffff';
+      wCtx.lineWidth = 1.5;
+      wCtx.stroke();
+    }
+  });
+
+  // Current playhead scrubber needle
+  const curX = padX + (currentMin / 80) * drawW;
+  wCtx.beginPath();
+  wCtx.moveTo(curX, 0);
+  wCtx.lineTo(curX, WH);
+  wCtx.strokeStyle = '#fbbf24';
+  wCtx.lineWidth = 2.5;
+  wCtx.stroke();
+
+  // Scrubber diamond
+  wCtx.beginPath();
+  wCtx.arc(curX, midY, 5, 0, Math.PI * 2);
+  wCtx.fillStyle = '#fbbf24';
+  wCtx.fill();
+
+  // Labels
+  wCtx.fillStyle = 'rgba(52,211,153,0.85)';
+  wCtx.font = 'bold 8px Segoe UI';
+  wCtx.textAlign = 'left';
+  wCtx.fillText('🇿🇦 SA', padX + 2, 10);
+  wCtx.fillText('🇳🇿 NZ', padX + 2, WH - 6);
+}
+
+// ============================================================
+// ANIMATION STATE & ULTRA-SMOOTH RENDER LOOP
+// ============================================================
+let currentMin = 0;
+let animT      = 0;
+let playing    = false;
+let autoLoop   = false;
+let speed      = 1;
+let rafId      = null;
+let lastTS     = null;
+let shownEvts  = new Set();
+let toastTO    = null;
+
+function frame(ts) {
+  if (!lastTS) lastTS = ts;
+  const dt = Math.min((ts - lastTS) / 1000, 0.05);
+  lastTS = ts;
+
+  animT += dt * 1.4;
+
+  if (playing) {
+    // Normal pace (1x = 1.25 match mins per real sec => 80 mins takes ~64 seconds)
+    currentMin += dt * speed * 1.25;
+
+    if (currentMin >= 80) {
+      currentMin = 80;
+      if (autoLoop) {
+        // Auto-loop after brief pause at full-time
+        setTimeout(() => {
+          if (playing && autoLoop) {
+            currentMin = 0;
+            shownEvts.clear();
+            const pl = document.getElementById('phaseLog');
+            if (pl) pl.innerHTML = '';
+          }
+        }, 1800);
+      } else {
+        playing = false;
+        const pBtn = document.getElementById('playBtn');
+        if (pBtn) {
+          pBtn.textContent = '🔄 REPLAY MATCH';
+          pBtn.classList.remove('active');
+        }
+        showToast({ type: 'ft', t: '🏁 FULL TIME: 🇳🇿 All Blacks 33 – 16 Springboks 🇿🇦 · All 95 Pins Displayed' });
+      }
+    }
+  }
+
+  // Fire match events chronologically
+  if (typeof KF !== 'undefined') {
+    KF.forEach(kf => {
+      if (kf.ev && kf.min <= currentMin && !shownEvts.has(kf.min)) {
+        shownEvts.add(kf.min);
+        showToast(kf.ev);
+        addLog(kf.min, kf.ev.t);
+      }
+    });
+  }
+
+  const state = getState(currentMin);
+
+  // Update 3D terrain
+  updateTerrain(state, animT);
+
+  // Update DOM Score & Minute
+  const saEl = document.getElementById('saScore');
+  const nzEl = document.getElementById('nzScore');
+  const m1El = document.getElementById('minDisp');
+  const m2El = document.getElementById('minDisp2');
+
+  if (saEl) saEl.textContent = state.saS;
+  if (nzEl) nzEl.textContent = state.nzS;
+  const minStr = Math.floor(currentMin) + "'";
+  if (m1El) m1El.textContent = minStr;
+  if (m2El) m2El.textContent = minStr;
+
+  // Render 3D scene
+  renderer.render(scene, camera);
+
+  // Render 2D Waveform & Update Pin Chronological Visibility + HUD
+  drawWaveform(currentMin);
+  updateMatchStatsHud(currentMin);
+
+  rafId = requestAnimationFrame(frame);
+}
+
+// Start real-time render loop
+rafId = requestAnimationFrame(frame);
+
+// ============================================================
+// DYNAMIC RESPONSIVE CANVAS & MOBILE TOUCH ENGINE
+// ============================================================
+function handleResize() {
+  const wrap = document.getElementById('three-wrap');
+  if (!wrap) return;
+  
+  // Use true responsive container width without artificial 980px cap
+  const width = wrap.clientWidth;
+  const isMobile = (window.innerWidth <= 640);
+  const isWidescreen = (window.innerWidth >= 1200);
+
+  // Widescreen pitch height up to 720px for massive cinematic field!
+  const height = isMobile ? Math.round(width * 0.68) : (isWidescreen ? Math.min(Math.round(width * 0.56), 720) : Math.round(width * 0.54));
+
+  renderer.setSize(width, height);
+  camera.aspect = width / height;
+
+  if (isMobile) {
+    camera.position.set(-0.5, 12.0, 19.5);
+    camera.fov = 46;
+  } else if (isWidescreen) {
+    // Zoom in slightly to make the rugby field massive and fill the screen
+    camera.position.set(-0.5, 9.4, 15.2);
+    camera.fov = 41;
+  } else {
+    camera.position.set(-0.5, 10.5, 17.0);
+    camera.fov = 42;
+  }
+  camera.updateProjectionMatrix();
+
+  const waveWrap = document.getElementById('waveWrap');
+  if (waveWrap && typeof wCanvas !== 'undefined' && wCanvas) {
+    const waveW = waveWrap.clientWidth || width;
+    wCanvas.width = waveW;
+    wCanvas.height = isMobile ? 55 : 75;
+    drawWaveform(currentMin);
+  }
+}
+
+window.addEventListener('resize', handleResize);
+window.addEventListener('orientationchange', () => setTimeout(handleResize, 150));
+
+// Mobile Touch Interaction for 3D Pitch Pins
+if (canvas3d) {
+  canvas3d.addEventListener('touchstart', (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const rect = canvas3d.getBoundingClientRect();
+    mouseVec.x = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+    mouseVec.y = -((touch.clientY - rect.top) / rect.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouseVec, camera);
+    const visibleHeads = pinMeshes.filter(m => m.parent && m.parent.visible);
+    const intersects = raycaster.intersectObjects(visibleHeads);
+
+    if (intersects.length > 0) {
+      const hitHead = intersects[0].object;
+      const parentPin = hitHead.parent;
+      const ev = parentPin.userData;
+
+      if (hoveredPin !== parentPin) {
+        if (hoveredPin) hoveredPin.scale.set(1, 1, 1);
+        hoveredPin = parentPin;
+        hoveredPin.scale.set(1.4, 1.4, 1.4);
+      }
+
+      const isSA = (ev.team === 'SA');
+      const teamBadgeHtml = isSA
+        ? '<span style="background:rgba(22,101,52,0.8);border:1px solid #34d399;color:#4ade80;padding:0.18rem 0.5rem;border-radius:4px;font-weight:900;">🇿🇦 SPRINGBOKS BALL</span>'
+        : '<span style="background:rgba(2,132,199,0.8);border:1px solid #38bdf8;color:#7dd3fc;padding:0.18rem 0.5rem;border-radius:4px;font-weight:900;">🇳🇿 ALL BLACKS BALL</span>';
+
+      let typeIcon = '⚡ Turnover';
+      if (ev.type === 'scrum')   typeIcon = '🏉 Scrum Feed';
+      if (ev.type === 'lineout') typeIcon = '📐 Lineout Throw';
+      if (ev.type === 'penalty') typeIcon = '🎯 Penalty Awarded';
+
+      tooltip.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.35rem;">
+          ${teamBadgeHtml}
+          <span style="font-size:0.75rem;color:#fbbf24;font-weight:900;">${ev.min}' MIN</span>
+        </div>
+        <div class="tt-title" style="color:#ffffff;font-size:0.85rem;">${ev.label}</div>
+        <div style="font-size:0.68rem;color:#94a3b8;margin-bottom:0.25rem;">📌 Phase: <strong style="color:#f8fafc;">${typeIcon}</strong></div>
+        <div class="tt-desc">${ev.desc}</div>
+        <div class="tt-loc">📍 Field Zone: <strong style="color:#f8fafc;">${ev.zone}</strong><br><span style="color:#60a5fa;font-weight:700;">👆 Match jumped to ${ev.min}'</span></div>
+      `;
+      tooltip.style.left = `${touch.clientX - rect.left}px`;
+      tooltip.style.top  = `${touch.clientY - rect.top}px`;
+      tooltip.classList.add('visible');
+      skipTo(ev.min);
+    } else {
+      if (hoveredPin) {
+        hoveredPin.scale.set(1, 1, 1);
+        hoveredPin = null;
+      }
+      tooltip.classList.remove('visible');
+    }
+  }, { passive: true });
+}
+
+// Mobile Touch for 2D Waveform Scrubbing
+const waveCanvasEl = document.getElementById('waveCanvas');
+if (waveCanvasEl) {
+  const handleWaveTouch = (e) => {
+    if (!e.touches || e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const r = waveCanvasEl.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (touch.clientX - r.left) / r.width));
+    currentMin = pct * 80;
+    lastTS = null;
+    shownEvts.clear();
+    const pl = document.getElementById('phaseLog');
+    if (pl) pl.innerHTML = '';
+    KF.forEach(kf => {
+      if (kf.ev && kf.min <= currentMin) {
+        shownEvts.add(kf.min);
+        addLog(kf.min, kf.ev.t);
+      }
+    });
+    updateMatchStatsHud(currentMin);
+  };
+  waveCanvasEl.addEventListener('touchstart', handleWaveTouch, { passive: true });
+  waveCanvasEl.addEventListener('touchmove', handleWaveTouch, { passive: true });
+  waveCanvasEl.addEventListener('click', e => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    currentMin = pct * 80;
+    lastTS = null;
+    shownEvts.clear();
+    const pl = document.getElementById('phaseLog');
+    if (pl) pl.innerHTML = '';
+    KF.forEach(kf => {
+      if (kf.ev && kf.min <= currentMin) {
+        shownEvts.add(kf.min);
+        addLog(kf.min, kf.ev.t);
+      }
+    });
+    updateMatchStatsHud(currentMin);
+  });
+}
+
+// Initial responsive sizing
+setTimeout(handleResize, 100);
+
+// ============================================================
+// CONTROLS & INTERACTIVITY
+// ============================================================
+function togglePlay() {
+  playing = !playing;
+  const btn = document.getElementById('playBtn');
+  if (playing) {
+    if (currentMin >= 79.5) {
+      currentMin = 0;
+      shownEvts.clear();
+      const pl = document.getElementById('phaseLog');
+      if (pl) pl.innerHTML = '';
+    }
+    btn.textContent = '⏸ PAUSE';
+    btn.classList.add('active');
+    lastTS = null;
+  } else {
+    btn.textContent = '▶ PLAY';
+    btn.classList.remove('active');
+  }
+}
+
+function toggleLoop(btn) {
+  autoLoop = !autoLoop;
+  btn.textContent = autoLoop ? '🔁 Loop: On' : '🔁 Loop: Off';
+  btn.classList.toggle('active', autoLoop);
+}
+
+function resetMatch() {
+  playing = false;
+  currentMin = 0;
+  lastTS = null;
+  shownEvts.clear();
+  const btn = document.getElementById('playBtn');
+  if (btn) {
+    btn.textContent = '▶ PLAY';
+    btn.classList.remove('active');
+  }
+  const pl = document.getElementById('phaseLog');
+  if (pl) pl.innerHTML = '';
+  const toast = document.getElementById('toast');
+  if (toast) toast.style.opacity = '0';
+  updateMatchStatsHud(0);
+}
+
+function setSpeed(s, btn) {
+  speed = s;
+  document.querySelectorAll('.spd-btn').forEach(b => {
+    if (b.textContent.includes('×')) b.classList.remove('active');
+  });
+  if (btn) btn.classList.add('active');
+}
+
+function skipTo(min) {
+  currentMin = min;
+  lastTS = null;
+  const pl = document.getElementById('phaseLog');
+  if (pl) pl.innerHTML = '';
+  shownEvts.clear();
+  KF.forEach(kf => {
+    if (kf.ev && kf.min <= min) {
+      shownEvts.add(kf.min);
+      addLog(kf.min, kf.ev.t);
+    }
+  });
+  updateMatchStatsHud(min);
+}
+
+// Toast & phase commentary log
+const toastColors = {
+  pg_sa: '#34d399', try_sa: '#f59e0b', try_nz: '#38bdf8',
+  yc: '#fbbf24', to: '#ef4444', ht: '#c084fc', ft: '#fbbf24'
+};
+
+function showToast(ev) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  const c = toastColors[ev.type] || '#ffffff';
+  el.style.border = `1px solid ${c}`;
+  el.style.color = c;
+  el.textContent = ev.t;
+  el.style.opacity = '1';
+  if (toastTO) clearTimeout(toastTO);
+  toastTO = setTimeout(() => { el.style.opacity = '0'; }, 4000);
+}
+
+function addLog(min, text) {
+  const pl = document.getElementById('phaseLog');
+  if (!pl) return;
+  const div = document.createElement('div');
+  div.className = 'phase-item';
+  div.innerHTML = `<span class="phase-min">${min}'</span><span>${text}</span>`;
+  pl.prepend(div);
+}
+
+// ============================================================
+// WIDESCREEN SIDEBAR SYNC & EVENT FEED POPULATION
+// ============================================================
+function initSidebarEventsFeed() {
+  const listEl = document.getElementById('matchEventsList');
+  if (!listEl || typeof MATCH_EVENTS_PITCH === 'undefined') return;
+
+  listEl.innerHTML = '';
+  MATCH_EVENTS_PITCH.forEach((ev, idx) => {
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    item.id = 'feed-item-' + ev.id;
+    item.onclick = function() {
+      skipTo(ev.min);
+      highlightFeedItem(ev.id);
+    };
+
+    const teamClass = ev.team === 'SA' ? 'fi-team-sa' : 'fi-team-nz';
+    const teamName = ev.team === 'SA' ? '🇿🇦 South Africa' : '🇳🇿 New Zealand';
+    const icon = ev.type === 'scrum' ? '💥' : (ev.type === 'lineout' ? '🌲' : (ev.type === 'penalty' ? '🎯' : (ev.type === 'card' ? '🟨' : '⚡')));
+
+    item.innerHTML = `
+      <div class="fi-top">
+        <span class="fi-min">${ev.min}' Match Min</span>
+        <span class="${teamClass}">${icon} ${teamName}</span>
+      </div>
+      <div class="fi-title">${ev.label || ev.title || (ev.min + "' Match Event")}</div>
+      <div class="fi-desc">${ev.desc || ev.zone || ''}</div>
+    `;
+    listEl.appendChild(item);
+  });
+}
+
+function highlightFeedItem(eventId) {
+  document.querySelectorAll('.feed-item').forEach(el => el.classList.remove('active-event'));
+  const activeEl = document.getElementById('feed-item-' + eventId);
+  if (activeEl) {
+    activeEl.classList.add('active-event');
+    activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function updateTelemetryHUD(curMin, curState) {
+  const minBadge = document.getElementById('telMinBadge');
+  const phaseEl = document.getElementById('telPhase');
+  const terrEl = document.getElementById('telTerritory');
+
+  if (minBadge) minBadge.textContent = Math.floor(curMin) + "' MATCH MIN";
+  
+  if (phaseEl && curState && curState.ev) {
+    phaseEl.textContent = curState.ev.t || curState.ev.type || "Live Contest";
+  } else if (phaseEl) {
+    if (curMin < 40) phaseEl.textContent = "1st Half Momentum";
+    else if (curMin === 40) phaseEl.textContent = "Half-Time Break";
+    else if (curMin >= 80) phaseEl.textContent = "Full-Time (80')";
+    else phaseEl.textContent = "2nd Half Contest";
+  }
+
+  if (terrEl && curState) {
+    const saTerr = Math.round(curState.base);
+    const nzTerr = 100 - saTerr;
+    if (saTerr > 55) terrEl.textContent = "🇿🇦 SA " + saTerr + "% Dominant";
+    else if (nzTerr > 55) terrEl.textContent = "🇳🇿 NZ " + nzTerr + "% Dominant";
+    else terrEl.textContent = "50% - 50% Balanced";
+  }
+
+  if (typeof MATCH_EVENTS_PITCH !== 'undefined') {
+    const currentM = Math.floor(curMin);
+    const nearest = MATCH_EVENTS_PITCH.find(ev => ev.min === currentM);
+    if (nearest) highlightFeedItem(nearest.id);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  initSidebarEventsFeed();
+});
+setTimeout(initSidebarEventsFeed, 200);
+
+</script>
+</body>
+</html>

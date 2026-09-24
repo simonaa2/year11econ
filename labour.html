@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabourForce Live — Labour &amp; Financial Market Simulation</title>
+<meta name="description" content="Live classroom labour and financial market simulation. Students play firms and workers in a real-time competitive labour market with government interventions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:#05040f; --bg-card:rgba(255,255,255,0.03); --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.14); --text-primary:#f1f5f9;
+  --text-secondary:#94a3b8; --text-muted:#64748b;
+  --primary:#818cf8; --primary-dark:#6366f1; --primary-glow:rgba(129,140,248,0.18);
+  --secondary:#c084fc; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+  --blue:#38bdf8; --orange:#fb923c; --teal:#2dd4bf;
+  --firm:#38bdf8; --worker:#34d399; --teacher:#c084fc;
+  --radius-sm:8px; --radius-md:16px; --radius-lg:24px; --radius-full:9999px;
+  --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;overflow-x:hidden;line-height:1.5;}
+.hidden{display:none!important;}
+a{color:var(--primary);text-decoration:none;}
+
+/* NAV */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:0.5rem;}
+.top-bar-title{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:900;background:linear-gradient(135deg,#34d399,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav-btns{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.nav-link{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-full);padding:0.35rem 0.9rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;transition:var(--transition);}
+.nav-link:hover{background:rgba(255,255,255,0.09);color:var(--text-primary);}
+
+/* SCREENS */
+.screen{min-height:100vh;padding:2rem 1rem 4rem;}
+.screen.hidden{display:none!important;}
+.container{max-width:860px;margin:0 auto;}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;}
+.card-title{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;margin-bottom:0.5rem;}
+.card-sub{color:var(--text-secondary);font-size:0.9rem;margin-bottom:2rem;}
+
+/* ROLE CARDS */
+.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-top:1.5rem;}
+.role-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem;cursor:pointer;transition:var(--transition);text-align:center;}
+.role-card:hover{border-color:var(--primary-dark);background:rgba(129,140,248,0.05);transform:translateY(-2px);}
+.role-card.firm:hover{border-color:var(--firm);}
+.role-card.worker:hover{border-color:var(--worker);}
+.role-card.teacher:hover{border-color:var(--teacher);}
+.role-icon{font-size:2.5rem;margin-bottom:0.75rem;}
+.role-name{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:0.4rem;}
+.role-desc{font-size:0.82rem;color:var(--text-secondary);}
+
+/* PHASE PILL */
+.phase-pill{display:inline-block;padding:0.3rem 0.9rem;border-radius:var(--radius-full);font-size:0.75rem;font-weight:700;margin-bottom:1.5rem;}
+.phase-lobby{background:rgba(100,116,139,0.15);color:#94a3b8;border:1px solid rgba(100,116,139,0.3);}
+.phase-wages{background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);}
+.phase-hiring{background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3);}
+.phase-investing{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3);}
+.phase-results{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.3);}
+
+/* FORMS */
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.04em;}
+.text-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.65rem 0.9rem;font-family:'Inter',sans-serif;font-size:0.9rem;transition:var(--transition);}
+.text-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+.select-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.65rem 0.9rem;font-family:'Inter',sans-serif;font-size:0.9rem;cursor:pointer;}
+.select-input option{background:#1e1e3a;}
+
+/* RANGE SLIDER */
+.range-slider{width:100%;appearance:none;height:6px;border-radius:3px;outline:none;cursor:pointer;margin:0.5rem 0;}
+.range-slider.firm-unskilled{background:linear-gradient(to right,var(--green) 0%,var(--green) var(--pct,40%),rgba(255,255,255,0.1) var(--pct,40%));}
+.range-slider.firm-skilled{background:linear-gradient(to right,var(--blue) 0%,var(--blue) var(--pct,40%),rgba(255,255,255,0.1) var(--pct,40%));}
+.range-slider.firm-management{background:linear-gradient(to right,var(--yellow) 0%,var(--yellow) var(--pct,40%),rgba(255,255,255,0.1) var(--pct,40%));}
+.range-slider::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.4);}
+.slider-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.25rem;}
+.slider-label{font-size:0.83rem;color:var(--text-secondary);}
+.slider-val{font-weight:700;font-size:0.95rem;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:0.5rem;padding:0.7rem 1.5rem;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;transition:var(--transition);border:none;}
+.btn-primary{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));color:white;}
+.btn-primary:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-secondary{background:rgba(255,255,255,0.07);color:var(--text-primary);border:1px solid var(--border);}
+.btn-secondary:hover{background:rgba(255,255,255,0.12);}
+.btn-firm{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:white;}
+.btn-firm:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-worker{background:linear-gradient(135deg,#059669,#34d399);color:white;}
+.btn-worker:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-teacher{background:linear-gradient(135deg,#9333ea,#c084fc);color:white;}
+.btn-teacher:hover{opacity:0.88;transform:translateY(-1px);}
+.btn-full{width:100%;}
+.btn-sm{padding:0.4rem 0.9rem;font-size:0.8rem;}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#f87171);color:white;}
+
+/* PHASE CONTROL */
+.phase-controls{display:grid;grid-template-columns:repeat(5,1fr);gap:0.5rem;margin-bottom:2rem;}
+.phase-btn{padding:0.65rem 0.5rem;border-radius:var(--radius-sm);font-size:0.78rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:rgba(255,255,255,0.03);color:var(--text-secondary);transition:var(--transition);text-align:center;}
+.phase-btn:hover{background:rgba(255,255,255,0.08);}
+.phase-btn.active-phase{background:linear-gradient(135deg,var(--primary-dark),var(--secondary));color:white;border-color:transparent;}
+
+/* BADGES */
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:var(--radius-full);font-size:0.72rem;font-weight:700;}
+.badge-green{background:rgba(52,211,153,0.15);color:#34d399;}
+.badge-blue{background:rgba(56,189,248,0.15);color:#38bdf8;}
+.badge-yellow{background:rgba(251,191,36,0.15);color:#fbbf24;}
+.badge-gray{background:rgba(100,116,139,0.15);color:#94a3b8;}
+.badge-red{background:rgba(248,113,113,0.15);color:#f87171;}
+
+/* JOB MARKET BOARD */
+.firm-listing{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:0.75rem;cursor:pointer;transition:var(--transition);}
+.firm-listing:hover{border-color:var(--worker);background:rgba(52,211,153,0.04);}
+.firm-listing.selected{border-color:var(--worker);background:rgba(52,211,153,0.08);}
+.firm-listing-name{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;margin-bottom:0.5rem;}
+.firm-wages{display:grid;grid-template-columns:repeat(3,1fr);gap:0.5rem;margin-top:0.5rem;}
+.wage-tier{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.5rem;text-align:center;font-size:0.8rem;}
+.wage-tier.affordable{border-color:var(--green);background:rgba(52,211,153,0.05);}
+.wage-tier.unaffordable{opacity:0.45;}
+.wage-tier.ineligible{opacity:0.25;}
+.wage-amount{font-weight:800;font-size:0.92rem;}
+
+/* INVESTMENT PANEL */
+.invest-option{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;margin-bottom:0.75rem;cursor:pointer;transition:var(--transition);}
+.invest-option:hover{border-color:var(--yellow);background:rgba(251,191,36,0.04);}
+.invest-option.selected{border-color:var(--yellow);background:rgba(251,191,36,0.08);}
+
+/* INTERVENTION PANEL */
+.intervention-panel{background:linear-gradient(135deg,rgba(251,191,36,0.05),rgba(248,113,113,0.05));border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:2rem;}
+.intervention-panel h4{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;color:#fbbf24;margin-bottom:0.75rem;}
+.intervention-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.5rem;}
+.intervention-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius-sm);padding:0.6rem 0.75rem;font-size:0.78rem;font-weight:700;cursor:pointer;color:var(--text-primary);transition:var(--transition);text-align:left;}
+.intervention-btn:hover{background:rgba(251,191,36,0.1);border-color:rgba(251,191,36,0.4);}
+.intervention-btn.fired{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.3);color:#f87171;cursor:default;}
+
+/* ACTIVE INTERVENTIONS */
+.active-intervention-tag{display:inline-flex;align-items:center;gap:0.35rem;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius-full);padding:0.25rem 0.75rem;font-size:0.78rem;font-weight:700;color:#fbbf24;margin:0.25rem;}
+
+/* AI TYPE GRID */
+.ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.5rem;}
+.ai-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;text-align:center;}
+.ai-card strong{display:block;font-size:0.82rem;margin-bottom:0.3rem;}
+.ai-wages{font-size:0.72rem;color:var(--text-muted);margin-bottom:0.5rem;}
+
+/* LEADERBOARD */
+.leaderboard-row{display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:0.5rem;}
+.leaderboard-rank{font-size:1.2rem;width:30px;text-align:center;flex-shrink:0;}
+.leaderboard-name{flex:1;font-weight:700;}
+.leaderboard-stat{font-size:0.85rem;color:var(--text-secondary);}
+.leaderboard-value{font-weight:800;font-size:1rem;color:var(--primary);}
+
+/* STAT BOXES */
+.stat-box{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem;text-align:center;}
+.stat-box-val{font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:800;color:var(--primary);}
+.stat-box-lbl{font-size:0.78rem;color:var(--text-muted);margin-top:0.25rem;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.75rem;margin-bottom:1.5rem;}
+
+/* PREVIEW BOX */
+.preview-box{background:rgba(129,140,248,0.05);border:1px solid rgba(129,140,248,0.15);border-radius:var(--radius-sm);padding:1rem;margin:1rem 0;font-size:0.85rem;}
+.preview-row{display:flex;justify-content:space-between;padding:0.25rem 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.preview-row:last-child{border-bottom:none;font-weight:700;padding-top:0.5rem;}
+
+/* INTEREST RATE CONTROL */
+.rate-control{display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem 1rem;margin-bottom:1.5rem;}
+.rate-control label{font-size:0.82rem;color:var(--text-secondary);flex:1;}
+.rate-control input[type=range]{flex:2;}
+.rate-val{font-weight:800;color:var(--yellow);min-width:40px;text-align:right;}
+
+/* LOBBY WAITING */
+.lobby-wait{text-align:center;padding:3rem 1rem;}
+.lobby-wait .big-icon{font-size:4rem;margin-bottom:1rem;}
+.lobby-wait h3{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:0.5rem;}
+.lobby-wait p{color:var(--text-secondary);font-size:0.9rem;}
+
+/* RESULT CHART */
+.chart-wrap{position:relative;height:260px;margin:1.5rem 0;}
+
+/* SCROLLABLE AREA */
+.scroll-area{max-height:300px;overflow-y:auto;padding-right:0.25rem;}
+.scroll-area::-webkit-scrollbar{width:4px;}
+.scroll-area::-webkit-scrollbar-track{background:transparent;}
+.scroll-area::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <div class="top-bar-title">💼 LabourForce Live</div>
+  <div class="nav-btns">
+    <span class="phase-pill phase-lobby" id="globalPhasePill">⏳ Lobby</span>
+    <a href="index.html" class="nav-link">← Hub</a>
+  </div>
+</nav>
+
+<!-- ─── JOIN SCREEN ─────────────────────────────────────── -->
+<div class="screen" id="joinScreen">
+  <div class="container" style="max-width:520px;margin-top:3rem;">
+    <div class="card">
+      <div class="card-title">💼 LabourForce Live</div>
+      <div class="card-sub">Labour Market + Financial Market Simulation</div>
+
+      <div class="form-group">
+        <label class="form-label">Session Code</label>
+        <input type="text" id="entryCode" class="text-input" placeholder="e.g. 11ECO1" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div id="entryMsg" style="color:var(--red);font-size:0.83rem;margin-bottom:1rem;"></div>
+
+      <div class="role-grid">
+        <div class="role-card firm" onclick="chooseRole('firm')">
+          <div class="role-icon">🏭</div>
+          <div class="role-name" style="color:var(--firm);">Firm / Employer</div>
+          <div class="role-desc">Set wages for 3 skill tiers, choose a strategy, issue shares in the financial round.</div>
+        </div>
+        <div class="role-card worker" onclick="chooseRole('worker')">
+          <div class="role-icon">👷</div>
+          <div class="role-name" style="color:var(--worker);">Worker / Investor</div>
+          <div class="role-desc">Choose which firm to work for, then invest your wages in the financial market.</div>
+        </div>
+        <div class="role-card teacher" onclick="chooseRole('teacher')">
+          <div class="role-icon">📊</div>
+          <div class="role-name" style="color:var(--teacher);">Teacher Dashboard</div>
+          <div class="role-desc">Control 5 phases, spawn AI workers, trigger government interventions.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FIRM NAME SCREEN ────────────────────────────────── -->
+<div class="screen hidden" id="firmNameScreen">
+  <div class="container" style="max-width:480px;margin-top:3rem;">
+    <div class="card">
+      <div class="card-title">🏭 Name Your Firm</div>
+      <div class="form-group" style="margin-top:1rem;">
+        <label class="form-label">Company Name</label>
+        <input type="text" id="firmNameInput" class="text-input" placeholder="e.g. TechCorp Industries">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hiring Strategy</label>
+        <select id="firmStrategyInput" class="select-input">
+          <option value="high_wage">💰 High Wage Employer — Wages +15%, attracts best workers, +20% productivity</option>
+          <option value="lean">✂️ Lean Operation — Wages -10%, lower costs, risk of vacancies</option>
+          <option value="profit_share">📈 Profit Share Model — Base wages -5%, workers get 10% profit bonus</option>
+          <option value="automation">🤖 Automation Focus — Unskilled slots -3, remaining workers +30% revenue</option>
+        </select>
+      </div>
+      <div id="firmNameMsg" style="color:var(--red);font-size:0.83rem;margin-bottom:1rem;"></div>
+      <button class="btn btn-firm btn-full" onclick="joinAsFirm()">Join as Firm →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── WORKER TYPE SCREEN ─────────────────────────────── -->
+<div class="screen hidden" id="workerTypeScreen">
+  <div class="container" style="max-width:560px;margin-top:3rem;">
+    <div class="card">
+      <div class="card-title">👷 Choose Your Profile</div>
+      <div class="card-sub">Your worker type determines which roles you're eligible for and your minimum acceptable wage.</div>
+      <div id="workerTypeGrid" class="ai-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-top:1rem;"></div>
+      <div id="workerTypeMsg" style="color:var(--red);font-size:0.83rem;margin:1rem 0;"></div>
+      <button class="btn btn-worker btn-full" style="margin-top:1rem;" onclick="joinAsWorker()">Join as Worker →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── FIRM SCREEN ─────────────────────────────────────── -->
+<div class="screen hidden" id="firmScreen">
+  <div class="container" style="max-width:600px;margin-top:2rem;">
+    <div class="card">
+      <div class="phase-pill phase-lobby" id="firmPhasePill">⏳ Lobby</div>
+      <div class="card-title" id="firmTitle">🏭 Your Firm</div>
+      <div id="firmActiveInterventions" style="margin-bottom:1rem;"></div>
+      <div id="firmContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── WORKER SCREEN ───────────────────────────────────── -->
+<div class="screen hidden" id="workerScreen">
+  <div class="container" style="max-width:680px;margin-top:2rem;">
+    <div class="card">
+      <div class="phase-pill phase-lobby" id="workerPhasePill">⏳ Lobby</div>
+      <div class="card-title" id="workerTitle">👷 Job Market</div>
+      <div id="workerActiveInterventions" style="margin-bottom:1rem;"></div>
+      <div id="workerContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TEACHER SCREEN ──────────────────────────────────── -->
+<div class="screen hidden" id="teacherScreen">
+  <div class="container">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+        <div>
+          <div class="card-title">📊 Teacher Dashboard</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);">Session: <strong id="teacherCodeLabel" style="color:var(--primary);"></strong></div>
+        </div>
+        <div class="phase-pill phase-lobby" id="teacherPhasePill">⏳ Lobby</div>
+      </div>
+
+      <!-- PHASE CONTROL -->
+      <div class="phase-controls">
+        <button class="phase-btn" onclick="setPhase('lobby')">⏳ Lobby</button>
+        <button class="phase-btn" onclick="setPhase('wages')">💰 Wages</button>
+        <button class="phase-btn" onclick="setPhase('hiring')">🤝 Hiring</button>
+        <button class="phase-btn" onclick="setPhase('investing')">📈 Investing</button>
+        <button class="phase-btn" onclick="setPhase('results')">🏆 Results</button>
+      </div>
+
+      <!-- INTEREST RATE CONTROL -->
+      <div class="rate-control">
+        <label>🏦 RBA Cash Rate (savings return rate)</label>
+        <input type="range" id="interestRateSlider" min="1" max="12" step="0.5" value="4" oninput="updateInterestRate(this.value)">
+        <span class="rate-val" id="interestRateVal">4.0%</span>
+      </div>
+
+      <!-- GOVERNMENT INTERVENTION PANEL -->
+      <div class="intervention-panel">
+        <h4>🏛️ Government Interventions</h4>
+        <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Trigger real-world policy events. Students see effects instantly on their screens.</p>
+        <div class="intervention-grid" id="interventionGrid"></div>
+        <div id="activeInterventionsList" style="margin-top:0.75rem;"></div>
+      </div>
+
+      <!-- LIVE PARTICIPANTS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:2rem;">
+        <div>
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;">🏭 Firms (<span id="firmCount">0</span>)</div>
+          <div class="scroll-area" id="firmList"><span style="color:var(--text-muted);font-size:0.82rem;">Waiting for firms…</span></div>
+        </div>
+        <div>
+          <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;">👷 Workers (<span id="workerCount">0</span>)</div>
+          <div class="scroll-area" id="workerList"><span style="color:var(--text-muted);font-size:0.82rem;">Waiting for workers…</span></div>
+        </div>
+      </div>
+
+      <!-- AI WORKER SPAWN -->
+      <div style="background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:2rem;">
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--worker);margin-bottom:0.75rem;">🤖 Spawn AI Workers</div>
+        <div id="aiWorkerGrid" class="ai-grid"></div>
+        <button class="btn btn-worker" style="margin-top:1rem;width:100%;font-size:0.85rem;" onclick="spawnAllAI()">🤖 Spawn All 5 AI Types</button>
+      </div>
+
+      <!-- RESULTS AREA -->
+      <div id="teacherResultsArea" class="hidden">
+        <div style="font-size:1rem;font-weight:800;font-family:'Outfit',sans-serif;margin-bottom:1rem;">📊 Market Results</div>
+        <div class="stats-grid" id="teacherResultStats"></div>
+        <div style="font-weight:700;margin-bottom:0.75rem;">🏭 Firm Profit Leaderboard</div>
+        <div id="firmLeaderboard" class="scroll-area" style="max-height:250px;margin-bottom:1.5rem;"></div>
+        <div style="font-weight:700;margin-bottom:0.75rem;">👷 Worker Wealth Leaderboard</div>
+        <div id="workerLeaderboard" class="scroll-area" style="max-height:250px;margin-bottom:1.5rem;"></div>
+        <div class="chart-wrap"><canvas id="wagesChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── FIREBASE ─────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain:"www.datatrends.com.au",
+  projectId:"maths-f3c6d",
+  storageBucket:"maths-f3c6d.appspot.com",
+  messagingSenderId:"731995338466",
+  appId:"1:731995338466:web:71a88e716a8e75d7cc4b44"
+});
+const db = firebase.firestore();
+
+// ── STATE ─────────────────────────────────────────────────
+let sessionCode='', userRole='', firmName='', firmStrategy='';
+let workerTypeKey='', workerTypeData=null;
+let currentPhase='lobby', currentInterestRate=4;
+let phaseUnsub=null, firmsUnsub=null, workersUnsub=null;
+let allFirms=[], allWorkers=[];
+let selectedFirmId=null, selectedTierKey=null;
+let wagesSubmitted=false, hiringSubmitted=false, investingSubmitted=false;
+let selectedInvestment=null;
+let wagesChart=null;
+let interventionsFired=new Set();
+
+// ── DATA ──────────────────────────────────────────────────
+const JOB_TIERS = {
+  unskilled: { label:'🔧 Unskilled', slots:8, varRevenue:45000, color:'var(--green)', wagMin:30000, wagMax:120000, wagDef:42000 },
+  skilled:   { label:'📐 Skilled',   slots:5, varRevenue:85000, color:'var(--blue)',  wagMin:50000, wagMax:200000, wagDef:70000 },
+  management:{ label:'🎯 Management',slots:3, varRevenue:160000,color:'var(--yellow)',wagMin:80000, wagMax:350000, wagDef:120000 }
+};
+
+const WORKER_TYPES = {
+  school_leaver: {
+    label:'🎒 School Leaver', short:'School Leaver',
+    desc:'Just finished Year 12. Unskilled only. Very price-sensitive.',
+    reserveWage:{ unskilled:38000, skilled:0, management:0 },
+    eligible:['unskilled'], color:'var(--green)'
+  },
+  trades: {
+    label:'🔨 Trades Graduate', short:'Trades',
+    desc:'TAFE qualified. Unskilled or Skilled roles.',
+    reserveWage:{ unskilled:42000, skilled:65000, management:0 },
+    eligible:['unskilled','skilled'], color:'var(--blue)'
+  },
+  graduate: {
+    label:'🎓 University Graduate', short:'Graduate',
+    desc:'Degree holder. Skilled or Management roles.',
+    reserveWage:{ unskilled:0, skilled:68000, management:110000 },
+    eligible:['skilled','management'], color:'var(--orange)'
+  },
+  professional: {
+    label:'💼 Experienced Professional', short:'Professional',
+    desc:'10+ years experience. Skilled or Management.',
+    reserveWage:{ unskilled:0, skilled:75000, management:125000 },
+    eligible:['skilled','management'], color:'var(--secondary)'
+  },
+  executive: {
+    label:'👔 Senior Executive', short:'Executive',
+    desc:'C-suite candidate. Management only.',
+    reserveWage:{ unskilled:0, skilled:0, management:140000 },
+    eligible:['management'], color:'var(--yellow)'
+  }
+};
+
+const FIRM_STRATEGIES = {
+  high_wage:    { label:'💰 High Wage Employer', wageMod:1.15, revMod:1.20, desc:'+15% wages, +20% revenue per worker' },
+  lean:         { label:'✂️ Lean Operation',     wageMod:0.90, revMod:1.0,  desc:'-10% wages, standard revenue' },
+  profit_share: { label:'📈 Profit Share',       wageMod:0.95, revMod:1.05, desc:'-5% wages, workers share 10% of profit' },
+  automation:   { label:'🤖 Automation',         wageMod:1.0,  revMod:1.30, desc:'Unskilled slots -3, +30% revenue per worker' }
+};
+
+const INTERVENTIONS = {
+  min_wage:    { label:'💵 Min Wage → $55K', desc:'Government mandates $55,000 minimum wage for unskilled roles.', emoji:'💵' },
+  union_action:{ label:'✊ Union Strike',    desc:'Workers demand +20% wages or will strike. Firms must raise wages.', emoji:'✊' },
+  immigration: { label:'🌍 Immigration Surge', desc:'Visa program floods unskilled labour supply. Unskilled reserve wages -15%.', emoji:'🌍' },
+  rate_rise:   { label:'📈 RBA Rate Rise +2.5%', desc:'Rising rates hurt firms. All revenues -10%. Share prices -15%.', emoji:'📈' },
+  payroll_tax: { label:'🧾 Payroll Tax 8%', desc:'Government adds 8% payroll tax. Effective labour cost +8% for firms.', emoji:'🧾' }
+};
+
+// ── HELPERS ──────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  window.scrollTo(0,0);
+}
+function fp() {
+  return btoa([navigator.language, screen.width+'x'+screen.height, navigator.platform, Intl.DateTimeFormat().resolvedOptions().timeZone].join('|'));
+}
+function fmtMoney(n) { return '$' + Math.round(n).toLocaleString(); }
+function fmtK(n) { return n>=1000 ? '$'+(n/1000).toFixed(0)+'K' : fmtMoney(n); }
+function getPhasePillClass(p) {
+  return {lobby:'phase-lobby',wages:'phase-wages',hiring:'phase-hiring',investing:'phase-investing',results:'phase-results'}[p]||'phase-lobby';
+}
+function getPhasePillText(p) {
+  return {lobby:'⏳ Lobby',wages:'💰 Wage Setting',hiring:'🤝 Job Market Open',investing:'📈 Financial Market',results:'🏆 Results'}[p]||'⏳ Lobby';
+}
+function updatePhasePill(id, phase) {
+  const el=document.getElementById(id); if(!el) return;
+  el.className='phase-pill '+getPhasePillClass(phase);
+  el.textContent=getPhasePillText(phase);
+}
+function updatePhaseButtons(phase) {
+  const order=['lobby','wages','hiring','investing','results'];
+  document.querySelectorAll('.phase-btn').forEach((btn,i)=>{
+    btn.classList.toggle('active-phase', order[i]===phase);
+  });
+}
+
+// ── ROLE SELECTION ────────────────────────────────────────
+function chooseRole(role) {
+  const code = document.getElementById('entryCode').value.trim().toUpperCase();
+  if (!code) { document.getElementById('entryMsg').textContent='Enter a session code first.'; return; }
+  document.getElementById('entryMsg').textContent='';
+  sessionCode = code;
+  userRole = role;
+  if (role==='firm') { showScreen('firmNameScreen'); return; }
+  if (role==='worker') { buildWorkerTypeGrid(); showScreen('workerTypeScreen'); return; }
+  if (role==='teacher') { joinAsTeacher(); return; }
+}
+
+function buildWorkerTypeGrid() {
+  const grid = document.getElementById('workerTypeGrid');
+  grid.innerHTML = Object.entries(WORKER_TYPES).map(([key,wt])=>`
+    <div class="invest-option" id="wtype_${key}" onclick="selectWorkerType('${key}')">
+      <strong style="font-size:0.9rem;">${wt.label}</strong>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin:0.3rem 0;">${wt.desc}</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">Eligible: ${wt.eligible.map(e=>JOB_TIERS[e].label).join(', ')}</div>
+    </div>`).join('');
+}
+
+let selectedWorkerTypeKey = null;
+function selectWorkerType(key) {
+  selectedWorkerTypeKey = key;
+  document.querySelectorAll('#workerTypeGrid .invest-option').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('wtype_'+key);
+  if (el) el.classList.add('selected');
+}
+
+async function joinAsFirm() {
+  const name = document.getElementById('firmNameInput').value.trim();
+  const strategy = document.getElementById('firmStrategyInput').value;
+  if (!name) { document.getElementById('firmNameMsg').textContent='Enter your company name.'; return; }
+  firmName = name; firmStrategy = strategy;
+  document.getElementById('firmTitle').textContent = '🏭 ' + firmName;
+  const strat = FIRM_STRATEGIES[strategy];
+  let slots = { ...Object.fromEntries(Object.entries(JOB_TIERS).map(([k,t])=>[k,t.slots])) };
+  if (strategy==='automation') slots.unskilled = Math.max(0, slots.unskilled-3);
+  await db.collection('labour_firms').doc(sessionCode+'_'+fp()).set({
+    sessionCode, firmName: name, firmStrategy: strategy,
+    unskilledWage: Math.round(JOB_TIERS.unskilled.wagDef * strat.wageMod),
+    skilledWage:   Math.round(JOB_TIERS.skilled.wagDef   * strat.wageMod),
+    managementWage:Math.round(JOB_TIERS.management.wagDef* strat.wageMod),
+    unskilledSlots: slots.unskilled, skilledSlots: slots.skilled, managementSlots: slots.management,
+    sharePrice: 10, wagesSubmitted: false, investingSubmitted: false,
+    hiredUnskilled:0, hiredSkilled:0, hiredManagement:0,
+    profit:0, isAI:false, joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+  startPhaseListener();
+  showScreen('firmScreen');
+  renderFirmContent('lobby');
+}
+
+async function joinAsWorker() {
+  if (!selectedWorkerTypeKey) { document.getElementById('workerTypeMsg').textContent='Select a worker type first.'; return; }
+  workerTypeKey = selectedWorkerTypeKey;
+  workerTypeData = WORKER_TYPES[workerTypeKey];
+  document.getElementById('workerTitle').textContent = '👷 ' + workerTypeData.label;
+  await db.collection('labour_workers').doc(sessionCode+'_'+fp()).set({
+    sessionCode, workerType: workerTypeKey, workerLabel: workerTypeData.label,
+    chosenFirmId: null, chosenTier: null, wageEarned: 0, surplus: 0,
+    investmentChoice: null, investmentReturn: 0, totalWealth: 0,
+    hiringSubmitted: false, investingSubmitted: false, isAI: false,
+    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+  startPhaseListener();
+  showScreen('workerScreen');
+  renderWorkerContent('lobby');
+}
+
+async function joinAsTeacher() {
+  document.getElementById('teacherCodeLabel').textContent = sessionCode;
+  await db.collection('labour_market').doc(sessionCode).set({
+    phase: 'lobby', interestRate: 4, interventions: [],
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge:true });
+  startPhaseListener();
+  startFirmsListener();
+  startWorkersListener();
+  buildInterventionGrid();
+  buildAIWorkerGrid();
+  showScreen('teacherScreen');
+}
+
+// ── PHASE LISTENER ────────────────────────────────────────
+function startPhaseListener() {
+  if (phaseUnsub) phaseUnsub();
+  phaseUnsub = db.collection('labour_market').doc(sessionCode).onSnapshot(snap=>{
+    if (!snap.exists) return;
+    const data = snap.data();
+    currentPhase = data.phase || 'lobby';
+    currentInterestRate = data.interestRate || 4;
+    const activeInterventions = data.interventions || [];
+    updatePhasePill('globalPhasePill', currentPhase);
+    if (userRole==='firm') {
+      updatePhasePill('firmPhasePill', currentPhase);
+      renderFirmContent(currentPhase);
+      renderActiveInterventions('firmActiveInterventions', activeInterventions);
+    }
+    if (userRole==='worker') {
+      updatePhasePill('workerPhasePill', currentPhase);
+      renderWorkerContent(currentPhase);
+      renderActiveInterventions('workerActiveInterventions', activeInterventions);
+    }
+    if (userRole==='teacher') {
+      updatePhasePill('teacherPhasePill', currentPhase);
+      updatePhaseButtons(currentPhase);
+      document.getElementById('interestRateSlider').value = currentInterestRate;
+      document.getElementById('interestRateVal').textContent = currentInterestRate.toFixed(1) + '%';
+      activeInterventions.forEach(id=>{ interventionsFired.add(id); });
+      renderInterventionButtons();
+      renderActiveInterventions('activeInterventionsList', activeInterventions);
+      if (currentPhase==='results') showTeacherResults();
+    }
+    applyInterventionEffects(activeInterventions);
+  });
+}
+
+// ── INTERVENTION EFFECTS ──────────────────────────────────
+let activeInterventionData = [];
+function applyInterventionEffects(list) {
+  activeInterventionData = list;
+}
+function getEffectiveWage(firmData, tier) {
+  const base = firmData[tier+'Wage'] || 0;
+  let result = base;
+  if (activeInterventionData.includes('min_wage') && tier==='unskilled') result = Math.max(result, 55000);
+  if (activeInterventionData.includes('union_action')) result = Math.ceil(result * 1.20);
+  if (activeInterventionData.includes('payroll_tax')) result = result; // cost impact, not wage itself
+  return result;
+}
+function getWorkerReserveWage(wtype, tier) {
+  const base = WORKER_TYPES[wtype].reserveWage[tier] || 0;
+  if (!base) return 0;
+  let result = base;
+  if (activeInterventionData.includes('immigration') && tier==='unskilled') result = Math.ceil(result * 0.85);
+  return result;
+}
+function getFirmRevModifier() {
+  let mod = 1;
+  if (activeInterventionData.includes('rate_rise')) mod *= 0.90;
+  return mod;
+}
+function getSharePriceMod() {
+  if (activeInterventionData.includes('rate_rise')) return 0.85;
+  return 1;
+}
+function getPayrollTax() {
+  return activeInterventionData.includes('payroll_tax') ? 0.08 : 0;
+}
+
+function renderActiveInterventions(containerId, list) {
+  const el = document.getElementById(containerId);
+  if (!el || !list.length) { if(el) el.innerHTML=''; return; }
+  el.innerHTML = '<div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.4rem;">Active policies:</div>' +
+    list.map(id=> `<span class="active-intervention-tag">${INTERVENTIONS[id]?.emoji||'🏛️'} ${INTERVENTIONS[id]?.label||id}</span>`).join('');
+}
+
+// ── FIRM CONTENT ──────────────────────────────────────────
+let uWage=42000, sWage=70000, mWage=120000;
+function renderFirmContent(phase) {
+  const el = document.getElementById('firmContent');
+  if (phase==='lobby') {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏭</div><h3>Waiting for Teacher</h3><p>Your firm: <strong>${firmName}</strong><br>Strategy: ${FIRM_STRATEGIES[firmStrategy]?.label||firmStrategy}</p></div>`;
+    return;
+  }
+  if (phase==='wages') {
+    const strat = FIRM_STRATEGIES[firmStrategy];
+    uWage = Math.round(JOB_TIERS.unskilled.wagDef * strat.wageMod);
+    sWage = Math.round(JOB_TIERS.skilled.wagDef * strat.wageMod);
+    mWage = Math.round(JOB_TIERS.management.wagDef * strat.wageMod);
+    el.innerHTML=`
+      <div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;">Set Wage Offers</div>
+      <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">Strategy: <strong style="color:var(--firm);">${strat.label}</strong> — ${strat.desc}</div>
+
+      <div style="background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--green);margin-bottom:0.75rem;">🔧 Unskilled Workers — ${JOB_TIERS.unskilled.slots+(firmStrategy==='automation'?-3:0)} slots available</div>
+        <div class="slider-row"><div class="slider-label">Wage offered</div><div class="slider-val" id="uWageVal" style="color:var(--green);">${fmtK(uWage)}</div></div>
+        <input type="range" class="range-slider firm-unskilled" id="uWageSlider" min="30000" max="120000" step="1000" value="${uWage}"
+          oninput="uWage=+this.value;document.getElementById('uWageVal').textContent=fmtK(uWage);updateFirmPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$30K</span><span>$120K</span></div>
+      </div>
+
+      <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--blue);margin-bottom:0.75rem;">📐 Skilled Workers — ${JOB_TIERS.skilled.slots} slots available</div>
+        <div class="slider-row"><div class="slider-label">Wage offered</div><div class="slider-val" id="sWageVal" style="color:var(--blue);">${fmtK(sWage)}</div></div>
+        <input type="range" class="range-slider firm-skilled" id="sWageSlider" min="50000" max="200000" step="1000" value="${sWage}"
+          oninput="sWage=+this.value;document.getElementById('sWageVal').textContent=fmtK(sWage);updateFirmPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$50K</span><span>$200K</span></div>
+      </div>
+
+      <div style="background:rgba(251,191,36,0.05);border:1px solid rgba(251,191,36,0.15);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--yellow);margin-bottom:0.75rem;">🎯 Management — ${JOB_TIERS.management.slots} slots available</div>
+        <div class="slider-row"><div class="slider-label">Wage offered</div><div class="slider-val" id="mWageVal" style="color:var(--yellow);">${fmtK(mWage)}</div></div>
+        <input type="range" class="range-slider firm-management" id="mWageSlider" min="80000" max="350000" step="2000" value="${mWage}"
+          oninput="mWage=+this.value;document.getElementById('mWageVal').textContent=fmtK(mWage);updateFirmPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$80K</span><span>$350K</span></div>
+      </div>
+
+      <div class="preview-box" id="firmWagePreview"></div>
+      <button class="btn btn-firm btn-full" onclick="submitFirmWages()">💰 Submit Wage Offers to Market</button>`;
+    updateFirmPreview();
+    return;
+  }
+  if (phase==='hiring') {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🤝</div><h3>Job Market Open</h3><p>Workers are browsing your wage offers now.<br>Check back when results are announced.</p></div>`;
+    return;
+  }
+  if (phase==='investing') {
+    el.innerHTML=`<div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:1rem;">📈 Set Your Share Price</div>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Workers can now buy shares in your firm. Set a price — workers will compare it to your expected profitability.</div>
+      <div class="form-group">
+        <label class="form-label">Share Price</label>
+        <div class="slider-row"><div class="slider-label">Price per share</div><div class="slider-val" id="sharePriceVal">$10</div></div>
+        <input type="range" class="range-slider firm-skilled" id="sharePriceSlider" min="1" max="100" step="1" value="10"
+          oninput="document.getElementById('sharePriceVal').textContent='$'+this.value">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);"><span>$1</span><span>$100</span></div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Higher share price = higher worker investment return if your firm is profitable. Low price may signal weakness.</div>
+      <button class="btn btn-firm btn-full" onclick="submitFirmSharePrice()">📈 List Shares on Market</button>`;
+    return;
+  }
+  if (phase==='results') {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏆</div><h3>Results Published!</h3><p>Check the Teacher's screen or wait for results to appear here.</p></div>`;
+    return;
+  }
+}
+
+function updateFirmPreview() {
+  const el = document.getElementById('firmWagePreview');
+  if (!el) return;
+  const strat = FIRM_STRATEGIES[firmStrategy];
+  const tax = getPayrollTax();
+  const revMod = getFirmRevModifier() * strat.revMod;
+  const uSlots = firmStrategy==='automation' ? Math.max(0,JOB_TIERS.unskilled.slots-3) : JOB_TIERS.unskilled.slots;
+  const projRevU = uSlots * JOB_TIERS.unskilled.varRevenue * revMod;
+  const projRevS = JOB_TIERS.skilled.slots * JOB_TIERS.skilled.varRevenue * revMod;
+  const projRevM = JOB_TIERS.management.slots * JOB_TIERS.management.varRevenue * revMod;
+  const totalRev = projRevU + projRevS + projRevM;
+  const totalWageCost = (uSlots*uWage + JOB_TIERS.skilled.slots*sWage + JOB_TIERS.management.slots*mWage)*(1+tax);
+  const profit = totalRev - totalWageCost;
+  el.innerHTML=`
+    <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--primary);margin-bottom:0.5rem;">Projected P&L (Full Hire)</div>
+    <div class="preview-row"><span>Total Revenue (all workers)</span><span>${fmtMoney(totalRev)}</span></div>
+    <div class="preview-row"><span>Total Wage Bill${tax>0?' (+8% payroll tax)':''}</span><span style="color:var(--red);">${fmtMoney(totalWageCost)}</span></div>
+    <div class="preview-row"><span>Net Profit (if fully hired)</span><strong style="color:${profit>=0?'var(--green)':'var(--red)'};">${fmtMoney(profit)}</strong></div>`;
+}
+
+async function submitFirmWages() {
+  const effectiveU = getEffectiveWage({unskilledWage:uWage,skilledWage:sWage,managementWage:mWage},'unskilled');
+  const effectiveS = getEffectiveWage({unskilledWage:uWage,skilledWage:sWage,managementWage:mWage},'skilled');
+  const effectiveM = getEffectiveWage({unskilledWage:uWage,skilledWage:sWage,managementWage:mWage},'management');
+  await db.collection('labour_firms').doc(sessionCode+'_'+fp()).update({
+    unskilledWage: effectiveU, skilledWage: effectiveS, managementWage: effectiveM, wagesSubmitted:true
+  });
+  document.getElementById('firmContent').innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Wages Submitted!</h3><p>Unskilled: <strong>${fmtK(effectiveU)}</strong> | Skilled: <strong>${fmtK(effectiveS)}</strong> | Management: <strong>${fmtK(effectiveM)}</strong><br>Waiting for job market to open…</p></div>`;
+  wagesSubmitted = true;
+}
+
+async function submitFirmSharePrice() {
+  const price = +document.getElementById('sharePriceSlider').value;
+  await db.collection('labour_firms').doc(sessionCode+'_'+fp()).update({ sharePrice: price * getSharePriceMod(), investingSubmitted:true });
+  document.getElementById('firmContent').innerHTML=`<div class="lobby-wait"><div class="big-icon">📈</div><h3>Shares Listed at $${price}</h3><p>Workers are allocating their wages now…</p></div>`;
+}
+
+// ── WORKER CONTENT ────────────────────────────────────────
+let selectedFirmDocId = null;
+let selectedTier = null;
+let workerWageEarned = 0;
+
+function renderWorkerContent(phase) {
+  const el = document.getElementById('workerContent');
+  if (phase==='lobby') {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">👷</div><h3>Waiting for Teacher</h3><p>You are: <strong>${workerTypeData?.label||'Worker'}</strong><br>Eligible roles: ${(workerTypeData?.eligible||[]).map(e=>JOB_TIERS[e].label).join(', ')}</p></div>`;
+    return;
+  }
+  if (phase==='wages') {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">📋</div><h3>Firms Setting Wages…</h3><p>Wait for the Job Market to open. You'll see all firm offers shortly.</p></div>`;
+    return;
+  }
+  if (phase==='hiring') {
+    if (hiringSubmitted) {
+      el.innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Application Submitted!</h3><p>Waiting for financial market to open…</p></div>`;
+      return;
+    }
+    renderJobBoard();
+    return;
+  }
+  if (phase==='investing') {
+    if (investingSubmitted) {
+      el.innerHTML=`<div class="lobby-wait"><div class="big-icon">📈</div><h3>Investment Submitted!</h3><p>Waiting for results…</p></div>`;
+      return;
+    }
+    renderInvestingScreen();
+    return;
+  }
+  if (phase==='results') {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">🏆</div><h3>Market Results Published!</h3><p>Check the teacher screen for final rankings.</p></div>`;
+    return;
+  }
+}
+
+async function renderJobBoard() {
+  const el = document.getElementById('workerContent');
+  const snap = await db.collection('labour_firms').where('sessionCode','==',sessionCode).get();
+  const firms = snap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.wagesSubmitted);
+  if (!firms.length) {
+    el.innerHTML=`<div class="lobby-wait"><div class="big-icon">📋</div><h3>Job Board Loading…</h3><p>Waiting for firms to submit wage offers.</p></div>`;
+    return;
+  }
+  const wt = workerTypeData;
+  let html = `<div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:0.5rem;">🏭 Available Employers</div>
+    <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">Your eligible roles: ${wt.eligible.map(e=>JOB_TIERS[e].label).join(', ')}</div>`;
+  firms.forEach(f=>{
+    const tiers = Object.entries(JOB_TIERS).map(([key,tier])=>{
+      const wage = f[key+'Wage']||0;
+      const reserve = getWorkerReserveWage(workerTypeKey, key);
+      const eligible = wt.eligible.includes(key);
+      const affordable = eligible && wage >= reserve && reserve > 0;
+      const surplus = affordable ? wage - reserve : 0;
+      return {key, tier, wage, reserve, eligible, affordable, surplus};
+    });
+    html += `<div class="firm-listing" id="fl_${f.id}" onclick="selectFirmTier('${f.id}', null)">
+      <div class="firm-listing-name">🏭 ${f.firmName} <span style="font-size:0.75rem;color:var(--text-muted);font-weight:400;">${FIRM_STRATEGIES[f.firmStrategy]?.label||''}</span></div>
+      <div class="firm-wages">
+        ${tiers.map(t=>`
+          <div class="wage-tier ${!t.eligible?'ineligible':t.affordable?'affordable':'unaffordable'}"
+               onclick="event.stopPropagation();${t.affordable?`selectFirmTier('${f.id}','${t.key}')`:''}"
+               style="cursor:${t.affordable?'pointer':'default'};">
+            <div style="font-size:0.7rem;color:var(--text-muted);">${t.tier.label}</div>
+            <div class="wage-amount" style="color:${t.affordable?'var(--green)':t.eligible?'var(--red)':'var(--text-muted)'};">${t.wage?fmtK(t.wage):'—'}</div>
+            ${t.eligible?`<div style="font-size:0.65rem;color:var(--text-muted);">Min: ${fmtK(t.reserve)}</div>`:'<div style="font-size:0.65rem;color:var(--text-muted);">Not eligible</div>'}
+            ${t.affordable?`<div style="font-size:0.65rem;color:var(--green);">+${fmtK(t.surplus)} surplus</div>`:''}
+          </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  html += `<div id="workerJobSelection" style="margin-top:1rem;"></div>`;
+  el.innerHTML = html;
+  renderJobSelection();
+}
+
+function selectFirmTier(firmId, tierKey) {
+  selectedFirmDocId = firmId;
+  selectedTier = tierKey;
+  document.querySelectorAll('.firm-listing').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('fl_'+firmId);
+  if (el) el.classList.add('selected');
+  renderJobSelection();
+}
+
+function renderJobSelection() {
+  const el = document.getElementById('workerJobSelection');
+  if (!el) return;
+  if (!selectedFirmDocId || !selectedTier) {
+    el.innerHTML='<div style="font-size:0.82rem;color:var(--text-muted);text-align:center;padding:1rem;">Click a wage tier to select your preferred job.</div>';
+    return;
+  }
+  el.innerHTML=`<button class="btn btn-worker btn-full" onclick="submitWorkerHiring()">✅ Apply for ${JOB_TIERS[selectedTier]?.label||selectedTier} Role</button>`;
+}
+
+async function submitWorkerHiring() {
+  if (!selectedFirmDocId || !selectedTier) return;
+  const firmSnap = await db.collection('labour_firms').doc(selectedFirmDocId).get();
+  const firm = firmSnap.data();
+  if (!firm) { alert('Firm not found.'); return; }
+  const wage = getEffectiveWage(firm, selectedTier);
+  const reserve = getWorkerReserveWage(workerTypeKey, selectedTier);
+  const surplus = wage - reserve;
+  workerWageEarned = wage;
+  await db.collection('labour_workers').doc(sessionCode+'_'+fp()).update({
+    chosenFirmId: selectedFirmDocId, chosenFirmName: firm.firmName,
+    chosenTier: selectedTier, wageEarned: wage, surplus, hiringSubmitted:true
+  });
+  const hiresField = selectedTier+'Hired';
+  const current = firm[hiresField]||0;
+  await db.collection('labour_firms').doc(selectedFirmDocId).update({ [hiresField]: current+1 });
+  hiringSubmitted = true;
+  document.getElementById('workerContent').innerHTML=`<div class="lobby-wait"><div class="big-icon">✅</div><h3>Application Submitted!</h3><p>Applied to: <strong>${firm.firmName}</strong><br>Role: <strong>${JOB_TIERS[selectedTier]?.label}</strong><br>Wage: <strong style="color:var(--green);">${fmtK(wage)}</strong><br>Your surplus: <strong style="color:var(--primary);">+${fmtK(surplus)}</strong></p></div>`;
+}
+
+async function renderInvestingScreen() {
+  const el = document.getElementById('workerContent');
+  const snap = await db.collection('labour_firms').where('sessionCode','==',sessionCode).get();
+  const firms = snap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.investingSubmitted);
+  const mySnap = await db.collection('labour_workers').doc(sessionCode+'_'+fp()).get();
+  const myData = mySnap.data()||{};
+  workerWageEarned = myData.wageEarned || workerWageEarned;
+  const saveRate = currentInterestRate;
+  let html = `<div style="font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:0.5rem;">📈 Financial Market</div>
+    <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">You earned <strong style="color:var(--green);">${fmtK(workerWageEarned)}</strong>. Allocate your savings:</div>
+    <div class="invest-option ${selectedInvestment==='save'?'selected':''}" id="inv_save" onclick="selectInvestment('save')">
+      <strong>🏦 Save with RBA-linked Account</strong>
+      <div style="font-size:0.82rem;color:var(--text-secondary);margin:0.3rem 0;">Risk-free return at ${saveRate}% interest rate.</div>
+      <div style="font-size:0.85rem;color:var(--green);">Return: ${fmtK(Math.round(workerWageEarned*(1+saveRate/100)))}</div>
+    </div>`;
+  if (firms.length) {
+    html += `<div style="font-size:0.82rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin:1rem 0 0.5rem;">🏭 Buy Shares in a Firm</div>`;
+    firms.forEach(f=>{
+      const estimatedProfit = estimateFirmProfit(f);
+      const shareVal = estimatedProfit > 0 ? (estimatedProfit/1000).toFixed(2) : '0.00';
+      const price = f.sharePrice || 10;
+      const returnPct = price>0 ? (((+shareVal-price)/price)*100).toFixed(1) : '0';
+      html += `<div class="invest-option ${selectedInvestment===f.id?'selected':''}" id="inv_${f.id}" onclick="selectInvestment('${f.id}')">
+        <strong>${f.firmName}</strong>
+        <div style="font-size:0.78rem;color:var(--text-muted);margin:0.3rem 0;">${FIRM_STRATEGIES[f.firmStrategy]?.label||''}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;font-size:0.8rem;margin-top:0.5rem;">
+          <div><div style="color:var(--text-muted);">Share Price</div><strong>$${price}</strong></div>
+          <div><div style="color:var(--text-muted);">Est. Share Value</div><strong style="color:${+shareVal>=price?'var(--green)':'var(--red)'};">$${shareVal}</strong></div>
+          <div><div style="color:var(--text-muted);">Expected Return</div><strong style="color:${+returnPct>=0?'var(--green)':'var(--red)'};">${returnPct}%</strong></div>
+        </div>
+      </div>`;
+    });
+  } else {
+    html += `<div style="font-size:0.82rem;color:var(--text-muted);padding:0.5rem 0;">No firm shares listed yet — save with the bank for now.</div>`;
+  }
+  html += `<div id="workerInvestSelection" style="margin-top:1rem;"></div>`;
+  el.innerHTML = html;
+  renderInvestSelection();
+}
+
+function estimateFirmProfit(f) {
+  const strat = FIRM_STRATEGIES[f.firmStrategy]||{revMod:1,wageMod:1};
+  const revMod = getFirmRevModifier() * strat.revMod;
+  const tax = getPayrollTax();
+  let profit = 0;
+  ['unskilled','skilled','management'].forEach(tier=>{
+    const hired = f[tier+'Hired']||0;
+    const wage = f[tier+'Wage']||0;
+    const rev = JOB_TIERS[tier].varRevenue * revMod;
+    profit += hired * (rev - wage*(1+tax));
+  });
+  return Math.round(profit);
+}
+
+function selectInvestment(id) {
+  selectedInvestment = id;
+  document.querySelectorAll('[id^="inv_"]').forEach(el=>el.classList.remove('selected'));
+  const el = document.getElementById('inv_'+id);
+  if (el) el.classList.add('selected');
+  renderInvestSelection();
+}
+
+function renderInvestSelection() {
+  const el = document.getElementById('workerInvestSelection');
+  if (!el || !selectedInvestment) return;
+  el.innerHTML = `<button class="btn btn-worker btn-full" onclick="submitWorkerInvestment()">📈 Confirm Investment</button>`;
+}
+
+async function submitWorkerInvestment() {
+  if (!selectedInvestment) return;
+  let investmentReturn = 0;
+  let investmentChoice = selectedInvestment;
+  if (selectedInvestment==='save') {
+    investmentReturn = Math.round(workerWageEarned * (currentInterestRate/100));
+  } else {
+    const firmSnap = await db.collection('labour_firms').doc(selectedInvestment).get();
+    const firm = firmSnap.data();
+    if (firm) {
+      const profit = estimateFirmProfit(firm);
+      const shareVal = profit > 0 ? profit/1000 : 0;
+      const price = firm.sharePrice || 10;
+      investmentReturn = price>0 ? Math.round(workerWageEarned * ((shareVal-price)/price)) : 0;
+    }
+  }
+  const totalWealth = workerWageEarned + investmentReturn;
+  await db.collection('labour_workers').doc(sessionCode+'_'+fp()).update({
+    investmentChoice, investmentReturn, totalWealth, investingSubmitted:true
+  });
+  investingSubmitted = true;
+  document.getElementById('workerContent').innerHTML=`<div class="lobby-wait"><div class="big-icon">📈</div><h3>Investment Confirmed!</h3><p>Total wealth: <strong style="color:var(--green);">${fmtK(totalWealth)}</strong><br>(Wage: ${fmtK(workerWageEarned)} + Return: ${investmentReturn>=0?'+':''}${fmtK(investmentReturn)})</p></div>`;
+}
+
+// ── TEACHER: FIRMS + WORKERS LISTENERS ────────────────────
+function startFirmsListener() {
+  if (firmsUnsub) firmsUnsub();
+  firmsUnsub = db.collection('labour_firms').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    allFirms = snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('firmCount').textContent = allFirms.length;
+    const list = document.getElementById('firmList');
+    if (!allFirms.length) { list.innerHTML='<span style="color:var(--text-muted);font-size:0.82rem;">Waiting for firms…</span>'; return; }
+    list.innerHTML = allFirms.map(f=>`
+      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+        <span>🏭</span>
+        <span style="flex:1;font-weight:600;font-size:0.85rem;">${f.firmName}${f.isAI?' <span style="font-size:0.7rem;color:var(--text-muted);">(AI)</span>':''}</span>
+        <span class="badge ${f.investingSubmitted?'badge-green':f.wagesSubmitted?'badge-yellow':'badge-gray'}">${f.investingSubmitted?'✓ Done':f.wagesSubmitted?'Wages set':'Lobby'}</span>
+      </div>`).join('');
+    if (currentPhase==='results') showTeacherResults();
+  });
+}
+
+function startWorkersListener() {
+  if (workersUnsub) workersUnsub();
+  workersUnsub = db.collection('labour_workers').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    allWorkers = snap.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById('workerCount').textContent = allWorkers.length;
+    const list = document.getElementById('workerList');
+    if (!allWorkers.length) { list.innerHTML='<span style="color:var(--text-muted);font-size:0.82rem;">Waiting for workers…</span>'; return; }
+    list.innerHTML = allWorkers.map(w=>`
+      <div style="display:flex;align-items:center;gap:0.5rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+        <span>${(WORKER_TYPES[w.workerType]||{}).label?.split(' ')[0]||'👷'}</span>
+        <span style="flex:1;font-size:0.82rem;">${w.workerLabel||w.workerType}${w.isAI?' <span style="font-size:0.7rem;color:var(--text-muted);">(AI)</span>':''}</span>
+        <span class="badge ${w.investingSubmitted?'badge-green':w.hiringSubmitted?'badge-yellow':'badge-gray'}">${w.investingSubmitted?'✓ Done':w.hiringSubmitted?'Applied':'Lobby'}</span>
+      </div>`).join('');
+    if (currentPhase==='results') showTeacherResults();
+  });
+}
+
+// ── TEACHER: PHASE CONTROL ────────────────────────────────
+async function setPhase(phase) {
+  if (phase==='hiring') await autoHireAI();
+  if (phase==='results') await calcResults();
+  await db.collection('labour_market').doc(sessionCode).update({ phase });
+}
+
+async function updateInterestRate(val) {
+  currentInterestRate = +val;
+  document.getElementById('interestRateVal').textContent = (+val).toFixed(1)+'%';
+  await db.collection('labour_market').doc(sessionCode).update({ interestRate: +val });
+}
+
+// ── INTERVENTIONS ─────────────────────────────────────────
+function buildInterventionGrid() {
+  const grid = document.getElementById('interventionGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(INTERVENTIONS).map(([key,iv])=>`
+    <button class="intervention-btn ${interventionsFired.has(key)?'fired':''}" id="ivbtn_${key}"
+      onclick="${interventionsFired.has(key)?'':''}" ${interventionsFired.has(key)?'disabled':''} onclick="fireIntervention('${key}')">
+      ${iv.emoji} ${iv.label}<br><span style="font-size:0.7rem;font-weight:400;color:var(--text-muted);">${iv.desc.slice(0,55)}…</span>
+    </button>`).join('');
+}
+
+function renderInterventionButtons() {
+  Object.keys(INTERVENTIONS).forEach(key=>{
+    const btn = document.getElementById('ivbtn_'+key);
+    if (!btn) return;
+    if (interventionsFired.has(key)) {
+      btn.className='intervention-btn fired';
+      btn.disabled=true;
+    }
+  });
+}
+
+async function fireIntervention(key) {
+  if (interventionsFired.has(key)) return;
+  interventionsFired.add(key);
+  const snap = await db.collection('labour_market').doc(sessionCode).get();
+  const current = (snap.data()||{}).interventions || [];
+  if (!current.includes(key)) {
+    await db.collection('labour_market').doc(sessionCode).update({ interventions: [...current, key] });
+  }
+  renderInterventionButtons();
+}
+
+// ── AI WORKERS ────────────────────────────────────────────
+function buildAIWorkerGrid() {
+  const grid = document.getElementById('aiWorkerGrid');
+  if (!grid) return;
+  grid.innerHTML = Object.entries(WORKER_TYPES).map(([key,wt])=>`
+    <div class="ai-card">
+      <strong>${wt.label}</strong>
+      <div class="ai-wages">Eligible: ${wt.eligible.join(', ')}</div>
+      <button class="btn btn-secondary btn-sm" onclick="spawnAI('${key}',1)">+ Spawn 1</button>
+    </div>`).join('');
+}
+
+async function spawnAI(typeKey, count) {
+  const wt = WORKER_TYPES[typeKey];
+  if (!wt) return;
+  for (let i=0; i<count; i++) {
+    const id = sessionCode+'_ai_'+typeKey+'_'+Date.now()+'_'+i;
+    await db.collection('labour_workers').doc(id).set({
+      sessionCode, workerType:typeKey, workerLabel:wt.label,
+      chosenFirmId:null, chosenTier:null, wageEarned:0, surplus:0,
+      investmentChoice:null, investmentReturn:0, totalWealth:0,
+      hiringSubmitted:false, investingSubmitted:false, isAI:true,
+      joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
+}
+
+async function spawnAllAI() {
+  for (const key of Object.keys(WORKER_TYPES)) await spawnAI(key, 1);
+}
+
+async function autoHireAI() {
+  const [aiSnap, firmSnap] = await Promise.all([
+    db.collection('labour_workers').where('sessionCode','==',sessionCode).where('isAI','==',true).get(),
+    db.collection('labour_firms').where('sessionCode','==',sessionCode).get()
+  ]);
+  const firms = firmSnap.docs.map(d=>({id:d.id,...d.data()})).filter(f=>f.wagesSubmitted);
+  if (!firms.length) return;
+  const hireCount = {};
+  firms.forEach(f=>{ hireCount[f.id]={unskilled:f.hiredUnskilled||0,skilled:f.hiredSkilled||0,management:f.hiredManagement||0}; });
+  const slots = {};
+  firms.forEach(f=>{
+    const auto = f.firmStrategy==='automation';
+    slots[f.id]={
+      unskilled: (auto?Math.max(0,JOB_TIERS.unskilled.slots-3):JOB_TIERS.unskilled.slots),
+      skilled: JOB_TIERS.skilled.slots,
+      management: JOB_TIERS.management.slots
+    };
+  });
+  for (const doc of aiSnap.docs) {
+    const w = doc.data();
+    const wt = WORKER_TYPES[w.workerType];
+    if (!wt || w.hiringSubmitted) continue;
+    let bestSurplus=-1, bestFirm=null, bestTier=null, bestWage=0;
+    for (const f of firms) {
+      for (const tier of wt.eligible) {
+        const wage = f[tier+'Wage']||0;
+        const reserve = getWorkerReserveWage(w.workerType, tier);
+        if (!reserve || wage<reserve) continue;
+        const avail = slots[f.id][tier]-hireCount[f.id][tier];
+        if (avail<=0) continue;
+        const surplus = wage-reserve;
+        if (surplus>bestSurplus) { bestSurplus=surplus; bestFirm=f; bestTier=tier; bestWage=wage; }
+      }
+    }
+    if (bestFirm && bestTier) {
+      hireCount[bestFirm.id][bestTier]++;
+      await doc.ref.update({ chosenFirmId:bestFirm.id, chosenFirmName:bestFirm.firmName, chosenTier:bestTier, wageEarned:bestWage, surplus:bestSurplus, hiringSubmitted:true });
+      await db.collection('labour_firms').doc(bestFirm.id).update({ [bestTier+'Hired']: hireCount[bestFirm.id][bestTier] });
+    }
+  }
+  // Auto-invest AI workers
+  const aiHiredSnap = await db.collection('labour_workers').where('sessionCode','==',sessionCode).where('isAI','==',true).get();
+  for (const doc of aiHiredSnap.docs) {
+    const w = doc.data();
+    if (!w.hiringSubmitted || w.investingSubmitted) continue;
+    const wage = w.wageEarned||0;
+    const ret = Math.round(wage*(currentInterestRate/100));
+    await doc.ref.update({ investmentChoice:'save', investmentReturn:ret, totalWealth:wage+ret, investingSubmitted:true });
+  }
+}
+
+// ── RESULTS ───────────────────────────────────────────────
+async function calcResults() {
+  const [firmSnap, workerSnap] = await Promise.all([
+    db.collection('labour_firms').where('sessionCode','==',sessionCode).get(),
+    db.collection('labour_workers').where('sessionCode','==',sessionCode).get()
+  ]);
+  for (const doc of firmSnap.docs) {
+    const f = doc.data();
+    const profit = estimateFirmProfit(f);
+    const shareVal = profit>0 ? profit/1000 : 0;
+    await doc.ref.update({ profit, shareValue: +shareVal.toFixed(2) });
+  }
+  for (const doc of workerSnap.docs) {
+    const w = doc.data();
+    if (w.investingSubmitted) continue;
+    const wage = w.wageEarned||0;
+    await doc.ref.update({ totalWealth:wage, investingSubmitted:true });
+  }
+}
+
+async function showTeacherResults() {
+  const resultsArea = document.getElementById('teacherResultsArea');
+  resultsArea.classList.remove('hidden');
+  const [firmSnap, workerSnap] = await Promise.all([
+    db.collection('labour_firms').where('sessionCode','==',sessionCode).get(),
+    db.collection('labour_workers').where('sessionCode','==',sessionCode).get()
+  ]);
+  const firms = firmSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.profit||0)-(a.profit||0));
+  const workers = workerSnap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.totalWealth||0)-(a.totalWealth||0));
+  const hired = workers.filter(w=>w.hiringSubmitted);
+  const unemployed = workers.filter(w=>!w.hiringSubmitted);
+  const totalSurplus = hired.reduce((s,w)=>s+(w.surplus||0),0);
+  const empRate = workers.length>0?(hired.length/workers.length*100).toFixed(0):0;
+  document.getElementById('teacherResultStats').innerHTML=`
+    <div class="stat-box"><div class="stat-box-val">${empRate}%</div><div class="stat-box-lbl">Employment Rate</div></div>
+    <div class="stat-box"><div class="stat-box-val">${unemployed.length}</div><div class="stat-box-lbl">Unemployed (DWL)</div></div>
+    <div class="stat-box"><div class="stat-box-val">${fmtK(totalSurplus)}</div><div class="stat-box-lbl">Total Worker Surplus</div></div>
+    <div class="stat-box"><div class="stat-box-val">${currentInterestRate}%</div><div class="stat-box-lbl">Cash Rate</div></div>`;
+  const medals=['🥇','🥈','🥉'];
+  document.getElementById('firmLeaderboard').innerHTML=firms.map((f,i)=>`
+    <div class="leaderboard-row">
+      <div class="leaderboard-rank">${medals[i]||i+1}</div>
+      <div><div class="leaderboard-name">${f.firmName}</div><div class="leaderboard-stat">${FIRM_STRATEGIES[f.firmStrategy]?.label||''} · ${f.hiredUnskilled||0}U/${f.hiredSkilled||0}S/${f.hiredManagement||0}M hired</div></div>
+      <div class="leaderboard-value">${fmtMoney(f.profit||0)}</div>
+    </div>`).join('')||'<div style="color:var(--text-muted);font-size:0.82rem;">No firm data yet.</div>';
+  document.getElementById('workerLeaderboard').innerHTML=workers.map((w,i)=>`
+    <div class="leaderboard-row">
+      <div class="leaderboard-rank">${medals[i]||i+1}</div>
+      <div><div class="leaderboard-name">${w.workerLabel||w.workerType}${w.isAI?' (AI)':''}</div><div class="leaderboard-stat">${w.chosenFirmName||'Unemployed'} · ${w.chosenTier?JOB_TIERS[w.chosenTier]?.label:'No job'}</div></div>
+      <div class="leaderboard-value">${fmtMoney(w.totalWealth||0)}</div>
+    </div>`).join('')||'<div style="color:var(--text-muted);font-size:0.82rem;">No worker data yet.</div>';
+  // Chart
+  if (wagesChart) { wagesChart.destroy(); wagesChart=null; }
+  const ctx = document.getElementById('wagesChart').getContext('2d');
+  const wageData = firms.map(f=>[f.unskilledWage||0, f.skilledWage||0, f.managementWage||0]);
+  const minWageLine = activeInterventionData.includes('min_wage') ? 55000 : null;
+  wagesChart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:firms.map(f=>f.firmName),
+      datasets:[
+        {label:'Unskilled Wage',data:firms.map(f=>f.unskilledWage||0),backgroundColor:'rgba(52,211,153,0.6)',borderColor:'#34d399',borderWidth:1},
+        {label:'Skilled Wage',data:firms.map(f=>f.skilledWage||0),backgroundColor:'rgba(56,189,248,0.6)',borderColor:'#38bdf8',borderWidth:1},
+        {label:'Management Wage',data:firms.map(f=>f.managementWage||0),backgroundColor:'rgba(251,191,36,0.6)',borderColor:'#fbbf24',borderWidth:1}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8'}},title:{display:true,text:'Wage Comparison by Firm & Tier',color:'#f1f5f9'}},
+      scales:{
+        x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},
+        y:{ticks:{color:'#94a3b8',callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'rgba(255,255,255,0.05)'},
+           ...(minWageLine?{annotations:{line:{type:'line',yMin:minWageLine,yMax:minWageLine,borderColor:'#fbbf24',borderWidth:2,label:{content:'Min Wage $55K',enabled:true}}}}:{})}
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>

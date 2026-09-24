@@ -1,0 +1,1827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StadiumEcon Live — HSC Economics Market Simulation</title>
+  <meta name="description" content="Live HSC Economics classroom simulation: supply, demand, consumer surplus, deadweight loss and the price mechanism in real time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{
+  --bg:#05040f;--bg-card:rgba(255,255,255,0.03);
+  --border:rgba(255,255,255,0.08);--border-strong:rgba(255,255,255,0.14);
+  --text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;
+  --primary:#818cf8;--primary-dark:#6366f1;--primary-glow:rgba(129,140,248,0.18);
+  --secondary:#c084fc;--green:#34d399;--red:#f87171;--yellow:#fbbf24;
+  --blue:#38bdf8;--orange:#fb923c;
+  --radius-sm:8px;--radius-md:16px;--radius-lg:24px;--radius-full:9999px;
+  --shadow:0 8px 32px rgba(0,0,0,0.45);--transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;line-height:1.5;overflow-x:hidden;}
+.hidden{display:none!important;}
+a{color:var(--primary);text-decoration:none;}
+
+/* NAV */
+.top-bar{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem;gap:1rem;}
+.top-bar-title{font-family:'Outfit',sans-serif;font-size:1.05rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap;}
+.nav-btns{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;}
+.nav-link{background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--radius-full);padding:0.35rem 0.9rem;font-size:0.78rem;color:var(--text-secondary);cursor:pointer;transition:var(--transition);text-decoration:none;white-space:nowrap;}
+.nav-link:hover{background:rgba(255,255,255,0.09);color:var(--text-primary);}
+.nav-link.active{background:rgba(129,140,248,0.15);border-color:rgba(129,140,248,0.35);color:var(--primary);font-weight:700;}
+
+/* LAYOUT */
+.screen{min-height:100vh;padding:1.5rem 1rem;}
+.container{max-width:1100px;margin:0 auto;}
+.container-wide{max-width:1400px;margin:0 auto;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;}
+@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr;}}
+
+/* CARDS */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;transition:var(--transition);}
+.card-sm{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;}
+.card-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:1rem;}
+.card-subtitle{font-size:0.9rem;color:var(--text-secondary);margin-bottom:1.5rem;}
+
+/* PHASE PILL */
+.phase-pill{display:inline-flex;align-items:center;gap:0.5rem;padding:0.35rem 1rem;border-radius:var(--radius-full);font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1.25rem;}
+.phase-pill.lobby{background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.3);color:#94a3b8;}
+.phase-pill.pricing{background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.35);color:#fbbf24;}
+.phase-pill.booking{background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.35);color:#34d399;}
+.phase-pill.results{background:rgba(129,140,248,0.12);border:1px solid rgba(129,140,248,0.35);color:#818cf8;}
+.phase-dot{width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulseDot 1.5s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+
+/* FORMS */
+.form-group{margin-bottom:1.25rem;}
+.form-label{display:block;font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:0.4rem;text-transform:uppercase;letter-spacing:0.04em;}
+.text-input,.select-input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--border-strong);border-radius:var(--radius-sm);color:var(--text-primary);padding:0.7rem 1rem;font-size:0.95rem;font-family:'Inter',sans-serif;outline:none;transition:var(--transition);}
+.text-input:focus,.select-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-glow);}
+.select-input{cursor:pointer;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.65rem 1.4rem;border-radius:var(--radius-full);font-size:0.9rem;font-weight:700;cursor:pointer;transition:var(--transition);border:none;font-family:'Inter',sans-serif;}
+.btn-primary{background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;box-shadow:0 4px 14px rgba(99,102,241,0.35);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(99,102,241,0.5);}
+.btn-primary:disabled{opacity:0.45;transform:none;cursor:not-allowed;}
+.btn-secondary{background:rgba(255,255,255,0.06);border:1px solid var(--border-strong);color:var(--text-secondary);}
+.btn-secondary:hover{background:rgba(255,255,255,0.11);color:var(--text-primary);}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#f87171);color:#fff;}
+.btn-green{background:linear-gradient(135deg,#059669,#34d399);color:#fff;box-shadow:0 4px 14px rgba(52,211,153,0.3);}
+.btn-green:hover{transform:translateY(-2px);}
+.btn-yellow{background:linear-gradient(135deg,#d97706,#fbbf24);color:#000;}
+.btn-yellow:hover{transform:translateY(-2px);}
+.btn-full{width:100%;justify-content:center;padding:0.85rem;}
+
+/* SLIDER */
+.range-slider{width:100%;-webkit-appearance:none;appearance:none;height:6px;background:rgba(255,255,255,0.08);border-radius:3px;outline:none;cursor:pointer;}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--primary);box-shadow:0 0 10px rgba(129,140,248,0.5);cursor:pointer;}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);padding:1rem 1.25rem;text-align:center;}
+.stat-val{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;line-height:1;}
+.stat-label{font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-top:0.3rem;}
+
+/* LEADERBOARD */
+.leader-row{display:grid;grid-template-columns:2rem 1fr auto auto;gap:0.75rem;align-items:center;padding:0.75rem 1rem;border-radius:var(--radius-sm);border-bottom:1px solid var(--border);font-size:0.88rem;}
+.leader-row:last-child{border-bottom:none;}
+.leader-row.me{background:rgba(129,140,248,0.07);border-color:rgba(129,140,248,0.2);}
+.leader-rank{font-weight:800;font-size:0.9rem;color:var(--text-muted);}
+.leader-name{font-weight:600;}
+.leader-revenue{font-weight:700;color:var(--green);}
+.leader-fill{font-size:0.78rem;color:var(--text-muted);}
+
+/* FAN BOOKING CARD */
+.venue-booking-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;transition:var(--transition);margin-bottom:1rem;}
+.venue-booking-card:hover{border-color:var(--border-strong);background:rgba(255,255,255,0.05);}
+.venue-name-badge{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:0.25rem;}
+.tier-row{display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;}
+.tier-row:last-child{border-bottom:none;}
+.tier-price{font-weight:700;color:var(--primary);}
+.tier-capacity{font-size:0.75rem;color:var(--text-muted);}
+
+/* SHOCK BANNER */
+.shock-banner{display:none;background:linear-gradient(135deg,rgba(251,191,36,0.12),rgba(248,113,113,0.12));border:1px solid rgba(251,191,36,0.35);border-radius:var(--radius-md);padding:1rem 1.25rem;margin-bottom:1.5rem;animation:pulseGlow 2s ease-in-out infinite;}
+.shock-banner.active{display:block;}
+@keyframes pulseGlow{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0.15);}50%{box-shadow:0 0 20px 4px rgba(251,191,36,0.1);}}
+.shock-title{font-weight:800;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;color:#fbbf24;margin-bottom:0.25rem;}
+.shock-text{font-size:0.88rem;color:var(--text-primary);}
+
+/* SCORECARD MODAL */
+.scorecard-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.scorecard-overlay.hidden{display:none;}
+.scorecard-box{background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border:1px solid rgba(129,140,248,0.3);border-radius:var(--radius-lg);padding:2.5rem;max-width:480px;width:90%;text-align:center;box-shadow:0 0 60px rgba(129,140,248,0.2);}
+.scorecard-score{font-family:'Outfit',sans-serif;font-size:4rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;}
+.scorecard-verdict{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:1rem;font-size:0.88rem;color:var(--text-secondary);margin:1rem 0 1.5rem;line-height:1.55;}
+
+/* ENTRY */
+.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.3);border-radius:var(--radius-full);padding:0.4rem 1rem;font-size:0.78rem;font-weight:700;color:#fbbf24;letter-spacing:0.05em;margin-bottom:1.25rem;}
+.hero-title{font-family:'Outfit',sans-serif;font-size:3rem;font-weight:900;line-height:1.1;margin-bottom:1rem;}
+@media(max-width:600px){.hero-title{font-size:2rem;}}
+.role-card{background:rgba(255,255,255,0.03);border:2px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;cursor:pointer;transition:var(--transition);text-align:center;}
+.role-card:hover{border-color:var(--primary);background:rgba(129,140,248,0.06);transform:translateY(-3px);}
+.role-icon{font-size:2.8rem;margin-bottom:0.75rem;}
+.role-title{font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:0.4rem;}
+.role-desc{font-size:0.85rem;color:var(--text-secondary);}
+
+/* TABLE */
+.team-table{width:100%;border-collapse:collapse;}
+.team-table th{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);padding:0.5rem 0.75rem;text-align:left;border-bottom:1px solid var(--border);}
+.team-table td{padding:0.65rem 0.75rem;font-size:0.88rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.team-table tr:last-child td{border-bottom:none;}
+
+/* DEBRIEF */
+.debrief-box{background:linear-gradient(135deg,rgba(129,140,248,0.06),rgba(192,132,252,0.06));border:1px solid rgba(129,140,248,0.2);border-radius:var(--radius-md);padding:1.25rem;font-size:0.9rem;color:var(--text-secondary);line-height:1.7;}
+.debrief-box strong{color:var(--text-primary);}
+
+/* UTILS */
+.text-green{color:var(--green);}
+.text-red{color:var(--red);}
+.text-yellow{color:var(--yellow);}
+.text-primary-col{color:var(--primary);}
+.divider{height:1px;background:var(--border);margin:1.25rem 0;}
+.badge{display:inline-block;padding:0.2rem 0.6rem;border-radius:var(--radius-full);font-size:0.72rem;font-weight:700;}
+.badge-green{background:rgba(52,211,153,0.12);color:#34d399;}
+.badge-red{background:rgba(248,113,113,0.12);color:#f87171;}
+.badge-yellow{background:rgba(251,191,36,0.12);color:#fbbf24;}
+.badge-blue{background:rgba(56,189,248,0.12);color:#38bdf8;}
+.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#34d399;box-shadow:0 0 6px #34d399;animation:pulseDot 1.5s ease-in-out infinite;margin-right:0.4rem;}
+
+/* EXPLAINER MODAL */
+.explainer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.9);backdrop-filter:blur(12px);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeInEx 0.4s ease;}
+.explainer-overlay.hidden{display:none;}
+@keyframes fadeInEx{from{opacity:0;}to{opacity:1;}}
+.explainer-box{background:linear-gradient(145deg,#0f0e1a,#141428,#0a1628);border:1px solid rgba(129,140,248,0.25);border-radius:var(--radius-lg);padding:0;max-width:720px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 0 80px rgba(129,140,248,0.15);animation:slideUpEx 0.4s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes slideUpEx{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.explainer-hero{background:linear-gradient(135deg,rgba(99,102,241,0.2),rgba(192,132,252,0.2));padding:2rem 2rem 1.5rem;border-bottom:1px solid var(--border);text-align:center;}
+.explainer-body{padding:1.75rem 2rem;}
+.explainer-tabs{display:flex;gap:0.5rem;margin-bottom:1.5rem;}
+.explainer-tab{flex:1;padding:0.55rem;border-radius:var(--radius-sm);font-size:0.82rem;font-weight:700;cursor:pointer;transition:var(--transition);border:1px solid var(--border);background:transparent;color:var(--text-muted);text-align:center;}
+.explainer-tab.active{background:rgba(129,140,248,0.15);border-color:rgba(129,140,248,0.4);color:var(--primary);}
+.explainer-panel{display:none;}
+.explainer-panel.active{display:block;}
+.explainer-step{display:flex;gap:1rem;margin-bottom:1.25rem;align-items:flex-start;}
+.explainer-step-num{width:2rem;height:2rem;border-radius:50%;background:linear-gradient(135deg,#6366f1,#818cf8);color:#fff;font-weight:800;font-size:0.85rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:0.1rem;}
+.explainer-step-text strong{display:block;font-size:0.92rem;margin-bottom:0.2rem;}
+.explainer-step-text span{font-size:0.85rem;color:var(--text-secondary);line-height:1.5;}
+.personality-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin:1rem 0;}
+@media(max-width:500px){.personality-grid{grid-template-columns:1fr;}}
+.personality-card{background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;}
+.personality-card strong{display:block;font-size:0.88rem;margin-bottom:0.2rem;}
+.personality-card span{font-size:0.78rem;color:var(--text-muted);line-height:1.4;}
+
+/* AI FANS PANEL */
+.ai-panel{background:linear-gradient(135deg,rgba(56,189,248,0.05),rgba(99,102,241,0.05));border:1px solid rgba(56,189,248,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.5rem;}
+.ai-panel-title{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:1rem;}
+.ai-fan-row{display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;}
+.ai-fan-log{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;margin-top:0.75rem;max-height:130px;overflow-y:auto;font-size:0.78rem;color:var(--text-muted);font-family:monospace;line-height:1.6;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-bar">
+  <span class="top-bar-title">⚽ StadiumEcon Live</span>
+  <div class="nav-btns">
+    <a href="https://www.datatrends.com.au" class="nav-link">🏠 Home</a>
+    <a href="https://www.datatrends.com.au/market.html" class="nav-link">✈️ SkyMarket</a>
+    <a href="https://www.datatrends.com.au/simulations.html" class="nav-link">📊 Simulations</a>
+    <a href="https://www.datatrends.com.au/audit.html" class="nav-link">🧠 Talent Audit</a>
+    <a href="https://www.datatrends.com.au/stadium.html" class="nav-link active">⚽ Stadium</a>
+  </div>
+</nav>
+
+<!-- EXPLAINER MODAL -->
+<div class="explainer-overlay" id="explainerOverlay">
+  <div class="explainer-box">
+    <div class="explainer-hero">
+      <div style="font-size:3rem;margin-bottom:0.5rem;">⚽</div>
+      <h1 style="font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:900;margin-bottom:0.5rem;">StadiumEcon Live</h1>
+      <p style="font-size:0.9rem;color:var(--text-secondary);max-width:480px;margin:0 auto;">A live classroom market simulation — students price tickets, fans decide whether to buy, and the market clears in real time.</p>
+    </div>
+    <div class="explainer-body">
+      <div class="explainer-tabs">
+        <button class="explainer-tab active" onclick="switchTab('student')" id="tabStudent">👨‍🎓 Student Guide</button>
+        <button class="explainer-tab" onclick="switchTab('teacher')" id="tabTeacher">👩‍🏫 Teacher Guide</button>
+        <button class="explainer-tab" onclick="switchTab('concepts')" id="tabConcepts">📚 Key Concepts</button>
+      </div>
+
+      <!-- STUDENT PANEL -->
+      <div class="explainer-panel active" id="panelStudent">
+        <div class="explainer-step">
+          <div class="explainer-step-num">1</div>
+          <div class="explainer-step-text"><strong>Enter Your Class Code</strong><span>Your teacher gives you a short code (e.g. 11BUS). This links you to your class session.</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">2</div>
+          <div class="explainer-step-text"><strong>Choose: Venue Manager 🏟️</strong><span>You set ticket prices for your stadium across three tiers (VIP, Premium, GA). Goal: maximise revenue — but price too high and seats go empty. Try different pricing strategies!</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">3</div>
+          <div class="explainer-step-text"><strong>OR Choose: Fan Group 👥</strong><span>You represent a fan group (tourists, families, ultras, corporates…). When booking opens, compare all venues and choose the tier you can afford. Your <em>consumer surplus</em> = what you'd pay minus what you actually pay.</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">4</div>
+          <div class="explainer-step-text"><strong>Watch the Market Clear</strong><span>After everyone submits, see the leaderboard, Supply &amp; Demand chart, and Revenue vs Surplus breakdown. If price &gt; your budget you are <em>priced out</em> — that's deadweight loss!</span></div>
+        </div>
+        <div style="background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:var(--radius-sm);padding:0.85rem;font-size:0.83rem;color:var(--text-secondary);margin-top:0.5rem;">
+          💡 <strong style="color:#fbbf24;">Tip:</strong> There are AI fan groups in the market too — they have their own personalities and strategy, just like real buyers. Watch how they behave!
+        </div>
+      </div>
+
+      <!-- TEACHER PANEL -->
+      <div class="explainer-panel" id="panelTeacher">
+        <div class="explainer-step">
+          <div class="explainer-step-num">1</div>
+          <div class="explainer-step-text"><strong>Create / Join a Session</strong><span>Enter any code (e.g. 11BUS) and pick <em>Teacher Dashboard</em>. The session is created automatically. Share the code with students.</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">2</div>
+          <div class="explainer-step-text"><strong>Control the Phases</strong><span><strong>Lobby →</strong> Students join. <strong>Open Pricing →</strong> Venue managers set prices (fans wait). <strong>Open Booking →</strong> Fan groups choose venues. <strong>Show Results →</strong> Market clears, scorecards appear.</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">3</div>
+          <div class="explainer-step-text"><strong>Spawn AI Fans (for small classes)</strong><span>If you have fewer than ~6 fan groups, use the <em>Spawn AI Fans</em> panel. AI fans have distinct personalities — Bargain Hunter, Status Seeker, FOMO Buyer, Loyal Local, Risk Taker. They create a realistic market even with a tiny class.</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">4</div>
+          <div class="explainer-step-text"><strong>Trigger Market Shocks</strong><span>Between rounds, fire a shock (transport strike, celebrity event, world cup fever…). Students must re-price or re-book in response. Great for teaching non-price demand shifters.</span></div>
+        </div>
+        <div class="explainer-step">
+          <div class="explainer-step-num">5</div>
+          <div class="explainer-step-text"><strong>Debrief with the AI</strong><span>After results, an AI debrief explains what happened economically — who won, who got priced out, what the shock did, and what it means for allocative efficiency.</span></div>
+        </div>
+      </div>
+
+      <!-- CONCEPTS PANEL -->
+      <div class="explainer-panel" id="panelConcepts">
+        <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">This simulation covers NESA Economics &amp; Business syllabus concepts:</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;">
+            <strong style="font-size:0.88rem;">Supply &amp; Demand</strong>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.5;">Venues supply seats; fans demand tickets. The chart shows where the market clears.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;">
+            <strong style="font-size:0.88rem;">Consumer Surplus</strong>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.5;">The gap between what you'd pay (WTP) and what you actually pay. Higher = better deal for the fan.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;">
+            <strong style="font-size:0.88rem;">Producer Surplus</strong>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.5;">Revenue the venue earns above its costs. Venue managers are competing for this.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;">
+            <strong style="font-size:0.88rem;">Deadweight Loss</strong>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.5;">When a fan is priced out — willing to buy but can't afford it. The transaction that "should" happen doesn't.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;">
+            <strong style="font-size:0.88rem;">Pricing Strategies</strong>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.5;">Cost-plus, skimming, penetration, dynamic — each trades off fill rate vs revenue per seat.</p>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.85rem;">
+            <strong style="font-size:0.88rem;">Non-Price Determinants</strong>
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.2rem;line-height:1.5;">Market shocks shift demand curves — income, tastes, prices of substitutes, expectations.</p>
+          </div>
+        </div>
+        <div class="personality-grid" style="margin-top:1.25rem;">
+          <div style="grid-column:1/-1;font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:0.25rem;">🤖 AI Fan Personalities</div>
+          <div class="personality-card"><strong>🛒 Bargain Hunter</strong><span>Always picks the cheapest affordable tier. Maximises surplus. Won't pay a cent more than needed.</span></div>
+          <div class="personality-card"><strong>💎 Status Seeker</strong><span>Goes straight for Cat 1 VIP. Budget permitting, prestige &gt; savings. Will pay top dollar.</span></div>
+          <div class="personality-card"><strong>😰 FOMO Buyer</strong><span>Panics at sold-out signs. Books Cat 2 quickly at the first available venue to avoid missing out.</span></div>
+          <div class="personality-card"><strong>❤️ Loyal Local</strong><span>Prefers the lowest-priced venue. Supports the underdog. Picks affordable tiers at bargain venues.</span></div>
+          <div class="personality-card"><strong>🎲 Risk Taker</strong><span>Randomly picks any affordable tier. Unpredictable — might grab VIP or GA with equal probability.</span></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" style="margin-top:1.5rem;" onclick="closeExplainer()">
+        Let's Go! ⚽
+      </button>
+      <p style="text-align:center;font-size:0.75rem;color:var(--text-muted);margin-top:0.75rem;cursor:pointer;" onclick="closeExplainer()">Skip — I know how this works</p>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 1 — ENTRY -->
+<div class="screen" id="entryScreen">
+  <div class="container" style="max-width:780px;">
+    <div class="hero-badge">📐 HSC Economics — The Price Mechanism in Action</div>
+    <h1 class="hero-title">
+      StadiumEcon<br>
+      <span style="background:linear-gradient(135deg,#fbbf24,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Live Market Simulation</span>
+    </h1>
+    <p style="color:var(--text-secondary);font-size:1.05rem;margin-bottom:2.5rem;max-width:560px;">
+      Students become <strong style="color:var(--text-primary);">Producers</strong> who set ticket prices, or <strong style="color:var(--text-primary);">Consumer Groups</strong> who decide whether to buy. Watch supply, demand, surplus and deadweight loss emerge in real time.
+    </p>
+
+    <div class="form-group" style="max-width:340px;margin-bottom:2rem;">
+      <label class="form-label">Class Session Code</label>
+      <input type="text" id="entryCode" class="text-input" placeholder="e.g. 11ECO or PERIOD2" style="text-transform:uppercase;font-weight:700;letter-spacing:0.06em;" maxlength="16">
+    </div>
+
+    <div class="two-col" style="max-width:620px;gap:1.25rem;margin-bottom:1rem;">
+      <div class="role-card" id="venueRoleCard" onclick="chooseRole('venue')">
+        <div class="role-icon">🏟️</div>
+        <div class="role-title">Venue Manager</div>
+        <div class="role-desc">Name your stadium, set 3 ticket tier prices, publish to the market and compete for fan revenue.</div>
+        <div style="margin-top:0.75rem;font-size:0.78rem;font-weight:700;color:var(--yellow);" id="venueSlotLabel">Loading slots…</div>
+      </div>
+      <div class="role-card" id="fanRoleCard" onclick="chooseRole('fan')">
+        <div class="role-icon">👥</div>
+        <div class="role-title">Fan Group</div>
+        <div class="role-desc">Represent a group of supporters. Browse all venues, choose a match and buy group tickets.</div>
+        <div style="margin-top:0.75rem;font-size:0.78rem;font-weight:700;color:var(--green);" id="fanSlotLabel">Loading…</div>
+      </div>
+    </div>
+    <div id="roleCapWarning" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.25);border-radius:10px;padding:0.75rem 1rem;font-size:0.82rem;color:#fca5a5;max-width:620px;margin-bottom:1rem;text-align:center;"></div>
+
+    <div class="role-card" onclick="chooseRole('teacher')" style="max-width:620px;text-align:left;display:flex;align-items:center;gap:1.25rem;border-color:rgba(192,132,252,0.3);">
+      <div style="font-size:2.2rem;">👩‍🏫</div>
+      <div>
+        <div class="role-title" style="font-size:1.1rem;">Teacher / Host Dashboard</div>
+        <div class="role-desc">Control match phases, trigger market shocks, view live leaderboard and AI debrief.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 2 — VENUE MANAGER -->
+<div class="screen hidden" id="venueScreen">
+  <div class="container" style="max-width:680px;">
+    <div class="phase-pill lobby" id="venuePhasePill"><span class="phase-dot"></span> Lobby — Waiting for teacher</div>
+
+    <div class="shock-banner" id="venueShockBanner">
+      <div class="shock-title">⚡ Market Shock — Round 2!</div>
+      <div class="shock-text" id="venueShockText">A market event has occurred. Adjust your prices and re-submit!</div>
+    </div>
+
+    <div class="card">
+      <h2 class="card-title">🏟️ Set Up Your Venue (Producer)</h2>
+      <p class="card-subtitle">You are a <strong>producer</strong> in the ticket market. Set prices across three tiers. Your goal is to maximise producer revenue — but price above consumer willingness to pay and you create <em>deadweight loss</em>. Find the market-clearing price!</p>
+
+      <div class="form-group" id="venueMgrNameGroup">
+        <label class="form-label">Your Name</label>
+        <input type="text" id="venueMgrName" class="text-input" placeholder="e.g. Taylor Smith">
+      </div>
+      <div class="form-group" id="venueNameGroup">
+        <label class="form-label">Stadium / Venue Name</label>
+        <input type="text" id="venueNameInput" class="text-input" placeholder="e.g. Lusail Iconic Arena, Sydney Olympic Park…">
+      </div>
+      <div id="venueAutoNameDisplay" style="display:none;background:rgba(129,140,248,0.07);border:1px solid rgba(129,140,248,0.2);border-radius:10px;padding:0.75rem 1rem;margin-bottom:1rem;font-size:0.9rem;">
+        🏟️ Your venue name: <strong id="venueAutoNameLabel" style="color:var(--primary);"></strong>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Match Stage</label>
+        <select id="venueStage" class="select-input" onchange="updateVenueMath()">
+          <option value="group">Group Stage — 50,000 capacity, Standard demand</option>
+          <option value="round16">Round of 16 — 60,000 capacity, Elevated demand</option>
+          <option value="quarter">Quarter-Final — 65,000 capacity, High demand</option>
+          <option value="semi">Semi-Final — 70,000 capacity, Very high demand</option>
+          <option value="final">World Cup Final — 80,000 capacity, Peak demand</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Price Setting Strategy <span style="font-size:0.72rem;color:var(--text-muted);font-weight:400;">(How producers set price in markets)</span></label>
+        <select id="venueStrategy" class="select-input" onchange="updateVenueMath()">
+          <option value="cost_plus">Cost-Plus Pricing — price = cost + margin (inelastic demand assumed)</option>
+          <option value="skimming">Price Skimming — high initial price, captures maximum consumer surplus</option>
+          <option value="penetration">Penetration Pricing — low price maximises Qd, shifts along demand curve (+25%)</option>
+          <option value="dynamic">Price Discrimination — different prices for different segments (+10%)</option>
+          <option value="equity">Below-Market Pricing — Cat 3 subsidised (simulates price ceiling effect)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" style="display:flex;justify-content:space-between;">
+          <span>Category 1 — VIP / Hospitality Price</span>
+          <span id="cat1Display" style="font-weight:700;color:var(--yellow);">$800</span>
+        </label>
+        <input type="range" id="cat1Slider" class="range-slider" min="200" max="3000" step="50" value="800" oninput="updateVenueMath()">
+        <div style="display:flex;justify-content:space-between;font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem;"><span>$200</span><span>$3,000</span></div>
+      </div>
+
+      <div class="card-sm" style="margin:1.25rem 0;">
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:0.75rem;">Calculated Ticket Tiers</div>
+        <div class="tier-row"><span>🟡 Cat 1 — VIP / Hospitality</span><div><span class="tier-price" id="t1Price">$800</span> <span class="tier-capacity" id="t1Cap">(10,000 seats)</span></div></div>
+        <div class="tier-row"><span>🔵 Cat 2 — Premium Covered</span><div><span class="tier-price" id="t2Price">$480</span> <span class="tier-capacity" id="t2Cap">(17,500 seats)</span></div></div>
+        <div class="tier-row"><span>🟢 Cat 3 — General Admission</span><div><span class="tier-price" id="t3Price">$280</span> <span class="tier-capacity" id="t3Cap">(22,500 seats)</span></div></div>
+        <div class="divider"></div>
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:0.75rem;">Live Market Projections</div>
+        <div class="tier-row"><span>Quantity Demanded (Qd)</span><strong id="projDemand">—</strong></div>
+        <div class="tier-row"><span>Market Clearing Rate (Qs/Qd)</span><strong id="projFill" class="text-green">—</strong></div>
+        <div class="tier-row"><span>Projected Producer Revenue</span><strong id="projRevenue" class="text-green">—</strong></div>
+        <div class="tier-row"><span>Estimated score (out of 100)</span><strong id="projScore" class="text-primary-col">—</strong></div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="venueSubmitBtn" onclick="submitVenue()">⚽ Publish Venue to Market</button>
+      <div id="venueSubmitMsg" style="text-align:center;margin-top:0.75rem;font-size:0.85rem;color:var(--green);display:none;">✓ Published! Fans can see your venue. You can update prices until booking opens.</div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.75rem;"><span class="live-dot"></span> Live Venue Leaderboard</div>
+      <div id="venueLiveLB"><div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No venues published yet.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 3 — FAN GROUP -->
+<div class="screen hidden" id="fanScreen">
+  <div class="container" style="max-width:720px;">
+    <div class="phase-pill lobby" id="fanPhasePill"><span class="phase-dot"></span> Lobby — Waiting for booking to open</div>
+
+    <!-- COUNTDOWN TIMER (hidden until booking opens) -->
+    <div id="bookingCountdownWrap" style="display:none;margin:0.75rem 0 1rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;">
+        <span style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#f87171;">⏱ Booking closes in</span>
+        <span id="bookingCountdownNum" style="font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:900;color:#f87171;">90</span>
+      </div>
+      <div style="height:6px;background:rgba(248,113,113,0.15);border-radius:999px;overflow:hidden;">
+        <div id="bookingCountdownBar" style="height:100%;background:linear-gradient(90deg,#f87171,#fbbf24);border-radius:999px;width:100%;transition:width 1s linear;"></div>
+      </div>
+    </div>
+
+    <div class="shock-banner" id="fanShockBanner">
+      <div class="shock-title">⚡ Market Shock!</div>
+      <div class="shock-text" id="fanShockText">A market event has changed fan budgets. Check updated venues below.</div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <h2 class="card-title">👥 Fan Group Details</h2>
+      <div class="two-col">
+        <div class="form-group">
+          <label class="form-label">Your Name / Group Name</label>
+        <div id="fanNameGroup">
+          <input type="text" id="fanName" class="text-input" placeholder="e.g. The Socceroos Squad">
+        </div>
+        <div id="fanAutoNameDisplay" style="display:none;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.2);border-radius:10px;padding:0.65rem 1rem;font-size:0.9rem;">
+          👥 Your team: <strong id="fanAutoNameLabel" style="color:var(--green);"></strong>
+        </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fan Type</label>
+          <select id="fanType" class="select-input" onchange="updateFanBudget()">
+            <option value="tourist">🌍 International Tourist — high budget, group of 2</option>
+            <option value="family">👨‍👩‍👧 Local Family — moderate budget, group of 4</option>
+            <option value="ultras">📣 Ultras Club — low budget, group of 10 (bulk buy)</option>
+            <option value="corporate">💼 Corporate Box — very high budget, group of 8</option>
+            <option value="student">🎓 Student Group — very low budget, group of 6</option>
+            <option value="neutral">🎲 Neutral Fan — average budget, solo</option>
+          </select>
+        </div>
+      </div>
+      <div class="card-sm" style="background:rgba(129,140,248,0.05);border-color:rgba(129,140,248,0.2);">
+        <div style="font-size:0.85rem;color:var(--text-secondary);">
+          <strong style="color:var(--text-primary);" id="fanBudgetLabel">Budget per person: $900</strong> &nbsp;|&nbsp;
+          Group size: <strong id="fanGroupSize">2</strong> tickets &nbsp;|&nbsp;
+          Max spend: <strong id="fanMaxSpend">$1,800</strong>
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;" id="fanTypeDesc">International tourists have strong willingness to pay for premium experiences.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;">🏟️ Live Booking Board</h3>
+        <span style="font-size:0.78rem;color:var(--text-muted);">Updates automatically</span>
+      </div>
+      <div id="fanBookingBoard">
+        <div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;text-align:center;padding:2rem 0;">Waiting for venues to publish their prices…</div>
+      </div>
+    </div>
+
+    <div id="fanConfirmBox" class="card" style="margin-top:1.5rem;display:none;border-color:rgba(52,211,153,0.3);background:rgba(52,211,153,0.04);">
+      <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.5rem;">✅ Tickets Booked!</div>
+      <div id="fanConfirmText" style="color:var(--text-secondary);font-size:0.9rem;line-height:1.6;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 4 — TEACHER DASHBOARD -->
+<div class="screen hidden" id="teacherScreen">
+  <div class="container-wide">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--secondary);">Teacher Dashboard</div>
+        <h1 style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;">⚽ World Cup Market Control</h1>
+      </div>
+      <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+        <span id="teacherSessionBadge" style="background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);border-radius:var(--radius-full);padding:0.35rem 1rem;font-size:0.82rem;font-weight:700;color:#34d399;">Session: —</span>
+        <button class="btn btn-secondary" onclick="refreshDashboard()" style="padding:0.4rem 1rem;font-size:0.82rem;">🔄 Refresh</button>
+        <button class="btn btn-danger" onclick="resetSession()" style="padding:0.4rem 1rem;font-size:0.82rem;">🗑 Reset Session</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:1rem;">Phase Controls</div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-yellow" onclick="setPhase('lobby')">🔒 Lobby</button>
+        <button class="btn btn-yellow" onclick="setPhase('pricing')">💰 Open Pricing</button>
+        <button class="btn btn-green" onclick="setPhase('booking')">🎟 Open Booking</button>
+        <button class="btn btn-primary" onclick="setPhase('results')">📊 Show Results</button>
+        <div style="height:30px;width:1px;background:var(--border);margin:0 0.25rem;"></div>
+        <span id="currentPhaseBadge" style="font-size:0.82rem;font-weight:700;color:var(--text-muted);">Current: Lobby</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;background:linear-gradient(135deg,rgba(129,140,248,0.04),rgba(192,132,252,0.04));border-color:rgba(129,140,248,0.2);">
+      <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:0.75rem;">✏️ Student Name Control</div>
+      <div style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:0.75rem;">Control whether students can type custom names or get auto-assigned World Cup names.</div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button id="btnAutoNames" class="btn btn-primary" onclick="setNameMode('auto')">🔒 Auto-Assign Names</button>
+        <button id="btnCustomNames" class="btn" style="background:rgba(255,255,255,0.05);border:1px solid var(--border);" onclick="setNameMode('custom')">✏️ Allow Custom Names</button>
+        <span id="nameModeLabel" style="font-size:0.82rem;color:var(--text-muted);align-self:center;">Mode: Auto-assigned</span>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;background:linear-gradient(135deg,rgba(251,191,36,0.04),rgba(248,113,113,0.04));border-color:rgba(251,191,36,0.18);">
+      <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#fbbf24;margin-bottom:1rem;">⚡ Market Shocks</div>
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+        <select id="shockSelect" class="select-input" style="flex:1;min-width:260px;max-width:480px;">
+          <option value=""> — Choose a demand shifter or govt intervention —</option>
+          <optgroup label="Non-Price Demand Determinants">
+          <option value="rain">🌧️ Heavy Rain — tastes shift, demand LEFT (−20% WTP)</option>
+          <option value="celebrity">⭐ Celebrity Event — tastes shift, demand RIGHT (+40%)</option>
+          <option value="transport">🚇 Transport Strike — real income falls, demand LEFT (−25%)</option>
+          <option value="rival">🔥 Rival Match — substitute available, demand LEFT (−30%)</option>
+          <option value="vip_sponsor">💎 Sponsor Package — income effect, demand RIGHT (+50% corp)</option>
+          <option value="scalping">🎭 Scalping Crackdown — black market gone, WTP rises (+10%)</option>
+          <option value="terror">🚨 Security Alert — negative expectations, demand LEFT (−15%)</option>
+          <option value="fever">🌡️ World Cup Fever — tastes shift strongly RIGHT (+35%)</option>
+          </optgroup>
+          <optgroup label="Government Intervention">
+          <option value="price_ceil">🏛️ Price Ceiling — Govt max $200/ticket → shortage</option>
+          <option value="price_floor">⚖️ Price Floor — Govt min $600/ticket → surplus</option>
+          </optgroup>
+        </select>
+        <button class="btn btn-yellow" onclick="triggerShock()">⚡ Trigger Shock</button>
+      </div>
+      <div id="activeShockLabel" style="font-size:0.82rem;color:var(--text-muted);margin-top:0.6rem;">No shock active.</div>
+    </div>
+
+    <!-- AI FANS PANEL -->
+    <div class="ai-panel">
+      <div class="ai-panel-title">🤖 AI Fan Agents — Market Thickness Tool</div>
+      <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:1rem;">Small class? Spawn AI fans with distinct personalities to thicken the market. They automatically book when the booking phase opens — just like real students.</p>
+      <div class="ai-fan-row">
+        <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+          <label class="form-label" style="margin-bottom:0.3rem;">Number of AI Fans</label>
+          <select id="aiFanCount" class="select-input" style="padding:0.5rem 0.75rem;">
+            <option value="3">3 AI fans (small class boost)</option>
+            <option value="5" selected>5 AI fans (recommended)</option>
+            <option value="8">8 AI fans (thin market)</option>
+            <option value="10">10 AI fans (stress test)</option>
+          </select>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <button class="btn btn-secondary" style="padding:0.5rem 1rem;font-size:0.82rem;" onclick="spawnAIFans()">🤖 Spawn AI Fans Now</button>
+          <button class="btn btn-danger" style="padding:0.5rem 1rem;font-size:0.82rem;" onclick="clearAIFans()">🗑 Clear AI Fans</button>
+        </div>
+      </div>
+      <div class="ai-fan-log" id="aiFanLog">AI fan log will appear here when they are spawned…</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val text-primary-col" id="tStatVenues">0</div><div class="stat-label">Venues Live</div></div>
+      <div class="stat-card"><div class="stat-val text-green" id="tStatFans">0</div><div class="stat-label">Fan Groups</div></div>
+      <div class="stat-card"><div class="stat-val text-yellow" id="tStatTickets">0</div><div class="stat-label">Tickets Sold</div></div>
+      <div class="stat-card"><div class="stat-val text-green" id="tStatRevenue">$0</div><div class="stat-label">Total Revenue</div></div>
+      <div class="stat-card"><div class="stat-val text-primary-col" id="tStatSurplus">$0</div><div class="stat-label">Consumer Surplus</div></div>
+      <div class="stat-card"><div class="stat-val" id="tStatFill">0%</div><div class="stat-label">Avg Fill Rate</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;"><span class="live-dot"></span>Venue Rankings</div>
+        <div id="teacherVenueLB"><div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No venues yet.</div></div>
+      </div>
+      <div class="card">
+        <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:1rem;"><span class="live-dot"></span>Fan Bookings</div>
+        <div id="teacherFanList"><div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No bookings yet.</div></div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:1.5rem;">
+      <div class="card">
+        <div class="card-title" style="font-size:1rem;">Supply vs Demand</div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Seats offered (supply) vs tickets demanded at each Cat 1 price point.</p>
+        <div style="position:relative;height:260px;"><canvas id="sdChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="font-size:1rem;">Revenue &amp; Surplus Distribution</div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem;">Producer revenue vs consumer surplus captured per venue.</p>
+        <div style="position:relative;height:260px;"><canvas id="surplusChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <div class="card-title" style="font-size:1rem;">🤖 AI Market Debrief</div>
+      <div class="debrief-box" id="teacherDebrief">Open Results to generate the debrief.</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 5 — RESULTS -->
+<div class="screen hidden" id="resultsScreen">
+  <div class="container" style="max-width:760px;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <div style="font-size:3rem;margin-bottom:0.5rem;">📐</div>
+      <h1 style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;margin-bottom:0.5rem;">Market Outcome</h1>
+      <p style="color:var(--text-secondary);">The price mechanism has spoken — here’s how the market allocated resources.</p>
+    </div>
+
+    <div class="stat-grid" style="margin-bottom:1.5rem;">
+      <div class="stat-card"><div class="stat-val text-yellow" id="rStatVenues">—</div><div class="stat-label">Producers</div></div>
+      <div class="stat-card"><div class="stat-val text-green" id="rStatTickets">—</div><div class="stat-label">Tickets Sold (Qs)</div></div>
+      <div class="stat-card"><div class="stat-val text-green" id="rStatRevenue">—</div><div class="stat-label">Producer Revenue</div></div>
+      <div class="stat-card"><div class="stat-val text-primary-col" id="rStatSurplus">—</div><div class="stat-label">Consumer Surplus</div></div>
+      <div class="stat-card"><div class="stat-val text-red" id="rStatDWL">—</div><div class="stat-label">Deadweight Loss</div></div>
+    </div>
+
+    <div id="marketEfficiencyPanel" style="display:none;background:linear-gradient(135deg,rgba(129,140,248,0.06),rgba(192,132,252,0.06));border:1px solid rgba(129,140,248,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.5rem;">
+      <div style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:0.75rem;">📐 Market Efficiency Analysis (HSC Economics)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.85rem;">
+        <div><span style="color:var(--text-muted);">Total Welfare (CS + PS)</span><br><strong id="rTotalWelfare">—</strong></div>
+        <div><span style="color:var(--text-muted);">Allocative Efficiency</span><br><strong id="rAllocEff">—</strong></div>
+        <div><span style="color:var(--text-muted);">Priced-Out Consumers</span><br><strong id="rPricedOut">—</strong></div>
+        <div><span style="color:var(--text-muted);">Avg Price Elasticity (PED)</span><br><strong id="rAvgPED">—</strong></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title" style="font-size:1rem;">🏟️ Producer Leaderboard</div>
+      <div id="resultVenueLB"></div>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title" style="font-size:1rem;">👥 Consumer Decisions</div>
+      <div id="resultFanList"></div>
+    </div>
+    <div class="card" style="margin-bottom:1.5rem;">
+      <div class="card-title" style="font-size:1rem;">🤖 Economics Debrief</div>
+      <div class="debrief-box" id="resultDebrief">Loading…</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCORECARD MODAL -->
+<div class="scorecard-overlay hidden" id="scorecardOverlay">
+  <div class="scorecard-box">
+    <div style="font-size:4rem;margin-bottom:0.5rem;" id="scBadgeEmoji">🏆</div>
+    <div class="scorecard-score" id="scScore">72</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:1.15rem;font-weight:700;margin:0.25rem 0;">out of 100</div>
+    <div style="font-size:1.4rem;font-weight:800;margin:0.5rem 0;" id="scBadgeLabel">🥇 Gold</div>
+    <div class="scorecard-verdict" id="scVerdict">Loading…</div>
+    <div style="display:flex;gap:0.6rem;margin-top:0.5rem;">
+      <button class="btn btn-primary" onclick="closeScorecard()" style="flex:1;">View Results →</button>
+      <button class="btn" onclick="shareScorecard()" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text-secondary);padding:0.6rem 0.9rem;" title="Copy result to clipboard">📋</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── FIREBASE ────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain:"www.datatrends.com.au",
+  projectId:"maths-f3c6d",
+  storageBucket:"maths-f3c6d.firebasestorage.app",
+  messagingSenderId:"76007634547",
+  appId:"1:76007634547:web:0b9773147e26dd2940dc06"
+});
+const db = firebase.firestore();
+
+// ─── STATE ───────────────────────────────────────────
+let sessionCode = "";
+let myRole = "";
+let myId = "";
+let currentPhase = "lobby";
+let activeShock = null;
+let myVenueData = null;
+let myBooking = null;
+let cachedVenues = [];        // shared cache for fan board
+let cachedFanBookings = [];   // live fan bookings for capacity tracking
+let sdChartInst = null;
+let surplusChartInst = null;
+
+// ─── CONFIG ──────────────────────────────────────────
+const FAN_TYPES = {
+  tourist:  { label:"International Tourist", budgetPer:900,  group:2,  desc:"High WTP for premium experiences. Pair of travellers." },
+  family:   { label:"Local Family",          budgetPer:350,  group:4,  desc:"Budget-conscious, need 4 seats. Prefer mid-tier." },
+  ultras:   { label:"Ultras Club",           budgetPer:120,  group:10, desc:"Bulk buyers on tight budget. Need GA tickets." },
+  corporate:{ label:"Corporate Box",         budgetPer:1800, group:8,  desc:"Expense accounts. Demand VIP hospitality." },
+  student:  { label:"Student Group",         budgetPer:90,   group:6,  desc:"Very price sensitive. Only buy if Cat 3 is affordable." },
+  neutral:  { label:"Neutral Fan",           budgetPer:400,  group:1,  desc:"Solo spectator with average budget." },
+};
+
+const STAGES = {
+  group:   { cap:50000, demandMult:1.0, label:"Group Stage" },
+  round16: { cap:60000, demandMult:1.2, label:"Round of 16" },
+  quarter: { cap:65000, demandMult:1.4, label:"Quarter-Final" },
+  semi:    { cap:70000, demandMult:1.65,label:"Semi-Final" },
+  final:   { cap:80000, demandMult:2.0, label:"World Cup Final" },
+};
+
+const SHOCKS = {
+  rain:        { label:"🌧️ Heavy Rain",          desc:"Outdoor fan demand drops 20% — tastes/preferences shift (non-price determinant).",   budgetMult:{tourist:0.8,family:0.75,ultras:0.8,corporate:0.95,student:0.85,neutral:0.8} },
+  celebrity:   { label:"⭐ Celebrity Event",      desc:"VIP demand surges +40% — tastes shift, demand curve moves RIGHT.",                   budgetMult:{tourist:1.3,family:1.0,ultras:1.0,corporate:1.4,student:1.0,neutral:1.1} },
+  transport:   { label:"🚇 Transport Strike",     desc:"Local fan WTP drops 25% — real income effect, demand curve moves LEFT.",             budgetMult:{tourist:1.0,family:0.75,ultras:0.75,corporate:1.0,student:0.8,neutral:0.8} },
+  rival:       { label:"🔥 Rival Match",          desc:"Price of substitute falls — student & ultras WTP drops 30%, demand curve LEFT.",     budgetMult:{tourist:1.0,family:0.95,ultras:0.7,corporate:1.0,student:0.7,neutral:0.95} },
+  vip_sponsor: { label:"💎 Sponsor Package",      desc:"Cat 1 demand +50% — income effect for corporates, demand curve RIGHT.",              budgetMult:{tourist:1.2,family:1.0,ultras:1.0,corporate:1.5,student:1.0,neutral:1.0} },
+  scalping:    { label:"🎭 Scalping Crackdown",   desc:"Black market eliminated — consumer WTP rises +10%. Market demand RIGHT.",           budgetMult:{tourist:1.1,family:1.1,ultras:1.1,corporate:1.1,student:1.1,neutral:1.1} },
+  terror:      { label:"🚨 Security Alert",       desc:"Negative expectations — all consumer WTP falls 15%. Demand curve LEFT.",            budgetMult:{tourist:0.85,family:0.85,ultras:0.85,corporate:0.9,student:0.85,neutral:0.85} },
+  fever:       { label:"🌡️ World Cup Fever",     desc:"Host nation plays! Strong taste shift — all demand +35%. Demand curve RIGHT.",     budgetMult:{tourist:1.35,family:1.35,ultras:1.35,corporate:1.35,student:1.35,neutral:1.35} },
+  price_ceil:  { label:"🏛️ Govt Price Ceiling",  desc:"Max price set at $200/ticket (below equilibrium) — shortage, excess Qd over Qs.",  budgetMult:{tourist:1.0,family:1.0,ultras:1.0,corporate:1.0,student:1.0,neutral:1.0} },
+  price_floor: { label:"⚖️ Govt Price Floor",    desc:"Min price set at $600/ticket (above equilibrium) — surplus, excess Qs over Qd.",  budgetMult:{tourist:0.9,family:0.85,ultras:0.7,corporate:1.0,student:0.6,neutral:0.85} },
+};
+
+// ─── HELPERS ─────────────────────────────────────────
+function fmt(n){ return '$'+Math.round(n).toLocaleString(); }
+function pct(n){ return Math.round(n)+'%'; }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function showScreen(id){
+  ['entryScreen','venueScreen','fanScreen','teacherScreen','resultsScreen'].forEach(s=>document.getElementById(s).classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ─── ENTRY ROLE COUNTER ──────────────────────────────
+const MAX_VENUES = 4; // max venue managers per session
+let entryVenueUnsub = null, entryFanUnsub = null;
+
+function watchEntryRoleCounts() {
+  const code = document.getElementById('entryCode').value.trim().toUpperCase();
+  if (!code || code.length < 2) return;
+  // Unsubscribe previous
+  if (entryVenueUnsub) entryVenueUnsub();
+  if (entryFanUnsub) entryFanUnsub();
+  entryVenueUnsub = db.collection('wc_venues').where('sessionCode','==',code).onSnapshot(snap => {
+    const count = snap.docs.filter(d => !d.data().isAI).length;
+    const full = count >= MAX_VENUES;
+    const label = document.getElementById('venueSlotLabel');
+    const card = document.getElementById('venueRoleCard');
+    const warn = document.getElementById('roleCapWarning');
+    label.textContent = full ? `🔴 Full (${count}/${MAX_VENUES} managers joined)` : `🟢 ${count}/${MAX_VENUES} managers joined`;
+    label.style.color = full ? 'var(--red)' : 'var(--yellow)';
+    card.style.opacity = full ? '0.5' : '1';
+    card.style.cursor = full ? 'not-allowed' : 'pointer';
+    card.title = full ? 'Venue Manager slots full — join as Fan Group' : '';
+    if (full) {
+      warn.style.display = 'block';
+      warn.textContent = '⚠️ Venue Manager slots are full. Please join as a Fan Group instead.';
+    } else {
+      warn.style.display = 'none';
+    }
+  });
+  entryFanUnsub = db.collection('wc_fans').where('sessionCode','==',code).onSnapshot(snap => {
+    const count = snap.docs.filter(d => !d.data().isAI).length;
+    const label = document.getElementById('fanSlotLabel');
+    label.textContent = `👥 ${count} fan group${count !== 1 ? 's' : ''} joined`;
+  });
+}
+
+document.getElementById('entryCode').addEventListener('input', function(){
+  this.value = this.value.toUpperCase();
+  if (this.value.length >= 2) watchEntryRoleCounts();
+});
+
+// ─── ENTRY ───────────────────────────────────────────
+function chooseRole(role){
+  const code = document.getElementById('entryCode').value.trim().toUpperCase();
+  if(!code){ alert('Please enter your class session code first.'); return; }
+  if(role==='venue'){
+    const card = document.getElementById('venueRoleCard');
+    if(card.style.opacity === '0.5'){ alert('Venue Manager slots are full! Please join as a Fan Group.'); return; }
+  }
+  sessionCode = code;
+  myRole = role;
+  myId = uid();
+  if(role==='venue')  { showScreen('venueScreen');   initVenueScreen(); }
+  if(role==='fan')    { showScreen('fanScreen');     initFanScreen(); }
+  if(role==='teacher'){
+    document.getElementById('teacherPinOverlay').classList.remove('hidden');
+    document.getElementById('teacherPinInput').value='';
+    document.getElementById('teacherPinInput').focus();
+    document.getElementById('teacherPinMsg').textContent='';
+  }
+}
+
+// ─── VENUE MANAGER ────────────────────────────────────
+function initVenueScreen(){
+  updateVenueMath();
+  // Listen to session phase changes
+  db.collection('wc_sessions').doc(sessionCode).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d = snap.data();
+    currentPhase = d.phase || 'lobby';
+    updateVenuePhasePill(currentPhase);
+    activeShock = d.activeShock || null;
+    const banner = document.getElementById('venueShockBanner');
+    if(activeShock && SHOCKS[activeShock]){
+      banner.classList.add('active');
+      document.getElementById('venueShockText').innerHTML = `<strong>${SHOCKS[activeShock].label}:</strong> ${SHOCKS[activeShock].desc} Adjust your prices!`;
+    } else {
+      banner.classList.remove('active');
+    }
+    // Apply name mode
+    applyNameMode(d.nameMode || 'auto');
+    if(currentPhase==='results') showResultsScreen();
+  });
+  // Live leaderboard for venue managers
+  db.collection('wc_venues').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    const venues = snap.docs.map(d=>d.data()).sort((a,b)=>b.score-a.score);
+    const lb = document.getElementById('venueLiveLB');
+    if(!venues.length){ lb.innerHTML='<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No venues yet.</div>'; return; }
+    lb.innerHTML = venues.map((v,i)=>`
+      <div class="leader-row ${v.managerId===myId?'me':''}">
+        <span class="leader-rank">${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span>
+        <div>
+          <div class="leader-name">${v.venueName}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">${v.managerName} — ${STAGES[v.stage]?.label||v.stage}</div>
+        </div>
+        <span class="leader-revenue">${fmt(v.projRevenue)}</span>
+        <span class="leader-fill">${pct(v.projFill*100)} full</span>
+      </div>`).join('');
+  });
+}
+
+function updateVenuePhasePill(phase){
+  const pill = document.getElementById('venuePhasePill');
+  const cls  = {lobby:'lobby',pricing:'pricing',booking:'booking',results:'results'};
+  const lbl  = {lobby:'🔒 Lobby — Waiting',pricing:'💰 Pricing Open — Submit your prices!',booking:'🎟 Booking Open — Fans are choosing!',results:'📊 Results Available'};
+  pill.className = 'phase-pill '+(cls[phase]||'lobby');
+  pill.innerHTML = `<span class="phase-dot"></span> ${lbl[phase]||phase}`;
+}
+
+function getVenueCalc(){
+  const stage    = document.getElementById('venueStage').value;
+  const strategy = document.getElementById('venueStrategy').value;
+  const cat1     = parseInt(document.getElementById('cat1Slider').value);
+  const cat2     = Math.round(cat1*0.60);
+  const cat3     = Math.round(cat1*0.35);
+  const cfg = STAGES[stage];
+  const cap=cfg.cap, cap1=Math.round(cap*0.20), cap2=Math.round(cap*0.35), cap3=Math.round(cap*0.45);
+  const maxP=3000;
+  let sm=1.0;
+  if(strategy==='penetration') sm=1.25;
+  if(strategy==='dynamic') sm=1.10;
+  const d1=Math.round(cap1*cfg.demandMult*sm*Math.max(0,(maxP-cat1)/maxP));
+  const d2=Math.round(cap2*cfg.demandMult*sm*Math.max(0,(maxP*0.6-cat2)/(maxP*0.6)));
+  const d3=Math.round(cap3*cfg.demandMult*sm*Math.max(0,(maxP*0.35-cat3)/(maxP*0.35)));
+  const s1=Math.min(d1,cap1), s2=Math.min(d2,cap2), s3=Math.min(d3,cap3);
+  const totalSold=s1+s2+s3, fillRate=totalSold/cap;
+  const revenue=s1*cat1+s2*cat2+s3*cat3;
+  const maxRev=cap1*3000+cap2*1800+cap3*1050;
+  const revScore=Math.min(50,Math.round((revenue/maxRev)*50));
+  const fillScore=Math.round(fillRate*30);
+  const stratBonus=strategy==='dynamic'?10:strategy==='penetration'?8:strategy==='skimming'?6:5;
+  const score=Math.min(100,revScore+fillScore+stratBonus);
+  return {cat1,cat2,cat3,cap,cap1,cap2,cap3,stage,strategy,d1,d2,d3,s1,s2,s3,totalSold,fillRate,revenue,score};
+}
+
+function updateVenueMath(){
+  const v=getVenueCalc();
+  document.getElementById('cat1Display').textContent=fmt(v.cat1);
+  document.getElementById('t1Price').textContent=fmt(v.cat1);
+  document.getElementById('t2Price').textContent=fmt(v.cat2);
+  document.getElementById('t3Price').textContent=fmt(v.cat3);
+  document.getElementById('t1Cap').textContent=`(${v.cap1.toLocaleString()} seats)`;
+  document.getElementById('t2Cap').textContent=`(${v.cap2.toLocaleString()} seats)`;
+  document.getElementById('t3Cap').textContent=`(${v.cap3.toLocaleString()} seats)`;
+  document.getElementById('projDemand').textContent=(v.d1+v.d2+v.d3).toLocaleString();
+  document.getElementById('projFill').textContent=pct(v.fillRate*100);
+  document.getElementById('projRevenue').textContent=fmt(v.revenue);
+  document.getElementById('projScore').textContent=v.score+'/100';
+}
+
+async function submitVenue(){
+  const name=document.getElementById('venueMgrName').value.trim();
+  const vname=document.getElementById('venueNameInput').value.trim();
+  if(!name){alert('Please enter your name.');return;}
+  if(!vname){alert('Please name your stadium.');return;}
+  const v=getVenueCalc();
+  const data={sessionCode,role:'venue',managerId:myId,managerName:name,venueName:vname,
+    stage:v.stage,strategy:v.strategy,cat1Price:v.cat1,cat2Price:v.cat2,cat3Price:v.cat3,
+    cap:v.cap,cap1:v.cap1,cap2:v.cap2,cap3:v.cap3,
+    projRevenue:v.revenue,projFill:v.fillRate,score:v.score,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  document.getElementById('venueSubmitBtn').disabled=true;
+  await db.collection('wc_venues').doc(`${sessionCode}_${myId}`).set(data);
+  myVenueData=data;
+  document.getElementById('venueSubmitBtn').disabled=false;
+  const msg=document.getElementById('venueSubmitMsg');
+  msg.style.display='block';
+  setTimeout(()=>{msg.style.display='none';},3000);
+}
+
+// ─── FAN GROUP ────────────────────────────────────────
+function initFanScreen(){
+  updateFanBudget();
+  // SESSION listener — updates phase pill AND re-renders board
+  db.collection('wc_sessions').doc(sessionCode).onSnapshot(snap=>{
+    if(!snap.exists) return;
+    const d=snap.data();
+    currentPhase=d.phase||'lobby';
+    // Update pill
+    const pill=document.getElementById('fanPhasePill');
+    const cls={lobby:'lobby',pricing:'pricing',booking:'booking',results:'results'};
+    const lbl={
+      lobby:'🔒 Lobby — Waiting for venue setup',
+      pricing:'💰 Venues are setting prices…',
+      booking:'🎟 Booking is OPEN — Choose your match!',
+      results:'📊 Results announced!'
+    };
+    pill.className='phase-pill '+(cls[currentPhase]||'lobby');
+    pill.innerHTML=`<span class="phase-dot"></span> ${lbl[currentPhase]||currentPhase}`;
+    // Shock
+    activeShock=d.activeShock||null;
+    const banner=document.getElementById('fanShockBanner');
+    if(activeShock && SHOCKS[activeShock]){
+      banner.classList.add('active');
+      document.getElementById('fanShockText').innerHTML=`<strong>${SHOCKS[activeShock].label}:</strong> ${SHOCKS[activeShock].desc} Check updated prices below.`;
+    } else {
+      banner.classList.remove('active');
+    }
+    updateFanBudget();
+    applyNameMode(d.nameMode || 'auto');
+    // Countdown timer when booking opens
+    if(currentPhase === 'booking' && d.bookingOpenedAt){
+      startBookingCountdown(d.bookingOpenedAt.toMillis ? d.bookingOpenedAt.toMillis() : Date.now(), 90);
+    }
+    renderFanBoard();   // <-- key: re-render board so booking buttons appear/disappear
+    if(currentPhase==='results') showResultsScreen();
+  });
+
+  // VENUES listener — cache venues and re-render board
+  db.collection('wc_venues').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    cachedVenues=snap.docs.map(d=>d.data()).sort((a,b)=>a.cat1Price-b.cat1Price);
+    renderFanBoard();
+  });
+
+  // FAN BOOKINGS listener — track capacity usage per venue/tier
+  db.collection('wc_fans').where('sessionCode','==',sessionCode).onSnapshot(snap=>{
+    cachedFanBookings=snap.docs.map(d=>d.data());
+    renderFanBoard();
+  });
+}
+
+function getFanConfig(){
+  return FAN_TYPES[document.getElementById('fanType').value]||FAN_TYPES.tourist;
+}
+
+function updateFanBudget(){
+  const cfg=getFanConfig();
+  const ftype=document.getElementById('fanType').value;
+  const shockMult=activeShock&&SHOCKS[activeShock]?(SHOCKS[activeShock].budgetMult[ftype]||1):1;
+  const bud=Math.round(cfg.budgetPer*shockMult);
+  document.getElementById('fanBudgetLabel').textContent=`Budget per person: ${fmt(bud)}`;
+  document.getElementById('fanGroupSize').textContent=cfg.group;
+  document.getElementById('fanMaxSpend').textContent=fmt(bud*cfg.group);
+  document.getElementById('fanTypeDesc').textContent=cfg.desc;
+}
+
+function renderFanBoard(){
+  const board=document.getElementById('fanBookingBoard');
+  if(!board) return;
+
+  if(!cachedVenues.length){
+    board.innerHTML='<div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:2rem 0;">Waiting for venues to publish their prices…</div>';
+    return;
+  }
+
+  const canBook = (currentPhase==='booking') && !myBooking;
+  const cfg=getFanConfig();
+  const ftype=document.getElementById('fanType').value;
+  const shockMult=activeShock&&SHOCKS[activeShock]?(SHOCKS[activeShock].budgetMult[ftype]||1):1;
+  const budPerPerson=Math.round(cfg.budgetPer*shockMult);
+
+  // Capacity: count tickets already sold per venue/tier from live bookings
+  function soldInTier(venueId, tier){
+    return cachedFanBookings
+      .filter(f=>f.venueId===venueId && f.tier===tier)
+      .reduce((s,f)=>s+(f.groupSize||0),0);
+  }
+
+  // Check if fan is priced out of ALL venues (no tier affordable anywhere)
+  const anyAffordable = canBook && cachedVenues.some(v=>{
+    const prices=[v.cat1Price,v.cat2Price,v.cat3Price];
+    return prices.some((p,i)=>{
+      const tierCap=[v.cap1,v.cap2,v.cap3][i]||0;
+      const sold=soldInTier(v.managerId,i+1);
+      return p<=budPerPerson && sold+cfg.group<=tierCap;
+    });
+  });
+
+  // Priced-out banner at top
+  let pricedOutBanner='';
+  if(canBook && !anyAffordable && cachedVenues.length>0){
+    pricedOutBanner=`
+    <div style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.35);border-radius:var(--radius-md);padding:1rem 1.25rem;margin-bottom:1.25rem;">
+      <div style="font-weight:800;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;color:#f87171;margin-bottom:0.25rem;">❌ Priced Out of the Market</div>
+      <div style="font-size:0.88rem;color:var(--text-secondary);">No venue has an affordable tier for your group's budget of <strong>${fmt(budPerPerson)}/person</strong>. You will record <strong>0 consumer surplus</strong> — this is <em>deadweight loss</em> caused by prices above your willingness to pay.</div>
+      <button class="btn btn-danger" style="margin-top:0.75rem;padding:0.5rem 1.1rem;font-size:0.85rem;" onclick="recordPricedOut()">📋 Record Priced Out</button>
+    </div>`;
+  }
+
+  board.innerHTML = pricedOutBanner + cachedVenues.map(v=>{
+    const alreadyBooked = myBooking && myBooking.venueId===v.managerId;
+
+    // Per-tier affordability and capacity
+    const tiers=[
+      {label:'🟡 Cat 1 — VIP',           price:v.cat1Price, cap:v.cap1||0, tierNum:1},
+      {label:'🔵 Cat 2 — Premium',        price:v.cat2Price, cap:v.cap2||0, tierNum:2},
+      {label:'🟢 Cat 3 — General Admission',price:v.cat3Price,cap:v.cap3||0, tierNum:3},
+    ];
+
+    const tierRows=tiers.map(t=>{
+      const sold=soldInTier(v.managerId,t.tierNum);
+      const remaining=t.cap-sold;
+      const soldOut=remaining<cfg.group;
+      const overBudget=t.price>budPerPerson;
+      let badge='';
+      if(soldOut) badge='<span class="badge badge-red" style="margin-left:0.5rem;">SOLD OUT</span>';
+      else if(overBudget) badge='<span class="badge badge-red" style="margin-left:0.5rem;">Over budget</span>';
+      else badge='<span class="badge badge-green" style="margin-left:0.5rem;">Affordable ✓</span>';
+      return `<div class="tier-row"><span>${t.label}${canBook&&!alreadyBooked?badge:''}</span><div><span class="tier-price" style="color:${overBudget?'var(--red)':soldOut?'var(--text-muted)':'var(--primary)'};">${fmt(t.price)}</span> <span class="tier-capacity">per person · ${remaining.toLocaleString()} left</span></div></div>`;
+    }).join('');
+
+    // Build select options — disable unaffordable or sold-out tiers
+    const selectOpts=tiers.map(t=>{
+      const sold=soldInTier(v.managerId,t.tierNum);
+      const remaining=t.cap-sold;
+      const soldOut=remaining<cfg.group;
+      const overBudget=t.price>budPerPerson;
+      const disabled=soldOut||overBudget?'disabled':'';
+      const label=soldOut?`Cat ${t.tierNum} — SOLD OUT`:overBudget?`Cat ${t.tierNum} — ${fmt(t.price)}/person (over your budget)`:`Cat ${t.tierNum} — ${fmt(t.price)}/person`;
+      return `<option value="${t.tierNum}" ${disabled}>${label}</option>`;
+    }).join('');
+
+    return `
+    <div class="venue-booking-card">
+      <div class="venue-name-badge">🏟️ ${v.venueName}</div>
+      <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.75rem;">${STAGES[v.stage]?.label||v.stage} — Manager: ${v.managerName}</div>
+      ${tierRows}
+      <div class="divider"></div>
+      ${alreadyBooked
+        ? `<div class="badge badge-green">✓ You booked here!</div>`
+        : canBook
+          ? `<div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;margin-top:0.75rem;">
+               <select class="select-input" id="tierSelect_${v.managerId}" style="flex:1;min-width:200px;"
+                 onchange="previewBooking('${v.managerId}','${v.managerName}','${v.venueName}','${v.stage}',${v.cat1Price},${v.cat2Price},${v.cat3Price})">
+                 <option value="">— Select a tier —</option>
+                 ${selectOpts}
+               </select>
+               <button class="btn btn-green" id="bookBtn_${v.managerId}"
+                 onclick="bookTickets('${v.managerId}','${v.managerName}','${v.venueName}','${v.stage}',${v.cat1Price},${v.cat2Price},${v.cat3Price})">
+                 🎟 Book Tickets
+               </button>
+             </div>
+             <div id="previewMsg_${v.managerId}" style="font-size:0.8rem;color:var(--text-muted);margin-top:0.4rem;"></div>`
+          : `<div style="font-size:0.8rem;color:var(--text-muted);margin-top:0.5rem;font-style:italic;">
+               ${currentPhase==='pricing'?'⏳ Venues still setting prices — booking not yet open.':
+                 currentPhase==='lobby'?'🔒 Booking will open when the teacher advances the phase.':
+                 myBooking?'✓ You have already booked tickets this session.':'Booking closed.'}
+             </div>`
+      }
+    </div>`;
+  }).join('');
+}
+
+function previewBooking(vid,mName,vName,stage,p1,p2,p3){
+  const sel=document.getElementById(`tierSelect_${vid}`);
+  const tier=parseInt(sel.value);
+  const prev=document.getElementById(`previewMsg_${vid}`);
+  if(!tier){prev.textContent='';return;}
+  const cfg=getFanConfig();
+  const ftype=document.getElementById('fanType').value;
+  const sm=activeShock&&SHOCKS[activeShock]?(SHOCKS[activeShock].budgetMult[ftype]||1):1;
+  const bud=Math.round(cfg.budgetPer*sm);
+  const price=[0,p1,p2,p3][tier];
+  const total=price*cfg.group;
+  const surplus=(bud-price)*cfg.group;
+  prev.innerHTML=`${cfg.group} tickets × ${fmt(price)} = <strong>${fmt(total)}</strong> total | Consumer surplus: <strong style="color:${surplus>=0?'var(--green)':'var(--red)'}">${fmt(Math.max(0,surplus))}</strong> ${total>bud*cfg.group?'<span class="badge badge-red">Over budget!</span>':''}`;
+}
+
+async function bookTickets(vid,mName,vName,stage,p1,p2,p3){
+  if(myBooking){alert('You have already booked tickets!');return;}
+  const sel=document.getElementById(`tierSelect_${vid}`);
+  const tier=parseInt(sel.value);
+  if(!tier){alert('Please select a ticket tier first.');return;}
+  const fname=document.getElementById('fanName').value.trim()||'Anonymous Fan';
+  const ftype=document.getElementById('fanType').value;
+  const cfg=getFanConfig();
+  const sm=activeShock&&SHOCKS[activeShock]?(SHOCKS[activeShock].budgetMult[ftype]||1):1;
+  const bud=Math.round(cfg.budgetPer*sm);
+  const price=[0,p1,p2,p3][tier];
+  const total=price*cfg.group;
+
+  // HARD BUDGET BLOCK — fan cannot book above their willingness to pay
+  if(price>bud){
+    alert(`❌ You can't afford Cat ${tier} at this venue.\n\nYour budget: ${fmt(bud)}/person\nTicket price: ${fmt(price)}/person\n\nThis is how markets work — if price > willingness to pay, no transaction occurs. Try a cheaper tier or venue.`);
+    return;
+  }
+
+  const surplus=(bud-price)*cfg.group;
+  const data={
+    sessionCode,role:'fan',fanId:myId,fanName:fname,fanType:ftype,fanTypeLabel:cfg.label,
+    venueId:vid,venueManagerName:mName,venueName:vName,stage,tier,
+    pricePerTicket:price,groupSize:cfg.group,totalSpend:total,
+    consumerSurplus:surplus,budgetPerPerson:bud,withinBudget:true,
+    pricedOut:false,
+    bookedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  const btn=document.getElementById(`bookBtn_${vid}`);
+  if(btn) btn.disabled=true;
+  await db.collection('wc_fans').doc(`${sessionCode}_${myId}`).set(data);
+  myBooking=data;
+  renderFanBoard();
+  const box=document.getElementById('fanConfirmBox');
+  box.style.display='block';
+  document.getElementById('fanConfirmText').innerHTML=`
+    ✅ <strong>${cfg.group} Cat ${tier} tickets</strong> booked at <strong>${vName}</strong> (${STAGES[stage]?.label||stage})<br>
+    Price per ticket: <strong>${fmt(price)}</strong> · Total spend: <strong>${fmt(total)}</strong><br>
+    Consumer surplus: <strong style="color:var(--green)">${fmt(surplus)}</strong> <span class="badge badge-green">Within budget ✓</span>`;
+  box.scrollIntoView({behavior:'smooth'});
+}
+
+async function recordPricedOut(){
+  if(myBooking){return;}
+  const fname=document.getElementById('fanName').value.trim()||'Anonymous Fan';
+  const ftype=document.getElementById('fanType').value;
+  const cfg=getFanConfig();
+  const sm=activeShock&&SHOCKS[activeShock]?(SHOCKS[activeShock].budgetMult[ftype]||1):1;
+  const bud=Math.round(cfg.budgetPer*sm);
+  const data={
+    sessionCode,role:'fan',fanId:myId,fanName:fname,fanType:ftype,fanTypeLabel:cfg.label,
+    venueId:null,venueManagerName:null,venueName:'N/A',stage:null,tier:null,
+    pricePerTicket:null,groupSize:cfg.group,totalSpend:0,
+    consumerSurplus:0,budgetPerPerson:bud,withinBudget:false,
+    pricedOut:true,
+    bookedAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  await db.collection('wc_fans').doc(`${sessionCode}_${myId}`).set(data);
+  myBooking=data;
+  renderFanBoard();
+  const box=document.getElementById('fanConfirmBox');
+  box.style.display='block';
+  document.getElementById('fanConfirmText').innerHTML=`
+    ❌ <strong>Priced Out</strong> — recorded as 0 consumer surplus.<br>
+    <span style="color:var(--text-muted);font-size:0.85rem;">Your group's max budget of <strong>${fmt(bud)}/person</strong> was below all available ticket prices. This is <em>deadweight loss</em> — a willing buyer couldn't transact because price exceeded willingness to pay.</span>`;
+  box.scrollIntoView({behavior:'smooth'});
+}
+
+// ─── TEACHER ─────────────────────────────────────────
+const AUTO_VENUE_NAMES = ['Azteca Arena 🇲🇽','MetLife Stadium 🇺🇸','AT&T Stadium 🇺🇸','SoFi Stadium 🇺🇸','Lumen Field 🇺🇸','BC Place 🇨🇦','BMO Field 🇨🇦','Rose Bowl 🇺🇸'];
+const AUTO_FAN_NAMES   = ['Brazil 🇧🇷','Argentina 🇦🇷','France 🇫🇷','England 🏴󠁧󠁢󠁥󠁮󠁧󠁿','Australia 🦘','Germany 🇩🇪','Spain 🇪🇸','Japan 🇯🇵','USA 🇺🇸','Morocco 🇲🇦','Portugal 🇵🇹','Netherlands 🇳🇱'];
+let currentNameMode = 'auto';
+
+function setNameMode(mode){
+  currentNameMode = mode;
+  db.collection('wc_sessions').doc(sessionCode).set({nameMode: mode, updatedAt: firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  const lbl = document.getElementById('nameModeLabel');
+  const btnA = document.getElementById('btnAutoNames');
+  const btnC = document.getElementById('btnCustomNames');
+  if(mode==='auto'){
+    lbl.textContent = '🔒 Mode: Auto-assigned (students cannot type names)';
+    lbl.style.color = 'var(--green)';
+    btnA.style.opacity='1'; btnC.style.opacity='0.5';
+  } else {
+    lbl.textContent = '✏️ Mode: Custom names allowed';
+    lbl.style.color = 'var(--yellow)';
+    btnA.style.opacity='0.5'; btnC.style.opacity='1';
+  }
+}
+
+function applyNameMode(mode){
+  // Called on venue & fan screens when session nameMode changes
+  const venueNameGrp = document.getElementById('venueNameGroup');
+  const venueMgrGrp  = document.getElementById('venueMgrNameGroup');
+  const venueAuto    = document.getElementById('venueAutoNameDisplay');
+  const fanNameGrp   = document.getElementById('fanNameGroup');
+  const fanAuto      = document.getElementById('fanAutoNameDisplay');
+  // fp() — stable fingerprint derived from this student's unique ID
+  // (avoids undefined crash from missing external fingerprint library)
+  const fp = () => (myId || (myId = uid()));
+  if(mode === 'auto'){
+    if(venueNameGrp){ venueNameGrp.style.display='none'; }
+    if(venueMgrGrp){ venueMgrGrp.style.display='none'; }
+    if(venueAuto){
+      venueAuto.style.display='block';
+      const idx = Math.abs(fp().split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % AUTO_VENUE_NAMES.length;
+      const aName = AUTO_VENUE_NAMES[idx];
+      document.getElementById('venueAutoNameLabel').textContent = aName;
+      document.getElementById('venueNameInput').value = aName;
+      document.getElementById('venueMgrName').value = aName;
+    }
+    if(fanNameGrp){ fanNameGrp.style.display='none'; }
+    if(fanAuto){
+      fanAuto.style.display='block';
+      const idx2 = Math.abs(fp().split('').reduce((a,c)=>a+c.charCodeAt(0),0)) % AUTO_FAN_NAMES.length;
+      const aName2 = AUTO_FAN_NAMES[idx2];
+      document.getElementById('fanAutoNameLabel').textContent = aName2;
+      document.getElementById('fanName').value = aName2;
+    }
+  } else {
+    if(venueNameGrp){ venueNameGrp.style.display=''; }
+    if(venueMgrGrp){ venueMgrGrp.style.display=''; }
+    if(venueAuto){ venueAuto.style.display='none'; }
+    if(fanNameGrp){ fanNameGrp.style.display=''; }
+    if(fanAuto){ fanAuto.style.display='none'; }
+  }
+}
+
+function initTeacherDashboard(){
+  document.getElementById('teacherSessionBadge').textContent='Session: '+sessionCode;
+  db.collection('wc_sessions').doc(sessionCode).set({phase:'lobby',nameMode:'auto',activeShock:null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  setNameMode('auto');
+  refreshDashboard();
+  db.collection('wc_venues').where('sessionCode','==',sessionCode).onSnapshot(()=>refreshDashboard());
+  db.collection('wc_fans').where('sessionCode','==',sessionCode).onSnapshot(()=>refreshDashboard());
+
+}
+
+async function saveSessionSnapshot(){
+  try {
+    const [vSnap, fSnap] = await Promise.all([
+      db.collection('wc_venues').where('sessionCode','==',sessionCode).get(),
+      db.collection('wc_fans').where('sessionCode','==',sessionCode).get()
+    ]);
+    const venues = vSnap.docs.map(d=>d.data()).filter(v=>!v.isAI);
+    const fans   = fSnap.docs.map(d=>d.data()).filter(f=>!f.isAI);
+
+    const strategyBreakdown = {}, stageBreakdown = {}, fanTypeBreakdown = {};
+    venues.forEach(v=>{ strategyBreakdown[v.strategy]=(strategyBreakdown[v.strategy]||0)+1; });
+    venues.forEach(v=>{ stageBreakdown[v.stage]=(stageBreakdown[v.stage]||0)+1; });
+    fans.forEach(f=>{ fanTypeBreakdown[f.fanType]=(fanTypeBreakdown[f.fanType]||0)+1; });
+
+    const avgCat1   = venues.length ? Math.round(venues.reduce((s,v)=>s+(v.cat1Price||0),0)/venues.length) : 0;
+    const avgFill   = venues.length ? venues.reduce((s,v)=>s+(v.projFill||0),0)/venues.length : 0;
+    const avgScore  = venues.length ? Math.round(venues.reduce((s,v)=>s+(v.score||0),0)/venues.length) : 0;
+    const totalRevenue = fans.reduce((s,f)=>s+(f.totalSpend||0),0);
+    const totalSurplus = fans.reduce((s,f)=>s+(f.consumerSurplus||0),0);
+    const pricedOutCount = fans.filter(f=>f.pricedOut).length;
+    const activeShockLabel = activeShock && SHOCKS[activeShock] ? SHOCKS[activeShock].label : null;
+
+    const snapshot = {
+      simType: 'stadium',
+      sessionCode,
+      savedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      venueCount: venues.length,
+      fanCount: fans.length,
+      avgCat1Price: avgCat1,
+      avgFillRate: Math.round(avgFill * 100) / 100,
+      avgScore,
+      totalRevenue,
+      totalSurplus,
+      pricedOutCount,
+      shockUsed: activeShockLabel,
+      strategyBreakdown,
+      stageBreakdown,
+      fanTypeBreakdown,
+      cat1Prices: venues.map(v=>v.cat1Price||0),
+      scores: venues.map(v=>v.score||0),
+      fillRates: venues.map(v=>Math.round((v.projFill||0)*100)),
+      venues: venues.map(v=>({name:v.venueName,strategy:v.strategy,stage:v.stage,cat1:v.cat1Price,score:v.score,fill:Math.round((v.projFill||0)*100),revenue:v.projRevenue||0})),
+      fans: fans.map(f=>({name:f.fanName,type:f.fanType,tier:f.tier||null,spend:f.totalSpend||0,surplus:f.consumerSurplus||0,pricedOut:f.pricedOut||false}))
+    };
+    const docId = `stadium_${sessionCode}_${Date.now()}`;
+    await db.collection('sim_results').doc(docId).set(snapshot);
+    console.log('✅ Sim snapshot saved:', docId);
+  } catch(e) {
+    console.warn('Snapshot save failed (non-critical):', e.message);
+  }
+}
+
+async function setPhase(phase){
+  if(!sessionCode){ alert('Session code is missing — please go back and re-enter your class code.'); return; }
+  try{
+    await db.collection('wc_sessions').doc(sessionCode).set(
+      {phase, activeShock: activeShock||null, updatedAt:firebase.firestore.FieldValue.serverTimestamp()},
+      {merge:true}
+    );
+    // Store booking open time so students can show countdown
+    if(phase === 'booking'){
+      await db.collection('wc_sessions').doc(sessionCode).set(
+        {bookingOpenedAt: firebase.firestore.FieldValue.serverTimestamp()},
+        {merge:true}
+      );
+    }
+    currentPhase=phase;
+    const badge=document.getElementById('currentPhaseBadge');
+    if(badge) badge.textContent='Current: '+phase.charAt(0).toUpperCase()+phase.slice(1);
+    if(phase==='results'){ refreshDashboard(); saveSessionSnapshot(); }
+  } catch(e){
+    alert('Error setting phase: ' + e.message + '\nSession: ' + sessionCode);
+  }
+}
+
+async function triggerShock(){
+  const shock=document.getElementById('shockSelect').value;
+  if(!shock){alert('Select a shock first.');return;}
+  await db.collection('wc_sessions').doc(sessionCode).set({activeShock:shock,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  activeShock=shock;
+  document.getElementById('activeShockLabel').innerHTML=`Active: <strong style="color:#fbbf24">${SHOCKS[shock].label}</strong> — ${SHOCKS[shock].desc}`;
+}
+
+async function resetSession(){
+  if(!confirm('Reset entire session? This deletes all venues and fan bookings.')) return;
+  const [vSnap,fSnap]=await Promise.all([
+    db.collection('wc_venues').where('sessionCode','==',sessionCode).get(),
+    db.collection('wc_fans').where('sessionCode','==',sessionCode).get()
+  ]);
+  const batch=db.batch();
+  vSnap.docs.forEach(d=>batch.delete(d.ref));
+  fSnap.docs.forEach(d=>batch.delete(d.ref));
+  batch.set(db.collection('wc_sessions').doc(sessionCode),{phase:'lobby',activeShock:null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await batch.commit();
+  refreshDashboard();
+}
+
+async function refreshDashboard(){
+  const [vSnap,fSnap]=await Promise.all([
+    db.collection('wc_venues').where('sessionCode','==',sessionCode).get(),
+    db.collection('wc_fans').where('sessionCode','==',sessionCode).get()
+  ]);
+  const venues=vSnap.docs.map(d=>d.data()).sort((a,b)=>b.score-a.score);
+  const fans=fSnap.docs.map(d=>d.data());
+  const totalTickets=fans.reduce((s,f)=>s+(f.groupSize||0),0);
+  const totalRevenue=fans.reduce((s,f)=>s+(f.totalSpend||0),0);
+  const totalSurplus=fans.reduce((s,f)=>s+(f.consumerSurplus||0),0);
+  const avgFill=venues.length?venues.reduce((s,v)=>s+v.projFill,0)/venues.length:0;
+  document.getElementById('tStatVenues').textContent=venues.length;
+  document.getElementById('tStatFans').textContent=fans.length;
+  document.getElementById('tStatTickets').textContent=totalTickets.toLocaleString();
+  document.getElementById('tStatRevenue').textContent=fmt(totalRevenue);
+  document.getElementById('tStatSurplus').textContent=fmt(totalSurplus);
+  document.getElementById('tStatFill').textContent=pct(avgFill*100);
+  document.getElementById('teacherVenueLB').innerHTML=venues.length?venues.map((v,i)=>`
+    <div class="leader-row">
+      <span class="leader-rank">${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span>
+      <div><div class="leader-name">${v.venueName}</div><div style="font-size:0.72rem;color:var(--text-muted);">${v.managerName} · ${v.strategy} · ${STAGES[v.stage]?.label}</div></div>
+      <span class="leader-revenue">${fmt(v.projRevenue)}</span>
+      <span style="font-size:0.78rem;font-weight:700;color:var(--primary);">${v.score}/100</span>
+    </div>`).join(''):'<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No venues yet.</div>';
+  document.getElementById('teacherFanList').innerHTML=fans.length?`
+    <table class="team-table"><thead><tr><th>Fan Group</th><th>Venue</th><th>Tier</th><th>Spend</th><th>Surplus</th></tr></thead>
+    <tbody>${fans.map(f=>`<tr>
+      <td><strong>${f.fanName}</strong><br><span style="font-size:0.72rem;color:var(--text-muted);">${f.fanTypeLabel}·${f.groupSize} tix</span></td>
+      <td style="font-size:0.85rem;">${f.venueName}</td>
+      <td><span class="badge badge-blue">Cat ${f.tier}</span></td>
+      <td class="text-green">${fmt(f.totalSpend)}</td>
+      <td class="${f.consumerSurplus>0?'text-green':'text-red'}">${fmt(f.consumerSurplus)}</td>
+    </tr>`).join('')}</tbody></table>`:'<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No bookings yet.</div>';
+  if(currentPhase==='results') buildDebriefAndCharts(venues,fans);
+}
+
+function buildDebriefAndCharts(venues=[],fans=[]){
+  setTimeout(()=>{
+    // Session-seeded demand variance (breaks $1500 convergence between classes)
+    const seed = sessionCode.split('').reduce((a,c)=>((a*31)+c.charCodeAt(0))&0xFFFF,0)/0xFFFF;
+    const wtpMult = 0.78 + seed * 0.44; // range 0.78 – 1.22, consistent per session code
+    // S&D chart
+    const ctx1=document.getElementById('sdChart');
+    if(!ctx1) return;
+    if(sdChartInst){ sdChartInst.destroy(); sdChartInst=null; }
+    const prices=[200,400,600,800,1000,1200,1500,1800,2000,2500,3000];
+    const supply=prices.map(()=>venues.reduce((s,v)=>s+v.cap,0));
+    const demand=prices.map(p=>venues.reduce((s,v)=>{
+      const stgMult=STAGES[v.stage]?.demandMult||1;
+      const wtpCap=3000*wtpMult*stgMult;
+      const d=Math.round(v.cap*stgMult*Math.max(0,(wtpCap-p)/wtpCap));
+      return s+d;
+    },0));
+    sdChartInst=new Chart(ctx1,{type:'line',data:{labels:prices.map(p=>fmt(p)),datasets:[
+      {label:'Supply (seats)',data:supply,borderColor:'#818cf8',backgroundColor:'rgba(129,140,248,0.1)',tension:0.1,fill:true,pointRadius:3},
+      {label:'Demand (tickets wanted)',data:demand,borderColor:'#34d399',backgroundColor:'rgba(52,211,153,0.1)',tension:0.4,fill:true,pointRadius:3}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${c.parsed.y.toLocaleString()}`}}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+    // Surplus chart
+    const ctx2=document.getElementById('surplusChart');
+    if(!ctx2) return;
+    if(surplusChartInst){ surplusChartInst.destroy(); surplusChartInst=null; }
+    const vnames=venues.map(v=>v.venueName.length>14?v.venueName.slice(0,12)+'…':v.venueName);
+    const vRevs=venues.map(v=>fans.filter(f=>f.venueId===v.managerId).reduce((s,f)=>s+f.totalSpend,0));
+    const vSurp=venues.map(v=>fans.filter(f=>f.venueId===v.managerId).reduce((s,f)=>s+f.consumerSurplus,0));
+    surplusChartInst=new Chart(ctx2,{type:'bar',data:{labels:vnames,datasets:[
+      {label:'Producer Revenue ($)',data:vRevs,backgroundColor:'rgba(129,140,248,0.7)',borderRadius:6},
+      {label:'Consumer Surplus ($)',data:vSurp,backgroundColor:'rgba(52,211,153,0.7)',borderRadius:6}
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.parsed.y)}`}}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},y:{ticks:{color:'#64748b',font:{size:10},callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+    buildDebrief(venues,fans);
+  }, 150);
+}
+
+function buildDebrief(venues,fans){
+  if(!venues.length) return;
+  const topV=[...venues].sort((a,b)=>b.score-a.score)[0];
+  const botV=[...venues].sort((a,b)=>a.score-b.score)[0];
+  const topF=[...fans].sort((a,b)=>b.consumerSurplus-a.consumerSurplus)[0];
+  const totalRev=fans.reduce((s,f)=>s+f.totalSpend,0);
+  const totalSurp=fans.reduce((s,f)=>s+f.consumerSurplus,0);
+  const avgFill=venues.reduce((s,v)=>s+v.projFill,0)/venues.length;
+  const shockLine=activeShock&&SHOCKS[activeShock]?`The <strong>${SHOCKS[activeShock].label}</strong> shock shifted the market: ${SHOCKS[activeShock].desc} This is a real-world example of a <em>non-price determinant</em> shifting the demand curve.<br><br>`:'';
+  const text=`🤖 <strong>AI Market Debrief</strong><br><br>
+    <strong>${topV.venueName}</strong> (managed by ${topV.managerName}) was the highest-scoring venue (${topV.score}/100), using a <em>${topV.strategy.replace('_',' ')}</em> strategy at a Cat 1 price of <strong>${fmt(topV.cat1Price)}</strong>.
+    ${topF?`The biggest winner for fans was <strong>${topF.fanName}</strong> (${topF.fanTypeLabel}), who captured a consumer surplus of <strong>${fmt(topF.consumerSurplus)}</strong>.`:''}
+    ${venues.length>1?`<strong>${botV.venueName}</strong> scored lowest (${botV.score}/100) — suggesting their price point either left too many seats empty or underpriced the market.`:'With only one venue, fans had no alternatives — a <em>monopoly</em> structure with significant pricing power.'}<br><br>
+    ${shockLine}Total market surplus: <strong>${fmt(totalRev+totalSurp)}</strong> (Consumer ${fmt(totalSurp)} + Producer ${fmt(totalRev)}).
+    Average fill rate: <strong>${pct(avgFill*100)}</strong>.
+    ${avgFill>=0.85?'High fill rates suggest prices were close to market-clearing — good allocative efficiency!':avgFill<0.5?'Low fill rates suggest prices were set <em>above</em> equilibrium — deadweight loss occurred.':'Moderate fill rates — the market partially cleared with some unsatisfied demand remaining.'}`;
+  document.querySelectorAll('#teacherDebrief,#resultDebrief').forEach(b=>b.innerHTML=text);
+}
+
+// ─── RESULTS ─────────────────────────────────────────
+async function showResultsScreen(){
+  showScreen('resultsScreen');
+  const [vSnap,fSnap]=await Promise.all([
+    db.collection('wc_venues').where('sessionCode','==',sessionCode).get(),
+    db.collection('wc_fans').where('sessionCode','==',sessionCode).get()
+  ]);
+  const venues=vSnap.docs.map(d=>d.data()).filter(v=>!v.isAI).sort((a,b)=>b.score-a.score);
+  const fans=fSnap.docs.map(d=>d.data());
+  const humanFans=fans.filter(f=>!f.isAI);
+  const pricedOut=fans.filter(f=>f.pricedOut||!f.venueName);
+  const totalRev=fans.reduce((s,f)=>s+(f.totalSpend||0),0);
+  const totalSurp=fans.reduce((s,f)=>s+(f.consumerSurplus||0),0);
+  const totalWelfare=totalRev+totalSurp;
+  const maxPossibleWelfare=fans.reduce((s,f)=>s+(f.wtp||f.budget||0),0)||1;
+  const allocEff=Math.min(100,Math.round((totalWelfare/maxPossibleWelfare)*100));
+  // DWL = surplus lost from priced-out consumers (approx: their WTP minus zero surplus)
+  const dwlEst=pricedOut.reduce((s,f)=>s+(f.wtp||f.budget||0),0);
+  document.getElementById('rStatVenues').textContent=venues.length;
+  document.getElementById('rStatTickets').textContent=fans.reduce((s,f)=>s+(f.groupSize||0),0).toLocaleString();
+  document.getElementById('rStatRevenue').textContent=fmt(totalRev);
+  document.getElementById('rStatSurplus').textContent=fmt(totalSurp);
+  // ✅ Populate DWL stat (was always showing —)
+  document.getElementById('rStatDWL').textContent=pricedOut.length>0?pricedOut.length+' groups':fmt(dwlEst)||'None';
+  // ✅ Show efficiency panel (was permanently hidden)
+  const effPanel=document.getElementById('marketEfficiencyPanel');
+  if(effPanel){
+    effPanel.style.display='block';
+    document.getElementById('rTotalWelfare').textContent=fmt(totalWelfare);
+    document.getElementById('rAllocEff').textContent=allocEff+'% efficient';
+    document.getElementById('rPricedOut').textContent=pricedOut.length+' consumer groups';
+    // Simple PED approximation across all venues
+    const avgPrice=venues.length?venues.reduce((s,v)=>s+(v.cat1Price||0),0)/venues.length:0;
+    const avgFillR=venues.length?venues.reduce((s,v)=>s+(v.projFill||0),0)/venues.length:0;
+    const pedApprox=avgPrice>0&&avgFillR>0?Math.abs(((1-avgFillR)/avgFillR)/((avgPrice-500)/500)).toFixed(2):'—';
+    document.getElementById('rAvgPED').textContent=pedApprox==='—'?'—':pedApprox+' (approx)';
+  }
+  document.getElementById('resultVenueLB').innerHTML=venues.length?venues.map((v,i)=>`
+    <div class="leader-row ${myRole==='venue'&&myVenueData&&myVenueData.managerId===v.managerId?'me':''}">
+      <span class="leader-rank">${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span>
+      <div><div class="leader-name">${v.venueName} <span class="badge badge-blue">${STAGES[v.stage]?.label||v.stage}</span></div>
+      <div style="font-size:0.72rem;color:var(--text-muted);">${v.managerName} · ${v.strategy.replace('_',' ')} · Cat1: ${fmt(v.cat1Price)}</div></div>
+      <span class="leader-revenue">${fmt(v.projRevenue)}</span>
+      <span style="font-weight:800;color:var(--primary);">${v.score}/100</span>
+    </div>`).join(''):'<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No venues.</div>';
+  // ✅ Fix "Cat null" for priced-out fans
+  document.getElementById('resultFanList').innerHTML=fans.length?`
+    <table class="team-table"><thead><tr><th>Fan Group</th><th>Venue Chosen</th><th>Tier</th><th>Total Spend</th><th>Surplus</th></tr></thead>
+    <tbody>${fans.map(f=>`<tr>
+      <td><strong>${f.fanName}</strong><br><span style="font-size:0.72rem;color:var(--text-muted);">${f.fanTypeLabel}·${f.groupSize} tickets</span></td>
+      <td style="font-size:0.85rem;">${f.venueName||'—'}</td>
+      <td>${f.tier?`<span class="badge badge-blue">Cat ${f.tier}</span>`:'<span class="badge badge-red">Priced Out 🚫</span>'}</td>
+      <td class="${f.totalSpend>0?'text-green':'text-muted'}">${f.totalSpend>0?fmt(f.totalSpend):'—'}</td>
+      <td class="${f.consumerSurplus>0?'text-green':'text-red'}">${fmt(f.consumerSurplus)}</td>
+    </tr>`).join('')}</tbody></table>`:'<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No bookings.</div>';
+  buildDebrief(venues,fans);
+  // Scorecards
+  if(myRole==='venue'&&myVenueData){
+    const rank=venues.findIndex(v=>v.managerId===myVenueData.managerId)+1;
+    showScorecard(myVenueData.score,rank,venues.length,'venue');
+  } else if(myRole==='fan'&&myBooking){
+    const maxSurp=Math.max(...fans.map(f=>f.consumerSurplus||0),1);
+    const fanScore=Math.min(100,Math.round((myBooking.consumerSurplus/maxSurp)*100));
+    const fanRank=[...fans].sort((a,b)=>b.consumerSurplus-a.consumerSurplus).findIndex(f=>f.fanId===myId)+1;
+    showScorecard(fanScore,fanRank,fans.length,'fan');
+  }
+}
+
+function showScorecard(score,rank,total,role){
+  const emoji=score>=85?'🥇':score>=65?'🥈':score>=45?'🥉':'🎟';
+  const badge=score>=85?'🥇 Gold':score>=65?'🥈 Silver':score>=45?'🥉 Bronze':'Participant';
+  const verdicts={
+    venue:score>=85?'Excellent pricing strategy! You balanced fill rate and revenue perfectly.':
+          score>=65?'Good performance. Small adjustments could push you to the top.':
+          score>=45?'Reasonable effort but your fill rate or revenue left room to improve.':
+          'Your pricing may have been too high (empty seats) or too low (lost revenue).',
+    fan:  score>=85?'You found the best deal — maximum consumer surplus!':
+          score>=65?'Smart booking. Good value relative to your group budget.':
+          score>=45?'Decent choice, but another venue may have offered better value.':
+          'This booking left little surplus. Explore other tiers next round.'
+  };
+  document.getElementById('scBadgeEmoji').textContent=emoji;
+  document.getElementById('scScore').textContent=score;
+  document.getElementById('scBadgeLabel').textContent=badge;
+  document.getElementById('scVerdict').innerHTML=`You ranked <strong>#${rank} of ${total}</strong> ${role==='venue'?'venue managers':'fan groups'}.<br><br>${verdicts[role]}`;
+  document.getElementById('scorecardOverlay').classList.remove('hidden');
+}
+function closeScorecard(){ document.getElementById('scorecardOverlay').classList.add('hidden'); }
+
+function shareScorecard(){
+  const score = document.getElementById('scScore').textContent;
+  const badge = document.getElementById('scBadgeLabel').textContent;
+  const verdict = document.getElementById('scVerdict').textContent.split('\n')[0];
+  const text = `⚽ StadiumEcon — ${badge}\nI scored ${score}/100 in the HSC Economics World Cup simulation!\n${verdict}\nCan you beat me? www.datatrends.com.au/stadium.html`;
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.querySelector('.scorecard-box button[onclick="shareScorecard()"]');
+    if(btn){ btn.textContent='✅'; setTimeout(()=>btn.textContent='📋',2000); }
+  }).catch(()=> alert(text));
+}
+
+let countdownInterval = null;
+function startBookingCountdown(openedAtMs, durationSec){
+  const wrap = document.getElementById('bookingCountdownWrap');
+  const numEl = document.getElementById('bookingCountdownNum');
+  const bar   = document.getElementById('bookingCountdownBar');
+  if(!wrap) return;
+  if(countdownInterval) clearInterval(countdownInterval);
+  wrap.style.display = 'block';
+  // Fanfare flash
+  document.body.style.transition='background 0.15s';
+  document.body.style.background='rgba(251,191,36,0.08)';
+  setTimeout(()=>document.body.style.background='',400);
+  function tick(){
+    const elapsed = (Date.now() - openedAtMs) / 1000;
+    const remaining = Math.max(0, durationSec - elapsed);
+    const secs = Math.ceil(remaining);
+    if(numEl) numEl.textContent = secs;
+    if(bar) bar.style.width = (remaining / durationSec * 100) + '%';
+    // Change colour to red in last 15s
+    if(secs <= 15 && numEl){ numEl.style.color='#ef4444'; bar.style.background='#ef4444'; }
+    if(remaining <= 0){
+      clearInterval(countdownInterval);
+      if(wrap) wrap.style.display = 'none';
+    }
+  }
+  tick();
+  countdownInterval = setInterval(tick, 1000);
+}
+
+// ─── EXPLAINER ───────────────────────────────────────
+function switchTab(tab){
+  ['student','teacher','concepts'].forEach(t=>{
+    document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+    document.getElementById('panel'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active',t===tab);
+  });
+}
+function closeExplainer(){
+  document.getElementById('explainerOverlay').classList.add('hidden');
+}
+// Show explainer on first load
+window.addEventListener('DOMContentLoaded',()=>{
+  // Only auto-show once per browser session
+  if(!sessionStorage.getItem('seenExplainer')){
+    document.getElementById('explainerOverlay').classList.remove('hidden');
+    sessionStorage.setItem('seenExplainer','1');
+  } else {
+    document.getElementById('explainerOverlay').classList.add('hidden');
+  }
+});
+
+// ─── AI FAN PERSONALITIES ────────────────────────────
+const AI_PERSONALITIES = [
+  {
+    id:'bargain_hunter',
+    name:'Bargain Hunter',
+    emoji:'🛒',
+    fanType:'student',    // lowest budgetPer, but picks cheapest affordable tier
+    strategy: (venues, budPerPerson, groupSize, cachedFanBookings) => {
+      // Sort venues by cheapest affordable tier first
+      let best = null;
+      let bestPrice = Infinity;
+      for(const v of venues){
+        const tiers = [{t:1,p:v.cat1Price,cap:v.cap1||0},{t:2,p:v.cat2Price,cap:v.cap2||0},{t:3,p:v.cat3Price,cap:v.cap3||0}];
+        for(const tier of tiers){
+          const sold = (cachedFanBookings||[]).filter(f=>f.venueId===v.managerId&&f.tier===tier.t).reduce((s,f)=>s+(f.groupSize||0),0);
+          if(tier.p <= budPerPerson && sold+groupSize <= tier.cap && tier.p < bestPrice){
+            bestPrice = tier.p;
+            best = {venueId:v.managerId,venueManagerName:v.managerName,venueName:v.venueName,stage:v.stage,tier:tier.t,price:tier.p};
+          }
+        }
+      }
+      return best;
+    }
+  },
+  {
+    id:'status_seeker',
+    name:'Status Seeker',
+    emoji:'💎',
+    fanType:'corporate',  // high budget
+    strategy: (venues, budPerPerson, groupSize, cachedFanBookings) => {
+      // Prefers Cat 1 at the most expensive venue they can afford
+      let best = null;
+      let bestPrice = -1;
+      for(const v of venues){
+        const tiers = [{t:1,p:v.cat1Price,cap:v.cap1||0},{t:2,p:v.cat2Price,cap:v.cap2||0}];
+        for(const tier of tiers){
+          const sold = (cachedFanBookings||[]).filter(f=>f.venueId===v.managerId&&f.tier===tier.t).reduce((s,f)=>s+(f.groupSize||0),0);
+          if(tier.p <= budPerPerson && sold+groupSize <= tier.cap && tier.t <= 2 && tier.p > bestPrice){
+            bestPrice = tier.p;
+            best = {venueId:v.managerId,venueManagerName:v.managerName,venueName:v.venueName,stage:v.stage,tier:tier.t,price:tier.p};
+          }
+        }
+      }
+      // If cannot afford Cat1/2, fall back to any affordable
+      if(!best){
+        for(const v of venues){
+          const tiers = [{t:3,p:v.cat3Price,cap:v.cap3||0}];
+          for(const tier of tiers){
+            const sold = (cachedFanBookings||[]).filter(f=>f.venueId===v.managerId&&f.tier===tier.t).reduce((s,f)=>s+(f.groupSize||0),0);
+            if(tier.p <= budPerPerson && sold+groupSize <= tier.cap){
+              best = {venueId:v.managerId,venueManagerName:v.managerName,venueName:v.venueName,stage:v.stage,tier:tier.t,price:tier.p};
+            }
+          }
+        }
+      }
+      return best;
+    }
+  },
+  {
+    id:'fomo_buyer',
+    name:'FOMO Buyer',
+    emoji:'😰',
+    fanType:'neutral',
+    strategy: (venues, budPerPerson, groupSize, cachedFanBookings) => {
+      // Books Cat 2 at the FIRST venue that has availability — panics early
+      for(const v of [...venues].sort(()=>Math.random()-0.5)){
+        const tiers = [{t:2,p:v.cat2Price,cap:v.cap2||0},{t:1,p:v.cat1Price,cap:v.cap1||0},{t:3,p:v.cat3Price,cap:v.cap3||0}];
+        for(const tier of tiers){
+          const sold = (cachedFanBookings||[]).filter(f=>f.venueId===v.managerId&&f.tier===tier.t).reduce((s,f)=>s+(f.groupSize||0),0);
+          if(tier.p <= budPerPerson && sold+groupSize <= tier.cap){
+            return {venueId:v.managerId,venueManagerName:v.managerName,venueName:v.venueName,stage:v.stage,tier:tier.t,price:tier.p};
+          }
+        }
+      }
+      return null;
+    }
+  },
+  {
+    id:'loyal_local',
+    name:'Loyal Local',
+    emoji:'❤️',
+    fanType:'family',
+    strategy: (venues, budPerPerson, groupSize, cachedFanBookings) => {
+      // Prefers the cheapest-priced venue overall (lowest Cat1), picks cheapest affordable tier there
+      const sorted = [...venues].sort((a,b)=>a.cat1Price-b.cat1Price);
+      for(const v of sorted){
+        const tiers = [{t:3,p:v.cat3Price,cap:v.cap3||0},{t:2,p:v.cat2Price,cap:v.cap2||0},{t:1,p:v.cat1Price,cap:v.cap1||0}];
+        for(const tier of tiers){
+          const sold = (cachedFanBookings||[]).filter(f=>f.venueId===v.managerId&&f.tier===tier.t).reduce((s,f)=>s+(f.groupSize||0),0);
+          if(tier.p <= budPerPerson && sold+groupSize <= tier.cap){
+            return {venueId:v.managerId,venueManagerName:v.managerName,venueName:v.venueName,stage:v.stage,tier:tier.t,price:tier.p};
+          }
+        }
+      }
+      return null;
+    }
+  },
+  {
+    id:'risk_taker',
+    name:'Risk Taker',
+    emoji:'🎲',
+    fanType:'tourist',
+    strategy: (venues, budPerPerson, groupSize, cachedFanBookings) => {
+      // Picks a random affordable tier across all venues — unpredictable
+      const options = [];
+      for(const v of venues){
+        const tiers = [{t:1,p:v.cat1Price,cap:v.cap1||0},{t:2,p:v.cat2Price,cap:v.cap2||0},{t:3,p:v.cat3Price,cap:v.cap3||0}];
+        for(const tier of tiers){
+          const sold = (cachedFanBookings||[]).filter(f=>f.venueId===v.managerId&&f.tier===tier.t).reduce((s,f)=>s+(f.groupSize||0),0);
+          if(tier.p <= budPerPerson && sold+groupSize <= tier.cap){
+            options.push({venueId:v.managerId,venueManagerName:v.managerName,venueName:v.venueName,stage:v.stage,tier:tier.t,price:tier.p});
+          }
+        }
+      }
+      return options.length ? options[Math.floor(Math.random()*options.length)] : null;
+    }
+  }
+];
+
+function log(msg){
+  const el = document.getElementById('aiFanLog');
+  if(!el) return;
+  const time = new Date().toLocaleTimeString();
+  el.innerHTML += `[${time}] ${msg}<br>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+async function spawnAIFans(){
+  const count = parseInt(document.getElementById('aiFanCount').value);
+  if(!sessionCode){ alert('No session code — please go back to entry and join as Teacher.'); return; }
+
+  // Fetch current venues and fan bookings from Firestore
+  const [vSnap, fSnap] = await Promise.all([
+    db.collection('wc_venues').where('sessionCode','==',sessionCode).get(),
+    db.collection('wc_fans').where('sessionCode','==',sessionCode).get()
+  ]);
+  const venues = vSnap.docs.map(d=>d.data());
+  const existingBookings = fSnap.docs.map(d=>d.data());
+
+  if(!venues.length){ alert('No venues published yet — ask students to publish their venues first.'); return; }
+
+  const el = document.getElementById('aiFanLog');
+  el.innerHTML = '';
+  log(`Spawning ${count} AI fans across ${venues.length} venue(s)…`);
+
+  // Pick count personalities (cycle if count > personalities available)
+  const batch = db.batch();
+  let spawned = 0;
+  const liveBookings = [...existingBookings];
+
+  for(let i=0;i<count;i++){
+    const p = AI_PERSONALITIES[i % AI_PERSONALITIES.length];
+    const cfg = FAN_TYPES[p.fanType] || FAN_TYPES.neutral;
+    const shockMult = activeShock&&SHOCKS[activeShock] ? (SHOCKS[activeShock].budgetMult[p.fanType]||1) : 1;
+    const budPerPerson = Math.round(cfg.budgetPer * shockMult);
+    const groupSize = cfg.group;
+
+    const choice = p.strategy(venues, budPerPerson, groupSize, liveBookings);
+
+    const aiId = 'ai_'+p.id+'_'+i+'_'+uid();
+    const name = `${p.emoji} ${p.name} ${i>0&&i%AI_PERSONALITIES.length===0?'II':''}`.trim();
+
+    let data;
+    if(!choice){
+      // Priced out
+      data = {
+        sessionCode, role:'fan', fanId:aiId, fanName:name,
+        fanType:p.fanType, fanTypeLabel:'🤖 AI · '+cfg.label,
+        venueId:null, venueManagerName:null, venueName:'N/A', stage:null, tier:null,
+        pricePerTicket:null, groupSize, totalSpend:0,
+        consumerSurplus:0, budgetPerPerson:budPerPerson, withinBudget:false,
+        pricedOut:true, isAI:true, personality:p.id,
+        bookedAt:firebase.firestore.FieldValue.serverTimestamp()
+      };
+      log(`${name} (${cfg.label}, $${budPerPerson}/person) — ❌ PRICED OUT of all venues`);
+    } else {
+      const surplus = (budPerPerson - choice.price) * groupSize;
+      data = {
+        sessionCode, role:'fan', fanId:aiId, fanName:name,
+        fanType:p.fanType, fanTypeLabel:'🤖 AI · '+cfg.label,
+        venueId:choice.venueId, venueManagerName:choice.venueManagerName,
+        venueName:choice.venueName, stage:choice.stage, tier:choice.tier,
+        pricePerTicket:choice.price, groupSize, totalSpend:choice.price*groupSize,
+        consumerSurplus:surplus, budgetPerPerson:budPerPerson, withinBudget:true,
+        pricedOut:false, isAI:true, personality:p.id,
+        bookedAt:firebase.firestore.FieldValue.serverTimestamp()
+      };
+      log(`${name} — booked Cat ${choice.tier} at "${choice.venueName}" · $${choice.price}/person · surplus $${surplus}`);
+      // Add to local bookings so capacity is respected for next AI
+      liveBookings.push(data);
+    }
+    batch.set(db.collection('wc_fans').doc(`${sessionCode}_${aiId}`), data);
+    spawned++;
+  }
+  await batch.commit();
+  log(`✅ Done — ${spawned} AI fans written to Firestore.`);
+  refreshDashboard();
+}
+
+async function clearAIFans(){
+  if(!confirm('Remove all AI fan entries from this session?')) return;
+  const fSnap = await db.collection('wc_fans').where('sessionCode','==',sessionCode).where('isAI','==',true).get();
+  const batch = db.batch();
+  fSnap.docs.forEach(d=>batch.delete(d.ref));
+  await batch.commit();
+  document.getElementById('aiFanLog').innerHTML = `All AI fans cleared.`;
+  log('All AI fans removed.');
+  refreshDashboard();
+}
+</script>
+
+<!-- TEACHER PIN CONFIRM FUNCTION -->
+<script>
+function confirmTeacherPin() {
+  const entered = document.getElementById('teacherPinInput').value.trim();
+  if (entered !== '1982') {
+    document.getElementById('teacherPinMsg').textContent = '❌ Incorrect PIN. Try again.';
+    document.getElementById('teacherPinInput').value = '';
+    document.getElementById('teacherPinInput').focus();
+    return;
+  }
+  document.getElementById('teacherPinOverlay').classList.add('hidden');
+  showScreen('teacherScreen');
+  initTeacherDashboard();
+}
+</script>
+
+<!-- TEACHER PIN MODAL -->
+
+<div id="teacherPinOverlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(192,132,252,0.3);border-radius:24px;padding:2.5rem;max-width:360px;width:90%;text-align:center;box-shadow:0 0 60px rgba(192,132,252,0.15);">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem;">🔒</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:0.5rem;">Teacher Access</div>
+    <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:1.5rem;">Enter your teacher PIN to continue</div>
+    <input id="teacherPinInput" type="password" inputmode="numeric" maxlength="6"
+      style="width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#f1f5f9;padding:0.85rem;font-size:1.5rem;font-weight:800;text-align:center;letter-spacing:0.3em;font-family:'Outfit',sans-serif;margin-bottom:0.75rem;"
+      placeholder="••••" onkeydown="if(event.key==='Enter')confirmTeacherPin()">
+    <div id="teacherPinMsg" style="color:#f87171;font-size:0.82rem;margin-bottom:1rem;min-height:1.2em;"></div>
+    <button onclick="confirmTeacherPin()" style="width:100%;background:linear-gradient(135deg,#9333ea,#c084fc);color:white;border:none;border-radius:12px;padding:0.85rem;font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;cursor:pointer;margin-bottom:0.75rem;">Unlock Dashboard</button>
+    <button onclick="document.getElementById('teacherPinOverlay').classList.add('hidden')" style="background:none;border:none;color:#64748b;font-size:0.82rem;cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+</body>
+</html>

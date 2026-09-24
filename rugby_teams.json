@@ -1,0 +1,2030 @@
+{
+  "generated_at": "2026-08-01T09:10:49Z",
+  "model_version": "rugby_v3.0",
+  "tournament": "RWC 2027 Australia",
+  "total_teams": 21,
+  "formula": "S = (Ti\u00d70.15 + Cd\u00d70.25 + Fp\u00d70.20 + Pc\u00d70.15 + Ts\u00d70.10 + Sd\u00d70.15)\u00d710, normalised 40-95",
+  "teams": [
+    {
+      "rank": 1,
+      "wr_rank": 3,
+      "team": "Ireland",
+      "synergy": 95,
+      "Ti": 9.5,
+      "Cd": 8.5,
+      "Fp": 8,
+      "Pc": 9.72,
+      "Ts": 9.6,
+      "Sd": 8.2,
+      "Xp": 9.72,
+      "win_pct_top10": 80,
+      "profile": "Franchise Fortress",
+      "dominant_club": "Leinster",
+      "fp_display": "Leinster (4/5)  \u00d71",
+      "n_players": 520,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 88.08,
+      "coach_name": "Andy Farrell",
+      "coach_tenure_yrs": 6,
+      "avg_starter_caps": 68,
+      "combination_status": "Settled 6-Nations Champion Core",
+      "style_category": "Set Piece & Lineout Drive",
+      "style_icon": "\ud83c\udfaf",
+      "workload_rotation_rating": "Controlled (IRFU Central Minutes Cap)",
+      "season_minutes_status": "~1,350 mins/yr (Strict IRFU Cap)",
+      "spine_dominant_club": "Leinster",
+      "spine_match_count": 4,
+      "spine_score": 9,
+      "players": [
+        {
+          "name": "Andrew Porter",
+          "position": "Loosehead Prop",
+          "club": "Leinster",
+          "caps": 62,
+          "role": "Starter"
+        },
+        {
+          "name": "Dan Sheehan",
+          "position": "Hooker",
+          "club": "Leinster",
+          "caps": 26,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Tadhg Furlong",
+          "position": "Tighthead Prop",
+          "club": "Leinster",
+          "caps": 72,
+          "role": "Starter"
+        },
+        {
+          "name": "Tadhg Beirne",
+          "position": "Lock",
+          "club": "Munster",
+          "caps": 46,
+          "role": "Starter"
+        },
+        {
+          "name": "Joe McCarthy",
+          "position": "Lock",
+          "club": "Leinster",
+          "caps": 12,
+          "role": "Starter"
+        },
+        {
+          "name": "Ronan Kelleher",
+          "position": "Hooker",
+          "club": "Leinster",
+          "caps": 28,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Finlay Bealham",
+          "position": "Tighthead Prop",
+          "club": "Connacht",
+          "caps": 36,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Cian Healy",
+          "position": "Loosehead Prop",
+          "club": "Leinster",
+          "caps": 129,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "James Ryan",
+          "position": "Lock",
+          "club": "Leinster",
+          "caps": 64,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "John Ryan",
+          "position": "Tighthead Prop",
+          "club": "Munster",
+          "caps": 24,
+          "role": "Retired / Veteran Depth"
+        },
+        {
+          "name": "Caelan Doris",
+          "position": "Number 8",
+          "club": "Leinster",
+          "caps": 43,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Jamison Gibson-Park",
+          "position": "Scrumhalf",
+          "club": "Leinster",
+          "caps": 35,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Jack Crowley",
+          "position": "Flyhalf",
+          "club": "Munster",
+          "caps": 18,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Hugo Keenan",
+          "position": "Fullback",
+          "club": "Leinster",
+          "caps": 39,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 2,
+      "wr_rank": 4,
+      "team": "France",
+      "synergy": 88.1,
+      "Ti": 9.6,
+      "Cd": 7.2,
+      "Fp": 6.5,
+      "Pc": 9.24,
+      "Ts": 8.8,
+      "Sd": 9.2,
+      "Xp": 9.24,
+      "win_pct_top10": 75,
+      "profile": "Bomb Squad Depth",
+      "dominant_club": "Toulouse",
+      "fp_display": "Toulouse (3/5)  \u00d71",
+      "n_players": 495,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 87.43,
+      "coach_name": "Fabien Galthi\u00e9",
+      "coach_tenure_yrs": 6,
+      "avg_starter_caps": 56,
+      "combination_status": "Settled Grand Slam Core",
+      "style_category": "Expansive & Unpredictable",
+      "style_icon": "\ud83d\udd25",
+      "workload_rotation_rating": "Heavy Load (Top 14 Overload Risk)",
+      "season_minutes_status": "~2,200 mins/yr (Top 14 Heavy)",
+      "spine_dominant_club": "Toulouse",
+      "spine_match_count": 4,
+      "spine_score": 9,
+      "players": [
+        {
+          "name": "Cyril Baille",
+          "position": "Loosehead Prop",
+          "club": "Toulouse",
+          "caps": 47,
+          "role": "Starter"
+        },
+        {
+          "name": "Peato Mauvaka",
+          "position": "Hooker",
+          "club": "Toulouse",
+          "caps": 32,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Uini Atonio",
+          "position": "Tighthead Prop",
+          "club": "La Rochelle",
+          "caps": 60,
+          "role": "Starter"
+        },
+        {
+          "name": "Thibaud Flament",
+          "position": "Lock",
+          "club": "Toulouse",
+          "caps": 26,
+          "role": "Starter"
+        },
+        {
+          "name": "Emmanuel Meafou",
+          "position": "Lock",
+          "club": "Toulouse",
+          "caps": 8,
+          "role": "Starter"
+        },
+        {
+          "name": "Julien Marchand",
+          "position": "Hooker",
+          "club": "Toulouse",
+          "caps": 35,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Dorian Aldegheri",
+          "position": "Tighthead Prop",
+          "club": "Toulouse",
+          "caps": 17,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Reda Wardi",
+          "position": "Loosehead Prop",
+          "club": "La Rochelle",
+          "caps": 14,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Paul Willemse",
+          "position": "Lock",
+          "club": "Montpellier",
+          "caps": 31,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Gr\u00e9gory Alldritt",
+          "position": "Number 8",
+          "club": "La Rochelle",
+          "caps": 48,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Antoine Dupont",
+          "position": "Scrumhalf",
+          "club": "Toulouse",
+          "caps": 52,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Romain Ntamack",
+          "position": "Flyhalf",
+          "club": "Toulouse",
+          "caps": 37,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Thomas Ramos",
+          "position": "Fullback",
+          "club": "Toulouse",
+          "caps": 36,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 3,
+      "wr_rank": 2,
+      "team": "South Africa",
+      "synergy": 82.1,
+      "Ti": 9.8,
+      "Cd": 5.8,
+      "Fp": 4.5,
+      "Pc": 9.96,
+      "Ts": 9.5,
+      "Sd": 9.8,
+      "Xp": 9.96,
+      "win_pct_top10": 82,
+      "profile": "Bomb Squad Depth",
+      "dominant_club": "Sharks",
+      "fp_display": "Sharks (2/5)  \u00d71",
+      "n_players": 480,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 92.85,
+      "coach_name": "Rassie Erasmus",
+      "coach_tenure_yrs": 8,
+      "avg_starter_caps": 74,
+      "combination_status": "World Cup Champion Core (3+ yrs)",
+      "style_category": "Set Piece & Bomb Squad",
+      "style_icon": "\ud83d\udee1\ufe0f",
+      "workload_rotation_rating": "Elite (23-man Squad Rotation)",
+      "season_minutes_status": "~1,400 mins/yr (Centrally Managed)",
+      "spine_dominant_club": "Stormers",
+      "spine_match_count": 2,
+      "spine_score": 4.5,
+      "players": [
+        {
+          "name": "Ox Nch\u00e9",
+          "position": "Loosehead Prop",
+          "club": "Sharks",
+          "caps": 35,
+          "role": "Starter"
+        },
+        {
+          "name": "Bongi Mbonambi",
+          "position": "Hooker",
+          "club": "Sharks",
+          "caps": 68,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Frans Malherbe",
+          "position": "Tighthead Prop",
+          "club": "Stormers",
+          "caps": 69,
+          "role": "Starter"
+        },
+        {
+          "name": "Eben Etzebeth",
+          "position": "Lock",
+          "club": "Sharks",
+          "caps": 120,
+          "role": "Starter"
+        },
+        {
+          "name": "RG Snyman",
+          "position": "Lock",
+          "club": "Leinster",
+          "caps": 34,
+          "role": "Starter"
+        },
+        {
+          "name": "Malcolm Marx",
+          "position": "Hooker",
+          "club": "Spears (Japan)",
+          "caps": 64,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Vincent Koch",
+          "position": "Tighthead Prop",
+          "club": "Sharks",
+          "caps": 49,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Steven Kitshoff",
+          "position": "Loosehead Prop",
+          "club": "Stormers",
+          "caps": 85,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Gerhard Steenekamp",
+          "position": "Loosehead Prop",
+          "club": "Bulls",
+          "caps": 10,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Thomas du Toit",
+          "position": "Tighthead Prop",
+          "club": "Bath",
+          "caps": 20,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Salmaan Moerat",
+          "position": "Lock",
+          "club": "Stormers",
+          "caps": 15,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Jasper Wiese",
+          "position": "Number 8",
+          "club": "Leicester",
+          "caps": 31,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Faf de Klerk",
+          "position": "Scrumhalf",
+          "club": "Spears (Japan)",
+          "caps": 94,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Manie Libbok",
+          "position": "Flyhalf",
+          "club": "Stormers",
+          "caps": 18,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Damian Willemse",
+          "position": "Fullback",
+          "club": "Stormers",
+          "caps": 40,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 4,
+      "wr_rank": 6,
+      "team": "Scotland",
+      "synergy": 71,
+      "Ti": 8.8,
+      "Cd": 5.5,
+      "Fp": 4.5,
+      "Pc": 9.32,
+      "Ts": 7.8,
+      "Sd": 6.8,
+      "Xp": 9.32,
+      "win_pct_top10": 55,
+      "profile": "Cap-Rich Veterans",
+      "dominant_club": "Edinburgh",
+      "fp_display": "Edinburgh (2/5)  \u00d71",
+      "n_players": 360,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 84.78,
+      "coach_name": "Gregor Townsend",
+      "coach_tenure_yrs": 9,
+      "avg_starter_caps": 58,
+      "combination_status": "Long-standing Core",
+      "style_category": "Fast Attacking & Loose-Ball",
+      "style_icon": "\ud83d\udca8",
+      "workload_rotation_rating": "High Starter Dependency",
+      "season_minutes_status": "~1,900 mins/yr (High Overuse)",
+      "spine_dominant_club": "Scattered",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": []
+    },
+    {
+      "rank": 5,
+      "wr_rank": 12,
+      "team": "Italy",
+      "synergy": 70.5,
+      "Ti": 7.5,
+      "Cd": 5.8,
+      "Fp": 8,
+      "Pc": 6.44,
+      "Ts": 6.8,
+      "Sd": 6.2,
+      "Xp": 6.44,
+      "win_pct_top10": 40,
+      "profile": "Rising Challenger",
+      "dominant_club": "Benetton",
+      "fp_display": "Benetton (4/5)  \u00d71",
+      "n_players": 340,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 76.3,
+      "coach_name": "Gonzalo Quesada",
+      "coach_tenure_yrs": 2.5,
+      "avg_starter_caps": 36,
+      "combination_status": "Quesada Evolving Unit",
+      "style_category": "High-Tempo & Counter",
+      "style_icon": "\ud83d\udca8",
+      "workload_rotation_rating": "Moderate (Benetton Load Managed)",
+      "season_minutes_status": "~1,700 mins/yr (Benetton Core)",
+      "spine_dominant_club": "Benetton",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Danilo Fischetti",
+          "position": "Loosehead Prop",
+          "club": "Zebre",
+          "caps": 41,
+          "role": "Starter"
+        },
+        {
+          "name": "Gianmarco Lucchesi",
+          "position": "Hooker",
+          "club": "Benetton",
+          "caps": 22,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Simone Ferrari",
+          "position": "Tighthead Prop",
+          "club": "Benetton",
+          "caps": 50,
+          "role": "Starter"
+        },
+        {
+          "name": "Federico Ruzza",
+          "position": "Lock",
+          "club": "Benetton",
+          "caps": 54,
+          "role": "Starter"
+        },
+        {
+          "name": "Niccol\u00f2 Cannone",
+          "position": "Lock",
+          "club": "Benetton",
+          "caps": 38,
+          "role": "Starter"
+        },
+        {
+          "name": "Giacomo Nicotera",
+          "position": "Hooker",
+          "club": "Benetton",
+          "caps": 18,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Pietro Ceccarelli",
+          "position": "Tighthead Prop",
+          "club": "Benetton",
+          "caps": 31,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Andrea Zambonin",
+          "position": "Lock",
+          "club": "Benetton",
+          "caps": 6,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 6,
+      "wr_rank": 11,
+      "team": "Wales",
+      "synergy": 67.2,
+      "Ti": 7.8,
+      "Cd": 6.5,
+      "Fp": 8,
+      "Pc": 4.02,
+      "Ts": 5.8,
+      "Sd": 5.5,
+      "Xp": 4.02,
+      "win_pct_top10": 25,
+      "profile": "Franchise Fortress",
+      "dominant_club": "Ospreys",
+      "fp_display": "Ospreys (4/5)  \u00d71",
+      "n_players": 370,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 76.38,
+      "coach_name": "Steve Tandy",
+      "coach_tenure_yrs": 1,
+      "avg_starter_caps": 38,
+      "combination_status": "Gatland Major Rebuild",
+      "style_category": "Developing Direct Game",
+      "style_icon": "\ud83c\udf31",
+      "workload_rotation_rating": "High Fatigue Risk (Thin Squad)",
+      "season_minutes_status": "~2,000 mins/yr (Overuse Risk)",
+      "spine_dominant_club": "Cardiff",
+      "spine_match_count": 2,
+      "spine_score": 4.5,
+      "players": [
+        {
+          "name": "Gareth Thomas",
+          "position": "Loosehead Prop",
+          "club": "Ospreys",
+          "caps": 30,
+          "role": "Starter"
+        },
+        {
+          "name": "Dewi Lake",
+          "position": "Hooker",
+          "club": "Ospreys",
+          "caps": 15,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Tomas Francis",
+          "position": "Tighthead Prop",
+          "club": "Provence",
+          "caps": 76,
+          "role": "Starter"
+        },
+        {
+          "name": "Dafydd Jenkins",
+          "position": "Lock",
+          "club": "Exeter",
+          "caps": 17,
+          "role": "Starter"
+        },
+        {
+          "name": "Adam Beard",
+          "position": "Lock",
+          "club": "Ospreys",
+          "caps": 52,
+          "role": "Starter"
+        },
+        {
+          "name": "Ryan Elias",
+          "position": "Hooker",
+          "club": "Scarlets",
+          "caps": 41,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Keiron Assiratti",
+          "position": "Tighthead Prop",
+          "club": "Cardiff",
+          "caps": 6,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Corey Domachowski",
+          "position": "Loosehead Prop",
+          "club": "Cardiff",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Will Rowlands",
+          "position": "Lock",
+          "club": "Racing 92",
+          "caps": 31,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Aaron Wainwright",
+          "position": "Number 8",
+          "club": "Dragons",
+          "caps": 48,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Tomos Williams",
+          "position": "Scrumhalf",
+          "club": "Cardiff",
+          "caps": 53,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Sam Costelow",
+          "position": "Flyhalf",
+          "club": "Scarlets",
+          "caps": 15,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Cameron Winnett",
+          "position": "Fullback",
+          "club": "Cardiff",
+          "caps": 7,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 7,
+      "wr_rank": 1,
+      "team": "New Zealand",
+      "synergy": 66.9,
+      "Ti": 9.7,
+      "Cd": 4.5,
+      "Fp": 4.5,
+      "Pc": 4.98,
+      "Ts": 8.8,
+      "Sd": 8.5,
+      "Xp": 4.98,
+      "win_pct_top10": 72,
+      "profile": "Distributed Elite",
+      "dominant_club": "Crusaders",
+      "fp_display": "Crusaders (2/5)  \u00d71",
+      "n_players": 510,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 94.12,
+      "coach_name": "Dave Rennie",
+      "coach_tenure_yrs": 0.5,
+      "avg_starter_caps": 62,
+      "combination_status": "New World Cup Cycle Rebuild",
+      "style_category": "Running & Width",
+      "style_icon": "\u26a1",
+      "workload_rotation_rating": "High (Super Rugby Load Managed)",
+      "season_minutes_status": "~1,600 mins/yr (SR Managed)",
+      "spine_dominant_club": "Chiefs",
+      "spine_match_count": 2,
+      "spine_score": 4.5,
+      "players": [
+        {
+          "name": "Ethan de Groot",
+          "position": "Loosehead Prop",
+          "club": "Highlanders",
+          "caps": 25,
+          "role": "Starter"
+        },
+        {
+          "name": "Codie Taylor",
+          "position": "Hooker",
+          "club": "Crusaders",
+          "caps": 85,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Tyrel Lomax",
+          "position": "Tighthead Prop",
+          "club": "Hurricanes",
+          "caps": 32,
+          "role": "Starter"
+        },
+        {
+          "name": "Scott Barrett",
+          "position": "Lock",
+          "club": "Crusaders",
+          "caps": 69,
+          "role": "Starter"
+        },
+        {
+          "name": "Patrick Tuipulotu",
+          "position": "Lock",
+          "club": "Blues",
+          "caps": 43,
+          "role": "Starter"
+        },
+        {
+          "name": "Asafo Aumua",
+          "position": "Hooker",
+          "club": "Hurricanes",
+          "caps": 15,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Fletcher Newell",
+          "position": "Tighthead Prop",
+          "club": "Crusaders",
+          "caps": 14,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Tupou Vaa'i",
+          "position": "Lock",
+          "club": "Chiefs",
+          "caps": 25,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Tamaiti Williams",
+          "position": "Loosehead Prop",
+          "club": "Crusaders",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Ardie Savea",
+          "position": "Number 8",
+          "club": "Kobe (Japan)",
+          "caps": 84,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Cortez Ratima",
+          "position": "Scrumhalf",
+          "club": "Chiefs",
+          "caps": 8,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Damian McKenzie",
+          "position": "Flyhalf",
+          "club": "Chiefs",
+          "caps": 50,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Will Jordan",
+          "position": "Fullback",
+          "club": "Crusaders",
+          "caps": 31,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 8,
+      "wr_rank": 5,
+      "team": "England",
+      "synergy": 66.7,
+      "Ti": 9.4,
+      "Cd": 5,
+      "Fp": 4.5,
+      "Pc": 6.08,
+      "Ts": 7.2,
+      "Sd": 7.8,
+      "Xp": 6.08,
+      "win_pct_top10": 52,
+      "profile": "Rising Challenger",
+      "dominant_club": "Saracens",
+      "fp_display": "Saracens (2/5)  \u00d71",
+      "n_players": 490,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 85.68,
+      "coach_name": "Steve Borthwick",
+      "coach_tenure_yrs": 3.5,
+      "avg_starter_caps": 52,
+      "combination_status": "Rebuilt Post-2023 Unit",
+      "style_category": "Kicking & Field Position",
+      "style_icon": "\ud83d\udc5f",
+      "workload_rotation_rating": "Moderate (Premiership 24-game Cap)",
+      "season_minutes_status": "~1,800 mins/yr (Prem Cap)",
+      "spine_dominant_club": "Saracens",
+      "spine_match_count": 2,
+      "spine_score": 4.5,
+      "players": [
+        {
+          "name": "Ellis Genge",
+          "position": "Loosehead Prop",
+          "club": "Bristol",
+          "caps": 58,
+          "role": "Starter"
+        },
+        {
+          "name": "Jamie George",
+          "position": "Hooker",
+          "club": "Saracens",
+          "caps": 88,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Dan Cole",
+          "position": "Tighthead Prop",
+          "club": "Leicester",
+          "caps": 112,
+          "role": "Starter"
+        },
+        {
+          "name": "Maro Itoje",
+          "position": "Lock",
+          "club": "Saracens",
+          "caps": 76,
+          "role": "Starter"
+        },
+        {
+          "name": "Ollie Chessum",
+          "position": "Lock",
+          "club": "Leicester",
+          "caps": 22,
+          "role": "Starter"
+        },
+        {
+          "name": "Theo Dan",
+          "position": "Hooker",
+          "club": "Saracens",
+          "caps": 12,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Joe Marler",
+          "position": "Loosehead Prop",
+          "club": "Harlequins",
+          "caps": 93,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Will Stuart",
+          "position": "Tighthead Prop",
+          "club": "Bath",
+          "caps": 33,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "George Martin",
+          "position": "Lock",
+          "club": "Leicester",
+          "caps": 10,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Ben Earl",
+          "position": "Number 8",
+          "club": "Saracens",
+          "caps": 30,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Alex Mitchell",
+          "position": "Scrumhalf",
+          "club": "Northampton",
+          "caps": 18,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "George Ford",
+          "position": "Flyhalf",
+          "club": "Sale",
+          "caps": 96,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Freddie Steward",
+          "position": "Fullback",
+          "club": "Leicester",
+          "caps": 34,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 9,
+      "wr_rank": 10,
+      "team": "Japan",
+      "synergy": 62.9,
+      "Ti": 7.5,
+      "Cd": 5.5,
+      "Fp": 5.3,
+      "Pc": 5.76,
+      "Ts": 7.5,
+      "Sd": 6,
+      "Xp": 5.76,
+      "win_pct_top10": 30,
+      "profile": "Rising Challenger",
+      "dominant_club": "Toyota",
+      "fp_display": "Toyota (4/5)  \u00d70.55",
+      "n_players": 290,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 76.42,
+      "coach_name": "Eddie Jones",
+      "coach_tenure_yrs": 3,
+      "avg_starter_caps": 44,
+      "combination_status": "Eddie Jones Young Squad",
+      "style_category": "High-Tempo & Passing",
+      "style_icon": "\u26a1",
+      "workload_rotation_rating": "Controlled (League One Moderate Games)",
+      "season_minutes_status": "~1,200 mins/yr (JRLO Short Season)",
+      "spine_dominant_club": "Wild Knights",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Keita Inagaki",
+          "position": "Loosehead Prop",
+          "club": "Wild Knights",
+          "caps": 49,
+          "role": "Starter"
+        },
+        {
+          "name": "Atsushi Sakate",
+          "position": "Hooker",
+          "club": "Wild Knights",
+          "caps": 37,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Jiwon Gu",
+          "position": "Tighthead Prop",
+          "club": "Kobe Steel",
+          "caps": 26,
+          "role": "Starter"
+        },
+        {
+          "name": "Warner Dearns",
+          "position": "Lock",
+          "club": "Toshiba",
+          "caps": 18,
+          "role": "Starter"
+        },
+        {
+          "name": "Jack Cornelsen",
+          "position": "Lock",
+          "club": "Wild Knights",
+          "caps": 19,
+          "role": "Starter"
+        },
+        {
+          "name": "Shota Horie",
+          "position": "Hooker",
+          "club": "Wild Knights",
+          "caps": 76,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Asaeli Ai Valu",
+          "position": "Tighthead Prop",
+          "club": "Wild Knights",
+          "caps": 28,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Amanaki Saumaki",
+          "position": "Lock",
+          "club": "Canon",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 10,
+      "wr_rank": 19,
+      "team": "Tonga",
+      "synergy": 62.3,
+      "Ti": 5.5,
+      "Cd": 4.8,
+      "Fp": 8,
+      "Pc": 6.4,
+      "Ts": 6.5,
+      "Sd": 5.2,
+      "Xp": 6.4,
+      "win_pct_top10": 10,
+      "profile": "Rising Challenger",
+      "dominant_club": "Moana Pasifika",
+      "fp_display": "Moana Pasifika (4/5)  \u00d71",
+      "n_players": 110,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 65.14,
+      "coach_name": "Tevita Tu'ifua",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 35,
+      "combination_status": "Pacific Veteran Core",
+      "style_category": "Direct Pacific Power",
+      "style_icon": "\ud83d\udca5",
+      "workload_rotation_rating": "High Fatigue Risk (Veteran Load)",
+      "season_minutes_status": "~1,800 mins/yr (Veteran Overuse)",
+      "spine_dominant_club": "Castres",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Siegfried Fisi'ihoi",
+          "position": "Loosehead Prop",
+          "club": "Pau",
+          "caps": 22,
+          "role": "Starter"
+        },
+        {
+          "name": "Paula Ngauamo",
+          "position": "Hooker",
+          "club": "Castres",
+          "caps": 30,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Ben Tameifuna",
+          "position": "Tighthead Prop",
+          "club": "Bordeaux",
+          "caps": 32,
+          "role": "Starter"
+        },
+        {
+          "name": "Leva Fifita",
+          "position": "Lock",
+          "club": "Ospreys",
+          "caps": 31,
+          "role": "Starter"
+        },
+        {
+          "name": "Sam Lousi",
+          "position": "Lock",
+          "club": "Scarlets",
+          "caps": 20,
+          "role": "Starter"
+        },
+        {
+          "name": "Siua Maile",
+          "position": "Hooker",
+          "club": "Benetton",
+          "caps": 15,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Tau Koloamatangi",
+          "position": "Prop",
+          "club": "Moana Pasifika",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Steve Mafi",
+          "position": "Lock",
+          "club": "Ospreys",
+          "caps": 41,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 11,
+      "wr_rank": 8,
+      "team": "Australia",
+      "synergy": 61.6,
+      "Ti": 8.3,
+      "Cd": 4.8,
+      "Fp": 4.5,
+      "Pc": 5.92,
+      "Ts": 6.2,
+      "Sd": 6.5,
+      "Xp": 5.92,
+      "win_pct_top10": 42,
+      "profile": "Distributed Elite",
+      "dominant_club": "Brumbies",
+      "fp_display": "Brumbies (2/5)  \u00d71",
+      "n_players": 420,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 81.61,
+      "coach_name": "Joe Schmidt",
+      "coach_tenure_yrs": 2.5,
+      "avg_starter_caps": 48,
+      "combination_status": "Schmidt Rebuilding Phase",
+      "style_category": "Kicking & Counter-Attack",
+      "style_icon": "\ud83d\udc5f",
+      "workload_rotation_rating": "Moderate (RA Load Management)",
+      "season_minutes_status": "~1,650 mins/yr (RA Managed)",
+      "spine_dominant_club": "Brumbies",
+      "spine_match_count": 4,
+      "spine_score": 9,
+      "players": [
+        {
+          "name": "Angus Bell",
+          "position": "Loosehead Prop",
+          "club": "Waratahs",
+          "caps": 28,
+          "role": "Starter"
+        },
+        {
+          "name": "Matt Faessler",
+          "position": "Hooker",
+          "club": "Brumbies",
+          "caps": 13,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Allan Alaalatoa",
+          "position": "Tighthead Prop",
+          "club": "Brumbies",
+          "caps": 67,
+          "role": "Starter"
+        },
+        {
+          "name": "Nick Frost",
+          "position": "Lock",
+          "club": "Brumbies",
+          "caps": 15,
+          "role": "Starter"
+        },
+        {
+          "name": "Will Skelton",
+          "position": "Lock",
+          "club": "La Rochelle",
+          "caps": 30,
+          "role": "Starter"
+        },
+        {
+          "name": "Dave Porecki",
+          "position": "Hooker",
+          "club": "Waratahs",
+          "caps": 19,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "James Slipper",
+          "position": "Loosehead Prop",
+          "club": "Brumbies",
+          "caps": 134,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Taniela Tupou",
+          "position": "Tighthead Prop",
+          "club": "Reds",
+          "caps": 51,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Lukhan Salakaia-Loto",
+          "position": "Lock",
+          "club": "Reds",
+          "caps": 32,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Rob Valetini",
+          "position": "Number 8",
+          "club": "Brumbies",
+          "caps": 39,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Tate McDermott",
+          "position": "Scrumhalf",
+          "club": "Reds",
+          "caps": 28,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Noah Lolesio",
+          "position": "Flyhalf",
+          "club": "Brumbies",
+          "caps": 20,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Tom Wright",
+          "position": "Fullback",
+          "club": "Brumbies",
+          "caps": 25,
+          "role": "Starter (Spine)"
+        }
+      ]
+    },
+    {
+      "rank": 12,
+      "wr_rank": 9,
+      "team": "Fiji",
+      "synergy": 59.6,
+      "Ti": 7.8,
+      "Cd": 4.5,
+      "Fp": 4.5,
+      "Pc": 5.68,
+      "Ts": 8,
+      "Sd": 6.2,
+      "Xp": 5.68,
+      "win_pct_top10": 35,
+      "profile": "Rising Challenger",
+      "dominant_club": "Moana Pasifika",
+      "fp_display": "Moana Pasifika (2/5)  \u00d71",
+      "n_players": 280,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 78,
+      "coach_name": "Mick Byrne",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 42,
+      "combination_status": "Pacific Hybrid Combination",
+      "style_category": "Unstructured Running Rugby",
+      "style_icon": "\ud83c\udfc3",
+      "workload_rotation_rating": "High Fatigue Risk (Global Travel)",
+      "season_minutes_status": "~2,000 mins/yr (Travel Heavy)",
+      "spine_dominant_club": "Drua",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Eroni Mawi",
+          "position": "Loosehead Prop",
+          "club": "Saracens",
+          "caps": 32,
+          "role": "Starter"
+        },
+        {
+          "name": "Te Vita Ikanivere",
+          "position": "Hooker",
+          "club": "Drua",
+          "caps": 15,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Mesake Doge",
+          "position": "Tighthead Prop",
+          "club": "Drua",
+          "caps": 10,
+          "role": "Starter"
+        },
+        {
+          "name": "Isoa Nasilasila",
+          "position": "Lock",
+          "club": "Drua",
+          "caps": 12,
+          "role": "Starter"
+        },
+        {
+          "name": "Temo Mayanavanua",
+          "position": "Lock",
+          "club": "Northampton",
+          "caps": 18,
+          "role": "Starter"
+        },
+        {
+          "name": "Sam Matavesi",
+          "position": "Hooker",
+          "club": "Northampton",
+          "caps": 31,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Peni Ravai",
+          "position": "Prop",
+          "club": "Reds",
+          "caps": 42,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Albert Tuisue",
+          "position": "Lock",
+          "club": "Gloucester",
+          "caps": 25,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 13,
+      "wr_rank": 13,
+      "team": "Georgia",
+      "synergy": 58.8,
+      "Ti": 6.5,
+      "Cd": 4.2,
+      "Fp": 4.47,
+      "Pc": 6.8,
+      "Ts": 9,
+      "Sd": 5.8,
+      "Xp": 6.8,
+      "win_pct_top10": 20,
+      "profile": "Rising Challenger",
+      "dominant_club": "Pro D2",
+      "fp_display": "Pro D2 (3/5)  \u00d70.55",
+      "n_players": 180,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 73.94,
+      "coach_name": "Richard Cockerill",
+      "coach_tenure_yrs": 2.5,
+      "avg_starter_caps": 45,
+      "combination_status": "Set-Piece Heavy Core",
+      "style_category": "Set Piece Warriors",
+      "style_icon": "\ud83d\udee1\ufe0f",
+      "workload_rotation_rating": "High Starter Dependency",
+      "season_minutes_status": "~2,100 mins/yr (Pro D2 Heavy)",
+      "spine_dominant_club": "Tbilisi",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Nika Abuladze",
+          "position": "Loosehead Prop",
+          "club": "Exeter",
+          "caps": 15,
+          "role": "Starter"
+        },
+        {
+          "name": "Shalva Mamukashvili",
+          "position": "Hooker",
+          "club": "Tbilisi",
+          "caps": 103,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Beka Gigashvili",
+          "position": "Tighthead Prop",
+          "club": "Toulon",
+          "caps": 38,
+          "role": "Starter"
+        },
+        {
+          "name": "Konstantine Mikautadze",
+          "position": "Lock",
+          "club": "Bayonne",
+          "caps": 86,
+          "role": "Starter"
+        },
+        {
+          "name": "Lado Chachanidze",
+          "position": "Lock",
+          "club": "Nevers",
+          "caps": 15,
+          "role": "Starter"
+        },
+        {
+          "name": "Luka Nioradze",
+          "position": "Hooker",
+          "club": "Aurillac",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Irakli Aptsiauri",
+          "position": "Tighthead Prop",
+          "club": "Grenoble",
+          "caps": 6,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Nodar Cheishvili",
+          "position": "Lock",
+          "club": "Black Lion",
+          "caps": 48,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 14,
+      "wr_rank": 7,
+      "team": "Argentina",
+      "synergy": 58.3,
+      "Ti": 8.5,
+      "Cd": 3.8,
+      "Fp": 2,
+      "Pc": 7.56,
+      "Ts": 8.2,
+      "Sd": 7.2,
+      "Xp": 7.56,
+      "win_pct_top10": 50,
+      "profile": "Distributed Elite",
+      "dominant_club": "Benetton",
+      "fp_display": "Benetton (1/5)  \u00d71",
+      "n_players": 380,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 83.13,
+      "coach_name": "Felipe Contepomi",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 64,
+      "combination_status": "Post-Cheika Transition",
+      "style_category": "Physicality & Breakdown",
+      "style_icon": "\ud83d\udca5",
+      "workload_rotation_rating": "Moderate (European Pro Rotation)",
+      "season_minutes_status": "~1,850 mins/yr (Euro Pro)",
+      "spine_dominant_club": "Scattered",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": []
+    },
+    {
+      "rank": 15,
+      "wr_rank": 18,
+      "team": "Uruguay",
+      "synergy": 51.7,
+      "Ti": 4.8,
+      "Cd": 5,
+      "Fp": 4.4,
+      "Pc": 6.2,
+      "Ts": 6.2,
+      "Sd": 4.5,
+      "Xp": 6.2,
+      "win_pct_top10": 10,
+      "profile": "Rising Challenger",
+      "dominant_club": "Domestic",
+      "fp_display": "Domestic (5/5)  \u00d70.3",
+      "n_players": 100,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 65.75,
+      "coach_name": "Rodolfo Ambrosio",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 30,
+      "combination_status": "Domestic Core Unit",
+      "style_category": "Physical Breakdown Game",
+      "style_icon": "\ud83d\udca5",
+      "workload_rotation_rating": "Moderate (Pe\u00f1arol Centrally Managed)",
+      "season_minutes_status": "~1,400 mins/yr (SLAR Managed)",
+      "spine_dominant_club": "Pe\u00f1arol",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Mateo Sanguinetti",
+          "position": "Loosehead Prop",
+          "club": "Pe\u00f1arol",
+          "caps": 82,
+          "role": "Starter"
+        },
+        {
+          "name": "Germ\u00e1n Kessler",
+          "position": "Hooker",
+          "club": "Pe\u00f1arol",
+          "caps": 65,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Ignacio P\u00e9culo",
+          "position": "Tighthead Prop",
+          "club": "Pe\u00f1arol",
+          "caps": 18,
+          "role": "Starter"
+        },
+        {
+          "name": "Manuel Leindekar",
+          "position": "Lock",
+          "club": "Bayonne",
+          "caps": 28,
+          "role": "Starter"
+        },
+        {
+          "name": "Felipe Aliaga",
+          "position": "Lock",
+          "club": "Pe\u00f1arol",
+          "caps": 15,
+          "role": "Starter"
+        },
+        {
+          "name": "Guillermo Pujadas",
+          "position": "Hooker",
+          "club": "Pe\u00f1arol",
+          "caps": 26,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Reinaldo Piussi",
+          "position": "Tighthead Prop",
+          "club": "Pe\u00f1arol",
+          "caps": 10,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Diego Magno",
+          "position": "Lock",
+          "club": "Pe\u00f1arol",
+          "caps": 105,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 16,
+      "wr_rank": 15,
+      "team": "Portugal",
+      "synergy": 50.4,
+      "Ti": 5.5,
+      "Cd": 3.8,
+      "Fp": 4.47,
+      "Pc": 6.12,
+      "Ts": 6.5,
+      "Sd": 4.8,
+      "Xp": 6.12,
+      "win_pct_top10": 15,
+      "profile": "Rising Challenger",
+      "dominant_club": "Pro D2",
+      "fp_display": "Pro D2 (3/5)  \u00d70.55",
+      "n_players": 140,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 69.39,
+      "coach_name": "Simon Mannix",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 28,
+      "combination_status": "European Professional Core",
+      "style_category": "Fast & Offloading",
+      "style_icon": "\ud83d\udca8",
+      "workload_rotation_rating": "High Fatigue Risk",
+      "season_minutes_status": "~1,900 mins/yr (French Pro D2)",
+      "spine_dominant_club": "Perpignan",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Francisco Fernandes",
+          "position": "Loosehead Prop",
+          "club": "Beziers",
+          "caps": 45,
+          "role": "Starter"
+        },
+        {
+          "name": "Mike Tadjer",
+          "position": "Hooker",
+          "club": "Perpignan",
+          "caps": 33,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Diogo Hasse Ferreira",
+          "position": "Tighthead Prop",
+          "club": "Dax",
+          "caps": 38,
+          "role": "Starter"
+        },
+        {
+          "name": "Steevy Cerqueira",
+          "position": "Lock",
+          "club": "Chambery",
+          "caps": 12,
+          "role": "Starter"
+        },
+        {
+          "name": "Jos\u00e9 Madeira",
+          "position": "Lock",
+          "club": "Grenoble",
+          "caps": 30,
+          "role": "Starter"
+        },
+        {
+          "name": "Luka Begic",
+          "position": "Hooker",
+          "club": "Chambery",
+          "caps": 6,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Anthony Alves",
+          "position": "Tighthead Prop",
+          "club": "Mont-de-Marsan",
+          "caps": 31,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Martim Belo",
+          "position": "Lock",
+          "club": "Cascais",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 17,
+      "wr_rank": 21,
+      "team": "Romania",
+      "synergy": 48.6,
+      "Ti": 4.2,
+      "Cd": 4.5,
+      "Fp": 4.47,
+      "Pc": 5.52,
+      "Ts": 7.2,
+      "Sd": 4,
+      "Xp": 5.52,
+      "win_pct_top10": 5,
+      "profile": "Rising Challenger",
+      "dominant_club": "Pro D2",
+      "fp_display": "Pro D2 (3/5)  \u00d70.55",
+      "n_players": 95,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 62.45,
+      "coach_name": "David G\u00e9rard",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 38,
+      "combination_status": "Eastern European Pack Unit",
+      "style_category": "Set Piece & Maul",
+      "style_icon": "\ud83d\udee1\ufe0f",
+      "workload_rotation_rating": "High Fatigue Risk",
+      "season_minutes_status": "~1,900 mins/yr (Domestic)",
+      "spine_dominant_club": "Dinamo",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Alexandru Savin",
+          "position": "Loosehead Prop",
+          "club": "Steaua",
+          "caps": 25,
+          "role": "Starter"
+        },
+        {
+          "name": "Ovidiu Cojocaru",
+          "position": "Hooker",
+          "club": "Dinamo",
+          "caps": 32,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Alexandru Gordas",
+          "position": "Tighthead Prop",
+          "club": "Dinamo",
+          "caps": 35,
+          "role": "Starter"
+        },
+        {
+          "name": "Adrian Motoc",
+          "position": "Lock",
+          "club": "Biarritz",
+          "caps": 28,
+          "role": "Starter"
+        },
+        {
+          "name": "Stefan Iancu",
+          "position": "Lock",
+          "club": "Steaua",
+          "caps": 10,
+          "role": "Starter"
+        },
+        {
+          "name": "Florin Bardasu",
+          "position": "Hooker",
+          "club": "Steaua",
+          "caps": 12,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Gheorghe Gajion",
+          "position": "Tighthead Prop",
+          "club": "Mont-de-Marsan",
+          "caps": 24,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Marius Iftimiciuc",
+          "position": "Lock",
+          "club": "Carcassonne",
+          "caps": 15,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 18,
+      "wr_rank": 17,
+      "team": "Spain",
+      "synergy": 43.6,
+      "Ti": 4.5,
+      "Cd": 4,
+      "Fp": 3.8,
+      "Pc": 5.8,
+      "Ts": 4.8,
+      "Sd": 3.8,
+      "Xp": 5.8,
+      "win_pct_top10": 5,
+      "profile": "Rising Challenger",
+      "dominant_club": "Division de Honor",
+      "fp_display": "Division de Honor (4/5)  \u00d70.3",
+      "n_players": 90,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 66.83,
+      "coach_name": "Pablo Bouza",
+      "coach_tenure_yrs": 2,
+      "avg_starter_caps": 20,
+      "combination_status": "Divisi\u00f3n de Honor Core",
+      "style_category": "Developing Identity",
+      "style_icon": "\ud83c\udf31",
+      "workload_rotation_rating": "High Fatigue Risk",
+      "season_minutes_status": "~1,700 mins/yr (Local Load)",
+      "spine_dominant_club": "Biarritz",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Thierry Futeu",
+          "position": "Loosehead Prop",
+          "club": "Chartres",
+          "caps": 30,
+          "role": "Starter"
+        },
+        {
+          "name": "Marco Pinto",
+          "position": "Hooker",
+          "club": "Biarritz",
+          "caps": 32,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Jon Zabala",
+          "position": "Tighthead Prop",
+          "club": "B\u00e9ziers",
+          "caps": 28,
+          "role": "Starter"
+        },
+        {
+          "name": "Manuel Mora",
+          "position": "Lock",
+          "club": "VRAC",
+          "caps": 41,
+          "role": "Starter"
+        },
+        {
+          "name": "Alejandro Su\u00e1rez",
+          "position": "Lock",
+          "club": "El Salvador",
+          "caps": 15,
+          "role": "Starter"
+        },
+        {
+          "name": "Vicente Del Hoyo",
+          "position": "Hooker",
+          "club": "El Salvador",
+          "caps": 18,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Joel Merkler",
+          "position": "Tighthead Prop",
+          "club": "Toulouse",
+          "caps": 12,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Lucas Guillaume",
+          "position": "Lock",
+          "club": "Albi",
+          "caps": 25,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 19,
+      "wr_rank": 24,
+      "team": "Canada",
+      "synergy": 41.2,
+      "Ti": 4,
+      "Cd": 3.8,
+      "Fp": 3.38,
+      "Pc": 5.96,
+      "Ts": 4.5,
+      "Sd": 3.8,
+      "Xp": 5.96,
+      "win_pct_top10": 0,
+      "profile": "Rising Challenger",
+      "dominant_club": "Old Glory DC",
+      "fp_display": "Old Glory DC (2/5)  \u00d70.55",
+      "n_players": 80,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 60.37,
+      "coach_name": "Kingsley Jones",
+      "coach_tenure_yrs": 7,
+      "avg_starter_caps": 24,
+      "combination_status": "MLR Native Squad",
+      "style_category": "Developing Identity",
+      "style_icon": "\ud83c\udf31",
+      "workload_rotation_rating": "High Fatigue Risk",
+      "season_minutes_status": "~1,600 mins/yr (MLR Load)",
+      "spine_dominant_club": "New England",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Liam Murray",
+          "position": "Loosehead Prop",
+          "club": "Dallas Jackals",
+          "caps": 10,
+          "role": "Starter"
+        },
+        {
+          "name": "Andrew Quattrin",
+          "position": "Hooker",
+          "club": "New England",
+          "caps": 20,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Cole Keith",
+          "position": "Tighthead Prop",
+          "club": "New England",
+          "caps": 28,
+          "role": "Starter"
+        },
+        {
+          "name": "Conor Keys",
+          "position": "Lock",
+          "club": "New England",
+          "caps": 32,
+          "role": "Starter"
+        },
+        {
+          "name": "Iosefo Saqanere",
+          "position": "Lock",
+          "club": "Houston",
+          "caps": 8,
+          "role": "Starter"
+        },
+        {
+          "name": "Foster Dewitt",
+          "position": "Hooker",
+          "club": "New England",
+          "caps": 5,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Conor Young",
+          "position": "Tighthead Prop",
+          "club": "New England",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Kyle Baillie",
+          "position": "Lock",
+          "club": "New England",
+          "caps": 35,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 20,
+      "wr_rank": 14,
+      "team": "USA",
+      "synergy": 40.4,
+      "Ti": 5.5,
+      "Cd": 3.5,
+      "Fp": 2,
+      "Pc": 5.28,
+      "Ts": 5.5,
+      "Sd": 4.2,
+      "Xp": 5.28,
+      "win_pct_top10": 5,
+      "profile": "Rising Challenger",
+      "dominant_club": "Anthem RC",
+      "fp_display": "Anthem RC (1/5)  \u00d70.55",
+      "n_players": 170,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 70.22,
+      "coach_name": "Scott Lawrence",
+      "coach_tenure_yrs": 2.5,
+      "avg_starter_caps": 32,
+      "combination_status": "MLR Hybrid Unit",
+      "style_category": "Direct MLR Physicality",
+      "style_icon": "\ud83d\udca5",
+      "workload_rotation_rating": "Moderate (MLR Workload)",
+      "season_minutes_status": "~1,500 mins/yr (MLR Season)",
+      "spine_dominant_club": "Chicago Hounds",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Jack Iscaro",
+          "position": "Loosehead Prop",
+          "club": "Old Glory DC",
+          "caps": 8,
+          "role": "Starter"
+        },
+        {
+          "name": "Dylan Fawsitt",
+          "position": "Hooker",
+          "club": "Chicago Hounds",
+          "caps": 25,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Paul Mullen",
+          "position": "Tighthead Prop",
+          "club": "Utah Warriors",
+          "caps": 30,
+          "role": "Starter"
+        },
+        {
+          "name": "Greg Peterson",
+          "position": "Lock",
+          "club": "San Diego Legion",
+          "caps": 42,
+          "role": "Starter"
+        },
+        {
+          "name": "Siaosi Mahoni",
+          "position": "Lock",
+          "club": "Houston SaberCats",
+          "caps": 10,
+          "role": "Starter"
+        },
+        {
+          "name": "Kapeli Pifeleti",
+          "position": "Hooker",
+          "club": "Saracens",
+          "caps": 10,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "David Ainu'u",
+          "position": "Prop",
+          "club": "Toulouse",
+          "caps": 22,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Nate Brakeley",
+          "position": "Lock",
+          "club": "New York",
+          "caps": 31,
+          "role": "Bench / Rotation"
+        }
+      ]
+    },
+    {
+      "rank": 21,
+      "wr_rank": 16,
+      "team": "Chile",
+      "synergy": 40,
+      "Ti": 4.5,
+      "Cd": 3.2,
+      "Fp": 2,
+      "Pc": 6.88,
+      "Ts": 6,
+      "Sd": 3.5,
+      "Xp": 6.88,
+      "win_pct_top10": 0,
+      "profile": "Rising Challenger",
+      "dominant_club": "CASI",
+      "fp_display": "CASI (1/5)  \u00d70.3",
+      "n_players": 120,
+      "data_source": "research_compiled_v3",
+      "wr_pts": 66.94,
+      "coach_name": "Pablo Lemoine",
+      "coach_tenure_yrs": 6,
+      "avg_starter_caps": 22,
+      "combination_status": "Super Rugby Americas Core",
+      "style_category": "URBA Direct Physicality",
+      "style_icon": "\ud83d\udca5",
+      "workload_rotation_rating": "Extreme Fatigue Risk (Amateur/Pro Mix)",
+      "season_minutes_status": "~1,800 mins/yr (Amateur Load)",
+      "spine_dominant_club": "Selknam",
+      "spine_match_count": 1,
+      "spine_score": 2,
+      "players": [
+        {
+          "name": "Javier Carrasco",
+          "position": "Loosehead Prop",
+          "club": "Selknam",
+          "caps": 18,
+          "role": "Starter"
+        },
+        {
+          "name": "Augusto Bohme",
+          "position": "Hooker",
+          "club": "Selknam",
+          "caps": 22,
+          "role": "Starter (Spine)"
+        },
+        {
+          "name": "Mat\u00edas Dittus",
+          "position": "Tighthead Prop",
+          "club": "Selknam",
+          "caps": 21,
+          "role": "Starter"
+        },
+        {
+          "name": "Clemente Saavedra",
+          "position": "Lock",
+          "club": "Selknam",
+          "caps": 20,
+          "role": "Starter"
+        },
+        {
+          "name": "Santiago Pedrero",
+          "position": "Lock",
+          "club": "Selknam",
+          "caps": 12,
+          "role": "Starter"
+        },
+        {
+          "name": "Diego Escobar",
+          "position": "Hooker",
+          "club": "Selknam",
+          "caps": 8,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Salvador Lues",
+          "position": "Loosehead Prop",
+          "club": "Selknam",
+          "caps": 10,
+          "role": "Bench / Rotation"
+        },
+        {
+          "name": "Pablo Huete",
+          "position": "Lock",
+          "club": "Selknam",
+          "caps": 32,
+          "role": "Bench / Rotation"
+        }
+      ]
+    }
+  ]
+}

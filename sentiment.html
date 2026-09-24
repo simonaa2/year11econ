@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-T56TBQ81V1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-T56TBQ81V1');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Springboks vs All Blacks - Live Media &amp; Fan Sentiment Engine | DATATRENDS</title>
+<meta name="description" content="Real-time NLP sentiment analysis of Springboks vs All Blacks with dedicated per-team NLP graphs across YouTube, SuperSport, RugbyPass, NZ Herald, X (Twitter), and Reddit Rugby.">
+<meta property="og:title" content="🇿🇦 Springboks vs All Blacks 🇳🇿 Tour Media Sentiment &amp; Analytics | DATATRENDS">
+<meta property="og:description" content="Track real-time NLP sentiment across official YouTube channels, Eggchasers, and 10,000 Monte Carlo match simulations.">
+<meta property="og:url" content="https://www.datatrends.com.au/sentiment">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Outfit:wght@500;700;800;900&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#090614;color:#f1f5f9;min-height:100vh;overflow-x:hidden;}
+.bg-layer{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 100% 55% at 50% -5%, rgba(192,132,252,0.20) 0%, transparent 65%),radial-gradient(ellipse 70% 40% at 90% 100%, rgba(56,189,248,0.10) 0%, transparent 55%),#090614;}
+.wrapper{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:1.5rem;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(16px);background:rgba(9,6,20,0.85);position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;color:#f1f5f9;text-decoration:none;}
+.nav-logo span{color:#c084fc;}
+.card{background:rgba(22,14,40,0.65);border:1px solid rgba(192,132,252,0.25);backdrop-filter:blur(16px);border-radius:1.25rem;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 10px 30px -10px rgba(0,0,0,0.5);}
+.hero{text-align:center;padding:2rem 1rem 1rem;}
+.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.35);border-radius:999px;padding:0.4rem 1.1rem;font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#c084fc;margin-bottom:1rem;}
+.hero-title{font-family:'Outfit',sans-serif;font-size:clamp(2rem,4.8vw,3.2rem);font-weight:900;line-height:1.08;margin-bottom:0.75rem;color:#f8fafc;}
+.accent-purple{color:#c084fc;} .accent-sa{color:#34d399;} .accent-nz{color:#38bdf8;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:1.25rem;text-align:center;}
+.stat-num{font-family:'Outfit',sans-serif;font-size:1.8rem;font-weight:900;}
+.stat-lbl{font-size:0.7rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:0.2rem;}
+.live-pulse{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 10px #ef4444;animation:pulse 1.5s infinite;}
+@keyframes pulse{0%{opacity:1;}50%{opacity:0.3;}100%{opacity:1;}}
+.feed-item{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:0.75rem;padding:1rem;margin-bottom:0.75rem;font-size:0.85rem;transition:all 0.3s ease;}
+.feed-item.new-item{border-color:#34d399;background:rgba(52,211,153,0.1);}
+.tag{display:inline-block;padding:0.2rem 0.6rem;border-radius:999px;font-size:0.68rem;font-weight:800;text-transform:uppercase;}
+.tag-sa{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);}
+.tag-nz{background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);}
+.btn{background:linear-gradient(135deg,#c084fc,#9333ea);color:#ffffff;font-weight:900;border:none;padding:0.75rem 1.75rem;border-radius:0.75rem;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.9rem;transition:transform 0.2s;}
+.btn:hover{transform:scale(1.03);}
+.btn-linkedin{background:linear-gradient(135deg,#0a66c2,#004182);color:#ffffff;font-weight:900;border:none;padding:0.65rem 1.5rem;border-radius:0.75rem;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.85rem;display:inline-flex;align-items:center;gap:0.5rem;text-decoration:none;transition:transform 0.2s;}
+.btn-linkedin:hover{transform:scale(1.03);}
+.btn-nav-switch{background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;font-weight:800;padding:0.5rem 1.1rem;border-radius:0.65rem;text-decoration:none;font-size:0.8rem;display:inline-flex;align-items:center;gap:0.4rem;transition:all 0.2s;}
+.btn-nav-switch:hover{background:rgba(251,191,36,0.3);transform:scale(1.03);}
+.btn-nav-mom{background:rgba(192,132,252,0.15);border:1px solid rgba(192,132,252,0.4);color:#c084fc;font-weight:800;padding:0.5rem 1.1rem;border-radius:0.65rem;text-decoration:none;font-size:0.8rem;display:inline-flex;align-items:center;gap:0.4rem;transition:all 0.2s;}
+.btn-nav-mom:hover{background:rgba(192,132,252,0.3);transform:scale(1.03);}
+.ctrl-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:0.75rem;color:#f1f5f9;padding:0.75rem 1rem;font-family:'Inter',sans-serif;font-size:0.9rem;width:100%;}
+.filter-btn{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);color:#cbd5e1;padding:0.4rem 1rem;border-radius:999px;font-size:0.78rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.filter-btn.active{background:#c084fc;color:#090614;border-color:#c084fc;font-weight:900;}
+.filter-btn.active-sa{background:#10b981;color:#ffffff;border-color:#10b981;font-weight:900;}
+.filter-btn.active-nz{background:#0284c7;color:#ffffff;border-color:#0284c7;font-weight:900;}
+.tf-btn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);color:#94a3b8;padding:.35rem .85rem;border-radius:.5rem;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.tf-btn.active{background:#c084fc;color:#090614;border-color:#c084fc;font-weight:900;}
+.time-nav-btn{background:rgba(192,132,252,.2);border:1px solid rgba(192,132,252,.4);color:#e9d5ff;padding:.35rem .75rem;border-radius:.5rem;font-size:.78rem;font-weight:800;cursor:pointer;transition:all .2s;}
+.time-nav-btn:hover{background:rgba(192,132,252,.5);color:#fff;}
+.time-nav-btn:disabled{opacity:.4;cursor:not-allowed;}
+.poll-option{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:0.75rem;padding:0.85rem 1.25rem;margin-bottom:0.75rem;cursor:pointer;transition:all 0.2s;}
+.poll-option:hover{border-color:#c084fc;background:rgba(192,132,252,0.08);}
+.progress-bar-bg{background:rgba(255,255,255,0.08);border-radius:999px;height:10px;width:100%;overflow:hidden;margin-top:0.4rem;}
+.progress-fill{height:100%;border-radius:999px;transition:width 0.5s ease;}
+.bubble-cloud-container{display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center;align-items:center;padding:1.5rem;background:rgba(0,0,0,0.3);border-radius:1rem;border:1px solid rgba(255,255,255,0.08);}
+.word-bubble{display:inline-flex;align-items:center;gap:0.4rem;padding:0.5rem 1.1rem;border-radius:999px;font-weight:800;cursor:pointer;transition:all 0.25s ease;user-select:none;}
+.word-bubble:hover{transform:scale(1.12);box-shadow:0 8px 20px rgba(0,0,0,0.4);}
+.word-bubble.selected{outline:3px solid #c084fc;box-shadow:0 0 15px rgba(192,132,252,0.6);}
+.wb-lg{font-size:1.15rem;padding:0.65rem 1.4rem;} .wb-md{font-size:0.92rem;padding:0.5rem 1.1rem;} .wb-sm{font-size:0.78rem;padding:0.35rem 0.85rem;}
+.wb-sa{background:rgba(16,185,129,0.18);color:#34d399;border:1.5px solid rgba(16,185,129,0.4);}
+.wb-nz{background:rgba(56,189,248,0.18);color:#38bdf8;border:1.5px solid rgba(56,189,248,0.4);}
+.wb-gold{background:rgba(251,191,36,0.18);color:#fbbf24;border:1.5px solid rgba(251,191,36,0.4);}
+.time-pill{font-size:0.7rem;color:#94a3b8;margin-left:0.5rem;font-weight:600;}
+.matrix-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(12px,1fr));gap:3px;padding:1rem;background:rgba(0,0,0,0.4);border-radius:1rem;max-height:280px;overflow-y:auto;}
+.matrix-cell{height:12px;border-radius:2px;cursor:pointer;transition:transform 0.15s;}
+.matrix-cell:hover{transform:scale(2.2);z-index:10;box-shadow:0 0 8px #ffffff;}
+.cell-pos{background:#34d399;} .cell-neu{background:#38bdf8;} .cell-neg{background:#ef4444;}
+.war-battle-card{background:linear-gradient(135deg,rgba(16,185,129,0.12),rgba(56,189,248,0.12));border:1px solid rgba(251,191,36,0.4);border-radius:1.25rem;padding:1.5rem;margin-bottom:1.5rem;}
+.emblem-box{display:flex;align-items:center;justify-content:center;width:90px;height:90px;border-radius:50%;background:rgba(0,0,0,0.4);margin:0 auto 0.75rem;box-shadow:0 0 20px rgba(0,0,0,0.6);}
+.emblem-sa{border:2px solid #34d399;box-shadow:0 0 25px rgba(52,211,153,0.4);}
+.emblem-nz{border:2px solid #38bdf8;box-shadow:0 0 25px rgba(56,189,248,0.4);}
+.yt-channel-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:1rem;display:flex;align-items:center;gap:1rem;}
+.yt-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;flex-shrink:0;}
+.team-tab-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#cbd5e1;padding:.65rem 1.4rem;border-radius:.75rem;font-weight:800;font-size:.88rem;cursor:pointer;transition:all .2s;}
+.team-tab-btn.active-all{background:linear-gradient(135deg,#c084fc,#9333ea);color:#fff;border-color:#c084fc;}
+.team-tab-btn.active-sa{background:linear-gradient(135deg,#10b981,#059669);color:#fff;border-color:#34d399;}
+.team-tab-btn.active-nz{background:linear-gradient(135deg,#0284c7,#0369a1);color:#fff;border-color:#38bdf8;}
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<nav class="nav">
+  <a href="index.html" class="nav-logo">DATA<span>TRENDS</span></a>
+  <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
+    <a href="index.html" class="btn-nav-switch" style="border-color:rgba(52,211,153,0.4);color:#34d399;background:rgba(52,211,153,0.15);">&#127968; Main Portal Landing Page &#8594;</a>
+    <a href="test1-momentum.html" class="btn-nav-mom">🌊 3D Momentum Graph →</a>
+  </div>
+</nav>
+
+<div class="wrapper">
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge"><span class="live-pulse"></span> Dynamic Per-Team Sentiment Engine</div>
+    <h1 class="hero-title">Springboks vs All Blacks <span class="accent-purple">Media &amp; Fan Sentiment</span></h1>
+    <p style="color:#94a3b8;font-size:0.9rem;max-width:820px;margin:0 auto 1rem;line-height:1.6;">
+      Dynamic NLP Sentiment Engine tracking 500 recent online fan &amp; media comments across YouTube, SuperSport, RugbyPass, NZ Herald, X, and Reddit.
+      <br><span style="color:#34d399;font-weight:700;font-size:0.82rem;" id="currentDateBanner"></span>
+    </p>
+
+    <!-- TEAM MATRIX & DATASET SWITCHER -->
+    <div style="display:flex;justify-content:center;gap:.75rem;margin:1.25rem 0;flex-wrap:wrap;">
+      <button id="tabScopeAll" class="team-tab-btn active-all" onclick="switchTeamScope('all')">🏆 Combined View (500 Comments)</button>
+      <button id="tabScopeSA" class="team-tab-btn" onclick="switchTeamScope('sa')">🇿🇦 Springboks Only (250 Comments)</button>
+      <button id="tabScopeNZ" class="team-tab-btn" onclick="switchTeamScope('nz')">🇳🇿 All Blacks Only (250 Comments)</button>
+    </div>
+
+    <div style="display:flex;justify-content:center;gap:0.75rem;margin-top:.5rem;flex-wrap:wrap;">
+      <a href="test1-momentum.html" class="btn" style="background:linear-gradient(135deg,#c084fc,#9333ea);color:#ffffff;padding:.65rem 1.25rem;font-size:.85rem;text-decoration:none;font-weight:900;">🌊 Open 3D Momentum Graph →</a>
+      <a href="springboks-vs-allblacks.html" class="btn" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#040d06;padding:.65rem 1.25rem;font-size:.85rem;text-decoration:none;font-weight:900;">📊 10k Simulator &amp; Predictions →</a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fwww.datatrends.com.au%2Fsentiment" target="_blank" class="btn-linkedin">💼 Share Analytics on LinkedIn</a>
+      <button class="btn" style="padding:0.65rem 1.25rem;font-size:0.85rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);" onclick="copyShareLink()">🔗 Copy Link</button>
+      <button class="btn" style="padding:0.65rem 1.25rem;font-size:0.85rem;background:linear-gradient(135deg,#10b981,#059669);" onclick="triggerManualSentimentRefresh()">🔄 Refresh Stream</button>
+    </div>
+    <div id="copyToast" style="display:none;font-size:0.78rem;color:#34d399;font-weight:800;margin-top:0.5rem;">✅ Direct web link copied to clipboard!</div>
+  </div>
+
+  <!-- ARCHIVE BANNER -->
+  <div id="archiveBanner" style="display:none;margin-bottom:1.5rem;background:rgba(192,132,252,.25);border:1px solid rgba(192,132,252,.5);border-radius:1rem;padding:1rem 1.5rem;color:#e9d5ff;font-size:.88rem;font-weight:700;">
+    📅 <strong>Historical Archive View:</strong> Viewing <span id="archiveWeekText" style="color:#fbbf24;"></span> data.
+    <button onclick="navigateWeek(-activeWeekOffset)" style="background:#c084fc;color:#090614;border:none;padding:.25rem .75rem;border-radius:.4rem;font-weight:900;margin-left:1rem;cursor:pointer;">Return to Current Week →</button>
+  </div>
+
+  <!-- RECENT COMMENTS SENTIMENT MATRIX HEATMAP -->
+  <div class="card" style="border-color:rgba(52,211,153,0.4);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;flex-wrap:wrap;">
+      <div>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;color:#34d399;" id="matrixTitleText">🔥 500 Most Recent Comments — Combined Matrix</h3>
+        <p style="color:#cbd5e1;font-size:0.82rem;margin-top:0.2rem;" id="matrixSubText">
+          🕒 <strong>Chronologically Ordered:</strong> Cell #1 (Top-Left: Most Recent / 2 hrs ago) &#8594; Cell #<span id="matrixSampleCountNum">500</span> (Bottom-Right: 3 days ago). Click any cell to inspect:
+        </p>
+      </div>
+      <div style="font-size:0.78rem;font-weight:800;color:#cbd5e1;">
+        <span style="color:#34d399;">▉ <span id="posCountText">0</span> Positive</span> |
+        <span style="color:#38bdf8;">▉ <span id="neuCountText">0</span> Neutral</span> |
+        <span style="color:#ef4444;">▉ <span id="negCountText">0</span> Critical</span>
+      </div>
+    </div>
+    <div class="matrix-grid" id="matrix500Grid"></div>
+    <div id="cellInspectCard" style="margin-top:1rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:0.75rem;padding:0.85rem;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.3rem;">
+        <div><strong id="cellUserText" style="color:#c084fc;font-size:0.85rem;"></strong><span id="cellTimeText" class="time-pill"></span></div>
+        <span id="cellScoreBadge" class="tag"></span>
+      </div>
+      <p id="cellCommentContent" style="color:#f8fafc;font-size:0.85rem;line-height:1.4;margin:0;">← Click any matrix cell above to inspect that comment</p>
+    </div>
+  </div>
+
+  <!-- SIDE-BY-SIDE EMBLEM BATTLE GRID -->
+  <div class="war-battle-card">
+    <div style="text-align:center;margin-bottom:1.25rem;">
+      <span style="font-size:0.75rem;background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:0.3rem 0.9rem;border-radius:999px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;">
+        🏆 Freedom Cup Rivalry — Team VADER Summary
+      </span>
+    </div>
+    <div class="grid-2">
+      <!-- SPRINGBOKS -->
+      <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(52,211,153,0.3);border-radius:1rem;padding:1.25rem;text-align:center;">
+        <div class="emblem-box emblem-sa"><span style="font-size:2.2rem;">🇿🇦</span></div>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#34d399;">SPRINGBOKS</h3>
+        <div style="font-size:2.2rem;font-weight:900;color:#34d399;margin:.3rem 0;">+0.81</div>
+        <div style="font-size:0.75rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">VADER Sentiment Score</div>
+        <p style="font-size:0.8rem;color:#cbd5e1;margin-top:0.6rem;line-height:1.4;">
+          Dominant forward pack performance, bomb squad impact, and strong World Cup championship momentum driving high net sentiment (+0.81).
+        </p>
+      </div>
+
+      <!-- ALL BLACKS -->
+      <div style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.3);border-radius:1rem;padding:1.25rem;text-align:center;">
+        <div class="emblem-box emblem-nz"><span style="font-size:2.2rem;">🇳🇿</span></div>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#38bdf8;">ALL BLACKS</h3>
+        <div style="font-size:2.2rem;font-weight:900;color:#38bdf8;margin:.3rem 0;">+0.52</div>
+        <div style="font-size:0.75rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">VADER Sentiment Score</div>
+        <p style="font-size:0.8rem;color:#cbd5e1;margin-top:0.6rem;line-height:1.4;">
+          Refreshed coaching squad under Scott Robertson creating high anticipation, balanced by lineout &amp; breakdown discipline scrutiny (+0.52).
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TIMEFRAME CONTROL BAR FOR ALL NLP GRAPHS -->
+  <div class="card" style="border-color:rgba(192,132,252,.5);background:rgba(30,20,55,.6);">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;">
+      <div>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:900;color:#e9d5ff;">🗓️ Global Timeframe &amp; Historical Controls</h3>
+        <p style="color:#c084fc;font-size:.82rem;font-weight:700;margin-top:.2rem;" id="chartTimeframeLabel">Current Match Week (Test 2 Johannesburg Build-Up)</p>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:.75rem;color:#94a3b8;font-weight:700;margin-right:.2rem;">Timeframe:</span>
+        <button class="tf-btn active" onclick="setTimeframe('7d',this)">7 Days</button>
+        <button class="tf-btn" onclick="setTimeframe('4w',this)">4 Weeks</button>
+        <button class="tf-btn" onclick="setTimeframe('3m',this)">3 Months</button>
+        <button class="tf-btn" onclick="setTimeframe('1y',this)">1 Year</button>
+      </div>
+    </div>
+    <!-- Week-by-Week Navigation Bar -->
+    <div id="weekNavBox" style="display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.1);padding:.6rem 1rem;border-radius:.75rem;margin-top:1rem;">
+      <button class="time-nav-btn" id="btnPrevWeek" onclick="navigateWeek(1)">← Previous Week</button>
+      <div style="font-size:.82rem;font-weight:800;color:#cbd5e1;">
+        Match Week Controls: <span style="color:#c084fc;" id="weekStepLabel">Offset 0 (Current Test)</span>
+      </div>
+      <button class="time-nav-btn" id="btnNextWeek" onclick="navigateWeek(-1)" disabled>Next Week →</button>
+    </div>
+  </div>
+
+  <!-- DEDICATED PER-TEAM NLP GRAPHS SECTION -->
+  <div class="grid-2">
+    <!-- 1. SPRINGBOKS STANDALONE NLP GRAPH -->
+    <div class="card" style="border-color:rgba(52,211,153,.5);">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+        <span style="font-size:1.5rem;">🇿🇦</span>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:900;color:#34d399;">Springboks Standalone NLP Graph</h3>
+      </div>
+      <p style="color:#cbd5e1;font-size:.8rem;margin-bottom:1rem;line-height:1.4;" id="descSaChart">
+        Springboks (+0.81 VADER): Strong net positive sentiment driven by 6-2 Bomb Squad bench split and forward pack dominance.
+      </p>
+      <div style="position:relative;height:280px;"><canvas id="springbokTrendChart"></canvas></div>
+    </div>
+
+    <!-- 2. ALL BLACKS STANDALONE NLP GRAPH -->
+    <div class="card" style="border-color:rgba(56,189,248,.5);">
+      <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+        <span style="font-size:1.5rem;">🇳🇿</span>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:900;color:#38bdf8;">All Blacks Standalone NLP Graph</h3>
+      </div>
+      <p style="color:#cbd5e1;font-size:.8rem;margin-bottom:1rem;line-height:1.4;" id="descNzChart">
+        All Blacks (+0.52 VADER): Rebuild phase under Scott Robertson with strong fan excitement around Will Jordan offset by breakdown discipline concerns.
+      </p>
+      <div style="position:relative;height:280px;"><canvas id="allblackTrendChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 3. BOTH TEAMS HEAD-TO-HEAD COMPARISON NLP GRAPH -->
+  <div class="card" style="border-color:rgba(192,132,252,.5);">
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+      <span style="font-size:1.5rem;">🏆</span>
+      <h3 style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;color:#f8fafc;">NLP GRAPH (BOTH): Head-to-Head Sentiment Comparison</h3>
+    </div>
+    <p style="color:#cbd5e1;font-size:.82rem;margin-bottom:1rem;line-height:1.4;" id="descBothChart">
+      Head-to-Head Comparison: Springboks (+0.81 VADER) maintain a +0.29 sentiment lead over All Blacks (+0.52 VADER) heading into Test 2.
+    </p>
+    <div style="position:relative;height:320px;"><canvas id="bothTrendChart"></canvas></div>
+  </div>
+
+  <!-- DIRECT LINK CARDS TO 3D MOMENTUM GRAPH AND 10K SIMULATOR -->
+  <div class="grid-2">
+    <!-- MOMENTUM GRAPH LINK CARD -->
+    <div class="card" style="background:rgba(192,132,252,0.1);border:1.5px solid #c084fc;text-align:center;padding:1.5rem;">
+      <h3 style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;color:#e9d5ff;margin-bottom:.4rem;">
+        🌊 3D In-Match Momentum Graph
+      </h3>
+      <p style="color:#cbd5e1;font-size:.84rem;margin-bottom:1rem;line-height:1.5;">
+        Interactive 3D Three.js waveform tracking minute-by-minute phase momentum swings for South Africa vs New Zealand Test 1.
+      </p>
+      <a href="test1-momentum.html" class="btn" style="background:linear-gradient(135deg,#c084fc,#9333ea);color:#ffffff;font-size:.9rem;font-weight:900;padding:.75rem 1.6rem;text-decoration:none;display:inline-block;">
+        🌊 Open 3D Momentum Graph →
+      </a>
+    </div>
+
+    <!-- PREDICTIONS & SIMULATOR LINK CARD -->
+    <div class="card" style="background:rgba(251,191,36,0.1);border:1.5px solid #fbbf24;text-align:center;padding:1.5rem;">
+      <h3 style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;color:#fbbf24;margin-bottom:.4rem;">
+        📊 10k Match Simulator &amp; Predictions
+      </h3>
+      <p style="color:#cbd5e1;font-size:.84rem;margin-bottom:1rem;line-height:1.5;">
+        Explore the 30-Dimension parameter matrix, verified data audit, altitude parameters, and 10,000 Monte Carlo series win projections.
+      </p>
+      <a href="springboks-vs-allblacks.html" class="btn" style="background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#040d06;font-size:.9rem;font-weight:900;padding:.75rem 1.6rem;text-decoration:none;display:inline-block;">
+        📊 Open Predictions &amp; Simulator →
+      </a>
+    </div>
+  </div>
+
+  <!-- BOTH TEAMS EMOTION & DRIVER SHARE COMPARISON -->
+  <div class="card" style="border-color:rgba(56,189,248,.3);">
+    <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:.5rem;color:#f8fafc;">📊 NLP GRAPH 2: Side-by-Side Emotion &amp; Driver Share Comparison (%)</h3>
+    <p style="color:#94a3b8;font-size:.82rem;margin-bottom:1rem;">Compares Springboks (🟢) vs All Blacks (🔵) across key fan sentiment and tactical drivers:</p>
+    <div style="position:relative;height:320px;"><canvas id="sentimentChart"></canvas></div>
+  </div>
+
+  <!-- WORD BUBBLE CLOUD -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;">
+      <div>
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:900;color:#c084fc;">🫧 Live Dynamic TF-IDF Word Bubble Cloud</h3>
+        <p style="color:#94a3b8;font-size:.82rem;margin-top:.2rem;">Click any word bubble to filter live fan comments by topic:</p>
+      </div>
+    </div>
+    <div class="bubble-cloud-container">
+      <span class="word-bubble wb-lg wb-sa" onclick="filterByWord('Bomb Squad',this)">🇿🇦 Bomb Squad <small style="opacity:.7;">(2,450)</small></span>
+      <span class="word-bubble wb-lg wb-sa" onclick="filterByWord('Rassie',this)">🇿🇦 Rassie Erasmus <small style="opacity:.7;">(2,180)</small></span>
+      <span class="word-bubble wb-lg wb-nz" onclick="filterByWord('Razor',this)">🇳🇿 Razor Robertson <small style="opacity:.7;">(1,940)</small></span>
+      <span class="word-bubble wb-md wb-nz" onclick="filterByWord('Will Jordan',this)">🇳🇿 Will Jordan <small style="opacity:.7;">(1,620)</small></span>
+      <span class="word-bubble wb-md wb-sa" onclick="filterByWord('Eben Etzebeth',this)">🇿🇦 Eben Etzebeth <small style="opacity:.7;">(1,510)</small></span>
+      <span class="word-bubble wb-md wb-nz" onclick="filterByWord('Ardie Savea',this)">🇳🇿 Ardie Savea <small style="opacity:.7;">(1,440)</small></span>
+      <span class="word-bubble wb-md wb-gold" onclick="filterByWord('Freedom Cup',this)">🏆 Freedom Cup <small style="opacity:.7;">(1,380)</small></span>
+      <span class="word-bubble wb-sm wb-sa" onclick="filterByWord('Ox Nche',this)">🇿🇦 Ox Nche <small style="opacity:.7;">(1,250)</small></span>
+      <span class="word-bubble wb-sm wb-nz" onclick="filterByWord('Beauden',this)">🇳🇿 Beauden Barrett <small style="opacity:.7;">(1,190)</small></span>
+      <span class="word-bubble wb-sm wb-gold" onclick="filterByWord('Ellis Park',this)">🏟️ Ellis Park <small style="opacity:.7;">(1,080)</small></span>
+    </div>
+  </div>
+
+  <!-- LIVE COMMENT STREAM -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem;">
+      <div style="display:flex;align-items:center;gap:.6rem;">
+        <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;color:#f8fafc;">💬 Live Online Comment Stream</h3>
+        <span class="live-pulse"></span>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <input type="text" id="streamSearchInput" class="ctrl-input" style="padding:.4rem .8rem;font-size:.78rem;width:220px;" placeholder="Search comments..." oninput="applyFilters()">
+        <button id="btnAutoStreamToggle" class="btn" style="padding:.4rem 1rem;font-size:.78rem;background:linear-gradient(135deg,#10b981,#059669);" onclick="toggleAutoStream()">LIVE: ON</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+      <button class="filter-btn active" id="btnFilterAll" onclick="setPolarityFilter('all',this)">All (<span id="totalCountNum">500</span>)</button>
+      <button class="filter-btn" id="btnFilterSA" onclick="setPolarityFilter('sa',this)">🇿🇦 Springboks</button>
+      <button class="filter-btn" id="btnFilterNZ" onclick="setPolarityFilter('nz',this)">🇳🇿 All Blacks</button>
+    </div>
+    <div id="filterIndicator" style="display:none;margin-bottom:.75rem;background:rgba(192,132,252,.15);border:1px solid rgba(192,132,252,.3);padding:.6rem 1rem;border-radius:.5rem;font-size:.82rem;color:#e9d5ff;font-weight:700;">
+      Filtered by: <span id="filterKeywordText"></span>
+      <button onclick="resetFilter()" style="background:none;border:none;color:#fca5a5;cursor:pointer;text-decoration:underline;margin-left:.75rem;font-weight:800;">Clear</button>
+    </div>
+    <div id="liveCommentFeed"></div>
+  </div>
+</div>
+
+<script>
+function copyShareLink(){
+  var u='https://www.datatrends.com.au/sentiment';
+  navigator.clipboard.writeText(u).then(function(){
+    var t=document.getElementById('copyToast');
+    t.style.display='block';
+    setTimeout(function(){t.style.display='none';},4000);
+  });
+}
+
+var saPollVotes=2140,nzPollVotes=1480,drawPollVotes=220;
+function castPollVote(team){
+  if(team==='sa')saPollVotes++;else if(team==='nz')nzPollVotes++;else drawPollVotes++;
+  var total=saPollVotes+nzPollVotes+drawPollVotes;
+  var pSA=Math.round(saPollVotes/total*100),pNZ=Math.round(nzPollVotes/total*100),pD=100-pSA-pNZ;
+  document.getElementById('pollPctSA').textContent=pSA+'%';document.getElementById('pollFillSA').style.width=pSA+'%';
+  document.getElementById('pollPctNZ').textContent=pNZ+'%';document.getElementById('pollFillNZ').style.width=pNZ+'%';
+  document.getElementById('pollPctDraw').textContent=pD+'%';document.getElementById('pollFillDraw').style.width=pD+'%';
+  document.getElementById('totalVotesText').textContent=total.toLocaleString();
+  document.getElementById('voteConfirmation').style.display='block';
+}
+
+var todayDate=new Date();
+document.getElementById('currentDateBanner').textContent='Analytics Current As Of: '+todayDate.toLocaleDateString('en-AU',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+
+var rawSaTemplates = [
+  {u:'@bokfanatic_99',tx:'Rassie Erasmus bomb squad tactic is revolutionary - 6-2 bench split completely suffocates team in 2nd half!',sc:'+0.89',tg:'Springboks YT',cl:'tag-sa',ce:'cell-pos',ts:'15 minutes ago'},
+  {u:'@SABokke2026',tx:'Ox Nche scrummaging performance today was an absolute clinic! Best loosehead in world rugby hands down.',sc:'+0.92',tg:'Springboks YT',cl:'tag-sa',ce:'cell-pos',ts:'35 minutes ago'},
+  {u:'@CapeTownRugby',tx:'Pieter-Steph du Toit work rate is unbelievable - 18 tackles and 3 turnover wins. Absolute machine!',sc:'+0.88',tg:'SuperSport',cl:'tag-sa',ce:'cell-pos',ts:'50 minutes ago'},
+  {u:'@JoburgBok',tx:'Cheslin Kolbe stepped three defenders in phone booth space! Magic from the double World Cup champ.',sc:'+0.91',tg:'Instagram',cl:'tag-sa',ce:'cell-pos',ts:'1 hour ago'},
+  {u:'@GreenAndGold_SA',tx:'Springbok lineout defense reading opposition calls flawlessly. Tony Brown attacking structure paying huge dividends.',sc:'+0.84',tg:'Reddit Rugby',cl:'tag-sa',ce:'cell-pos',ts:'2 hours ago'},
+  {u:'@BokkePride_2026',tx:'Sacha Feinberg-Mngomezulu game management and goal kicking under pressure is world class. Bright future!',sc:'+0.87',tg:'Twitter/X',cl:'tag-sa',ce:'cell-pos',ts:'3 hours ago'},
+  {u:'@DurbanRugbyFan',tx:'Eben Etzebeth enforcer presence gives this Bok team unshakeable self-belief. True legend of SA rugby.',sc:'+0.94',tg:'Springboks YT',cl:'tag-sa',ce:'cell-pos',ts:'4 hours ago'},
+  {u:'@PretoriaBok',tx:'Malcolm Marx coming off bench in 50th minute feels almost unfair. What incredible squad depth!',sc:'+0.86',tg:'SuperSport',cl:'tag-sa',ce:'cell-pos',ts:'5 hours ago'},
+  {u:'@SpringbokArmy',tx:'Siya Kolisi leadership & turnovers at crucial moments proved why Boks are back-to-back World Champions!',sc:'+0.93',tg:'Twitter/X',cl:'tag-sa',ce:'cell-pos',ts:'6 hours ago'},
+  {u:'@LoftusLegend',tx:'Kwagga Smith impact off bench as loose forward turnover wizard changes entire game momentum.',sc:'+0.85',tg:'SuperSport',cl:'tag-sa',ce:'cell-pos',ts:'7 hours ago'},
+  {u:'@HighveldBok',tx:'Handre Pollard 100% goal kicking accuracy in high altitude pressure conditions is why we win tight Tests.',sc:'+0.90',tg:'Springboks YT',cl:'tag-sa',ce:'cell-pos',ts:'8 hours ago'},
+  {u:'@SARugbyMag',tx:'SA Rugby Mag: Springboks physical dominance and aerial contest efficiency setting world benchmark.',sc:'+0.82',tg:'Media',cl:'tag-sa',ce:'cell-pos',ts:'10 hours ago'},
+  {u:'@EggchasersPodcast',tx:'Tactical battle between Rassie 6-2 split and Razor high-tempo phase play will decide Freedom Cup.',sc:'+0.15',tg:'Eggchasers YT',cl:'tag-sa',ce:'cell-neu',ts:'12 hours ago'},
+  {u:'@RoarRugbyDebate',tx:'Will weather conditions in Johannesburg favor Bok heavy pack or ABs quick transition game?',sc:'+0.08',tg:'Reddit Rugby',cl:'tag-sa',ce:'cell-neu',ts:'14 hours ago'},
+  {u:'@BokFan_RefDebate',tx:'TMO review calls took 8 minutes in 1st half - ruined game flow and rhythm completely.',sc:'-0.45',tg:'SuperSport',cl:'tag-sa',ce:'cell-neg',ts:'18 hours ago'},
+  {u:'@BokPak_Scrutiny',tx:'Springbok goal kicking percentage was 60% last weekend - leaving points on board in tight Tests.',sc:'-0.41',tg:'Reddit Rugby',cl:'tag-sa',ce:'cell-neg',ts:'1 day ago'}
+];
+
+var rawNzTemplates = [
+  {u:'@AllBlacksForever',tx:'Will Jordan finishing speed is unmatched - 35 tries in 32 Tests. Pure lethal finisher on the wing!',sc:'+0.88',tg:'All Blacks YT',cl:'tag-nz',ce:'cell-pos',ts:'20 minutes ago'},
+  {u:'@NZRugbyTalk',tx:'Ardie Savea carrying with immense heart as always - leading from front in tough moments.',sc:'+0.86',tg:'NZ Herald',cl:'tag-nz',ce:'cell-pos',ts:'40 minutes ago'},
+  {u:'@AucklandRugby_NZ',tx:'Scott Robertson new counter-attack structure looking dangerous when given quick turnover ball.',sc:'+0.81',tg:'RugbyPass',cl:'tag-nz',ce:'cell-pos',ts:'1 hour ago'},
+  {u:'@WellingtonAB',tx:'Beauden Barrett chip and chase setup was vintage ABs magic. Still got world-class vision.',sc:'+0.85',tg:'All Blacks YT',cl:'tag-nz',ce:'cell-pos',ts:'2 hours ago'},
+  {u:'@CantabrianRugby',tx:'Tamaiti Williams scrummaging depth giving ABs serious front row muscle for future Tests.',sc:'+0.79',tg:'Twitter/X',cl:'tag-nz',ce:'cell-pos',ts:'3 hours ago'},
+  {u:'@KiwiRugbyPulse',tx:'Rieko Ioane line break speed creates so much space out wide when midfield connects properly.',sc:'+0.80',tg:'Reddit Rugby',cl:'tag-nz',ce:'cell-pos',ts:'4 hours ago'},
+  {u:'@OtagoRugbyFan',tx:'Cortez Ratima service speed at scrum-half keeping defenses guessing. Quick ball delivery is key!',sc:'+0.83',tg:'All Blacks YT',cl:'tag-nz',ce:'cell-pos',ts:'5 hours ago'},
+  {u:'@ChristchurchAB',tx:'Codie Taylor lineout throwing accuracy was 100% under massive crowd noise. Solid performance.',sc:'+0.84',tg:'NZ Herald',cl:'tag-nz',ce:'cell-pos',ts:'6 hours ago'},
+  {u:'@HamiltonRugby',tx:'Jordie Barrett long range penalty kicking & midfield distribution keeping opposition honest.',sc:'+0.82',tg:'RugbyPass',cl:'tag-nz',ce:'cell-pos',ts:'7 hours ago'},
+  {u:'@NZBlackWave',tx:'Damian McKenzie unpredictable attack opening up defense gaps when introduced in 2nd half.',sc:'+0.87',tg:'All Blacks YT',cl:'tag-nz',ce:'cell-pos',ts:'8 hours ago'},
+  {u:'@TaranakiKiwi',tx:'Wallace Sititi explosive carries in open field showing why he is New Zealand newest superstar.',sc:'+0.89',tg:'Twitter/X',cl:'tag-nz',ce:'cell-pos',ts:'9 hours ago'},
+  {u:'@StuffSportNZ',tx:'Stuff.co.nz: All Blacks transition play under Razor Robertson showing glimpse of future dominance.',sc:'+0.78',tg:'NZ Herald',cl:'tag-nz',ce:'cell-pos',ts:'10 hours ago'},
+  {u:'@RugbyPassAnalysis',tx:'Springboks scrum dominance vs All Blacks breakdown speed - total contrast of rugby styles.',sc:'+0.22',tg:'RugbyPass',cl:'tag-nz',ce:'cell-neu',ts:'12 hours ago'},
+  {u:'@NZSportHerald',tx:'Scott Robertson bench selection strategy under scrutiny ahead of altitude fixture in SA.',sc:'+0.12',tg:'NZ Herald',cl:'tag-nz',ce:'cell-neu',ts:'14 hours ago'},
+  {u:'@AB_ConcernedFan',tx:'All Blacks lineout collapse in 2nd half was unacceptable. Need clean ball to execute Razor game plan.',sc:'-0.65',tg:'NZ Herald',cl:'tag-nz',ce:'cell-neg',ts:'18 hours ago'},
+  {u:'@KiwiRugbyCritic',tx:'ABs discipline at breakdown giving away 14 penalties. Cannot beat Boks penalty kicking from 50m.',sc:'-0.58',tg:'Twitter/X',cl:'tag-nz',ce:'cell-neg',ts:'1 day ago'}
+];
+
+function parseTsMinutes(ts){
+  if(!ts) return 999999;
+  var lts = ts.toLowerCase();
+  if(lts.indexOf('just now')>=0 || lts.indexOf('now')>=0 || lts.indexOf('sec')>=0) return 0;
+  var parts=ts.split(' ');
+  var num=parseInt(parts[0]);
+  if(isNaN(num)) num = 1;
+  var unit=(parts[1]||'min').toLowerCase();
+  if(unit.indexOf('min')>=0) return num;
+  if(unit.indexOf('hour')>=0) return num * 60;
+  if(unit.indexOf('day')>=0) return num * 1440;
+  if(unit.indexOf('week')>=0) return num * 10080;
+  return 999999;
+}
+
+function buildDataset(teamScope, weekOffset){
+  var ds = [];
+  var idCounter = 1;
+
+  var saPool = rawSaTemplates;
+  var nzPool = rawNzTemplates;
+
+  var targetCount = (teamScope === 'all') ? 500 : 250;
+  var saCount = (teamScope === 'nz') ? 0 : ((teamScope === 'sa') ? 250 : 250);
+  var nzCount = (teamScope === 'sa') ? 0 : ((teamScope === 'nz') ? 250 : 250);
+
+  if(saCount > 0){
+    for(var i=0; i<saCount; i++){
+      var template = saPool[i % saPool.length];
+      var uniqueHandle = (i < saPool.length) ? template.u : ('@SpringbokFan_' + (100 + i * 3));
+      var ts = template.ts;
+      if(weekOffset === 1) ts = (1 + (i % 6)) + ' week' + ((i % 6) > 0 ? 's' : '') + ' ago';
+      else if(weekOffset === 2) ts = (2 + (i % 5)) + ' weeks ago';
+      else if(weekOffset >= 3) ts = (weekOffset + (i % 4)) + ' weeks ago';
+      else if(i >= saPool.length){
+        var mins = 20 + (i * 13) % 1400;
+        ts = mins < 60 ? mins + ' mins ago' : Math.floor(mins/60) + ' hours ago';
+      }
+      ds.push({
+        user: uniqueHandle,
+        text: template.tx,
+        score: template.sc,
+        tag: template.tg,
+        'class': template.cl,
+        cls: template.ce,
+        timestamp: ts
+      });
+    }
+  }
+
+  if(nzCount > 0){
+    for(var j=0; j<nzCount; j++){
+      var templateNZ = nzPool[j % nzPool.length];
+      var uniqueHandleNZ = (j < nzPool.length) ? templateNZ.u : ('@AllBlackFan_' + (100 + j * 3));
+      var tsNZ = templateNZ.ts;
+      if(weekOffset === 1) tsNZ = (1 + (j % 6)) + ' week' + ((j % 6) > 0 ? 's' : '') + ' ago';
+      else if(weekOffset === 2) tsNZ = (2 + (j % 5)) + ' weeks ago';
+      else if(weekOffset >= 3) tsNZ = (weekOffset + (j % 4)) + ' weeks ago';
+      else if(j >= nzPool.length){
+        var minsNZ = 25 + (j * 14) % 1400;
+        tsNZ = minsNZ < 60 ? minsNZ + ' mins ago' : Math.floor(minsNZ/60) + ' hours ago';
+      }
+      ds.push({
+        user: uniqueHandleNZ,
+        text: templateNZ.tx,
+        score: templateNZ.sc,
+        tag: templateNZ.tg,
+        'class': templateNZ.cl,
+        cls: templateNZ.ce,
+        timestamp: tsNZ
+      });
+    }
+  }
+
+  ds.sort(function(a,b){
+    return parseTsMinutes(a.timestamp) - parseTsMinutes(b.timestamp);
+  });
+
+  return ds;
+}
+
+var currentDataset = buildDataset('all', 0);
+var activePolarity = 'all', activeWord = null, autoStreamOn = true, streamIntervalId = null;
+var activePolarity = 'all', activeWord = null, autoStreamOn = true, streamIntervalId = null;
+
+function switchTeamScope(scope){
+  currentTeamScope = scope;
+  
+  document.getElementById('tabScopeAll').className = 'team-tab-btn' + (scope==='all'?' active-all':'');
+  document.getElementById('tabScopeSA').className = 'team-tab-btn' + (scope==='sa'?' active-sa':'');
+  document.getElementById('tabScopeNZ').className = 'team-tab-btn' + (scope==='nz'?' active-nz':'');
+
+  var mTitle = document.getElementById('matrixTitleText');
+  var mSub = document.getElementById('matrixSubText');
+  if(scope==='all'){
+    mTitle.innerHTML = '🔥 500 Most Recent Comments — Combined Matrix';
+    mSub.innerHTML = '🕒 <strong>Chronologically Ordered:</strong> Cell #1 (Top-Left: Most Recent / 2 hrs ago) &#8594; Cell #500 (Bottom-Right: 3 days ago). Both teams combined:';
+  } else if(scope==='sa'){
+    mTitle.innerHTML = '🇿🇦 250 Most Recent Comments — Springboks Matrix';
+    mSub.innerHTML = '🕒 <strong>Chronologically Ordered:</strong> Cell #1 (Top-Left: Most Recent) &#8594; Cell #250 (Bottom-Right: 3 days ago). Springboks fan stream:';
+  } else {
+    mTitle.innerHTML = '🇳ℤ 250 Most Recent Comments — All Blacks Matrix';
+    mSub.innerHTML = '🕒 <strong>Chronologically Ordered:</strong> Cell #1 (Top-Left: Most Recent) &#8594; Cell #250 (Bottom-Right: 3 days ago). All Blacks fan stream:';
+  }
+
+  currentDataset = buildDataset(scope, activeWeekOffset);
+  applyFilters();
+}
+
+function renderMatrix(ds){
+  var g=document.getElementById('matrix500Grid');g.innerHTML='';
+  var pos=0,neu=0,neg=0;
+  ds.forEach(function(item, idx){
+    if(item.cls==='cell-pos')pos++;else if(item.cls==='cell-neu')neu++;else neg++;
+    var c=document.createElement('div');
+    c.className='matrix-cell '+item.cls;
+    c.title='#'+(idx+1)+' ['+item.timestamp+'] '+item.text.substring(0,70)+'...';
+    c.onclick=(function(it, iNum){return function(){inspectCell(it, iNum);};})(item, idx+1);
+    g.appendChild(c);
+  });
+  document.getElementById('posCountText').textContent=pos;
+  document.getElementById('neuCountText').textContent=neu;
+  document.getElementById('negCountText').textContent=neg;
+  document.getElementById('matrixSampleCountNum').textContent=ds.length;
+}
+
+function inspectCell(item, cellNum){
+  document.getElementById('cellUserText').textContent=(cellNum?'Cell #'+cellNum+' | ':'')+item.user;
+  document.getElementById('cellTimeText').textContent=item.timestamp;
+  document.getElementById('cellScoreBadge').textContent=item.tag+' | VADER '+item.score;
+  document.getElementById('cellScoreBadge').className='tag '+item['class'];
+  document.getElementById('cellCommentContent').textContent=item.text;
+}
+
+function renderCommentStream(ds){
+  var feed=document.getElementById('liveCommentFeed');
+  var toShow=ds.slice(0,30);
+  feed.innerHTML='';
+  toShow.forEach(function(item,i){
+    var div=document.createElement('div');
+    div.className='feed-item'+(i<3?' new-item':'');
+    var sc=item.cls==='cell-pos'?'#34d399':(item.cls==='cell-neu'?'#38bdf8':'#ef4444');
+    div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;"><div><strong style="color:#c084fc;font-size:.85rem;">'+item.user+'</strong><span class="time-pill">'+item.timestamp+'</span></div><div style="display:flex;gap:.4rem;align-items:center;"><span class="tag '+item['class']+'">'+item.tag+'</span><span style="font-size:.75rem;font-weight:900;color:'+sc+';">'+item.score+'</span></div></div><p style="color:#e2e8f0;font-size:.84rem;line-height:1.45;margin:0;">'+item.text+'</p>';
+    feed.appendChild(div);
+  });
+  document.getElementById('totalCountNum').textContent=ds.length;
+}
+
+function applyFilters(){
+  var f=currentDataset.slice();
+  var s=document.getElementById('streamSearchInput').value.toLowerCase();
+  if(activePolarity!=='all')f=f.filter(function(d){return d['class']==='tag-'+activePolarity;});
+  if(activeWord)f=f.filter(function(d){return d.text.toLowerCase().indexOf(activeWord.toLowerCase())>=0||d.tag.toLowerCase().indexOf(activeWord.toLowerCase())>=0;});
+  if(s)f=f.filter(function(d){return d.text.toLowerCase().indexOf(s)>=0||d.user.toLowerCase().indexOf(s)>=0||d.tag.toLowerCase().indexOf(s)>=0;});
+  renderMatrix(f);renderCommentStream(f);
+}
+
+function setPolarityFilter(type,btn){
+  activePolarity=type;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');b.classList.remove('active-sa');b.classList.remove('active-nz');});
+  if(type==='sa') btn.classList.add('active-sa');
+  else if(type==='nz') btn.classList.add('active-nz');
+  else btn.classList.add('active');
+  applyFilters();
+}
+function filterByWord(word,el){
+  if(activeWord===word){
+    activeWord=null;
+    document.querySelectorAll('.word-bubble').forEach(function(b){b.classList.remove('selected');});
+    document.getElementById('filterIndicator').style.display='none';
+  } else {
+    activeWord=word;
+    document.querySelectorAll('.word-bubble').forEach(function(b){b.classList.remove('selected');});
+    el.classList.add('selected');
+    document.getElementById('filterIndicator').style.display='block';
+    document.getElementById('filterKeywordText').textContent=word;
+  }
+  applyFilters();
+}
+function resetFilter(){
+  activeWord=null;
+  document.querySelectorAll('.word-bubble').forEach(function(b){b.classList.remove('selected');});
+  document.getElementById('filterIndicator').style.display='none';
+  applyFilters();
+}
+function toggleAutoStream(){
+  autoStreamOn=!autoStreamOn;
+  var btn=document.getElementById('btnAutoStreamToggle');
+  if(autoStreamOn){btn.textContent='LIVE: ON';btn.style.background='linear-gradient(135deg,#10b981,#059669)';startAutoStream();}
+  else{btn.textContent='PAUSED';btn.style.background='linear-gradient(135deg,#6b7280,#4b5563)';clearInterval(streamIntervalId);}
+}
+function triggerManualSentimentRefresh(){applyFilters();}
+function startAutoStream(){
+  clearInterval(streamIntervalId);
+  streamIntervalId = setInterval(function(){
+    if(!autoStreamOn) return;
+    var pools = [rawSaTemplates, rawNzTemplates];
+    var selectedPool = pools[Math.floor(Math.random() * pools.length)];
+    var t = selectedPool[Math.floor(Math.random() * selectedPool.length)];
+    var randomNum = Math.floor(Math.random() * 899) + 100;
+    
+    var newComment = {
+      user: t.u + '_live' + randomNum,
+      text: t.tx,
+      score: t.sc,
+      tag: t.tg,
+      'class': t['class'],
+      cls: t.ce,
+      timestamp: 'Just now'
+    };
+
+    currentDataset.unshift(newComment);
+    if(currentDataset.length > 500) currentDataset.pop();
+    applyFilters();
+  }, 6000);
+}
+
+// -------------------------------------------------------------
+// TIMEFRAME & DEDICATED PER-TEAM NLP GRAPH LOGIC
+// -------------------------------------------------------------
+var activeTimeframe='7d';
+var activeWeekOffset=0;
+
+var springbokTrendChartInstance=null;
+var allblackTrendChartInstance=null;
+var bothTrendChartInstance=null;
+var sentimentChartInstance=null;
+
+var historicalDataSets={
+  '7d_w0': {
+    label: 'Current Match Week (Test 2 Johannesburg Build-Up)',
+    xLabels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat (Test Day)'],
+    saVader: [0.72, 0.75, 0.78, 0.81, 0.79, 0.84, 0.81],
+    nzVader: [0.45, 0.48, 0.42, 0.50, 0.47, 0.51, 0.52],
+    descSA: 'Springboks (+0.81 VADER): Strong net positive sentiment driven by 6-2 Bomb Squad bench split and forward pack dominance.',
+    descNZ: 'All Blacks (+0.52 VADER): Rebuild phase under Scott Robertson with strong fan excitement around Will Jordan offset by breakdown discipline concerns.',
+    descBoth: 'Head-to-Head Comparison: Springboks (+0.81 VADER) maintain a +0.29 sentiment lead over All Blacks (+0.52 VADER) heading into Test 2.'
+  },
+  '7d_w1': {
+    label: 'Week -1 (Ellis Park Test 1 Victory)',
+    xLabels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    saVader: [0.68, 0.71, 0.74, 0.79, 0.82, 0.86, 0.83],
+    nzVader: [0.55, 0.58, 0.61, 0.48, 0.44, 0.46, 0.49],
+    descSA: 'Springboks (+0.83 VADER): Came-from-behind victory at Ellis Park sparked massive fan celebration and media praise.',
+    descNZ: 'All Blacks (+0.49 VADER): Post-loss analysis focused on 2nd-half lineout collapse and 14 breakdown penalties.',
+    descBoth: 'Head-to-Head Comparison: Ellis Park result caused a sharp sentiment divergence (+0.83 SA vs +0.49 NZ).'
+  },
+  '7d_w2': {
+    label: 'Week -2 (Rugby Championship Round 2)',
+    xLabels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    saVader: [0.70, 0.72, 0.73, 0.75, 0.76, 0.78, 0.76],
+    nzVader: [0.62, 0.64, 0.60, 0.63, 0.65, 0.62, 0.61],
+    descSA: 'Springboks (+0.76 VADER): Steady baseline performance with positive squad rotation feedback.',
+    descNZ: 'All Blacks (+0.61 VADER): Positive backline play feedback balanced by lineout consistency debate.',
+    descBoth: 'Head-to-Head Comparison: Both SANZAAR giants tracking positive baselines ahead of Freedom Cup series.'
+  },
+  '7d_w3': {
+    label: 'Week -3 (Rugby Championship Season Opener)',
+    xLabels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    saVader: [0.69, 0.71, 0.72, 0.74, 0.75, 0.76, 0.74],
+    nzVader: [0.64, 0.66, 0.63, 0.65, 0.67, 0.66, 0.65],
+    descSA: 'Springboks (+0.74 VADER): Confident season opener sentiment.',
+    descNZ: 'All Blacks (+0.65 VADER): High anticipation for Razor Robertson era debut.',
+    descBoth: 'Head-to-Head Comparison: Close baseline sentiment between both squads (+0.74 SA vs +0.65 NZ).'
+  },
+  '4w': {
+    label: 'Last 4 Weeks (Rugby Championship Season)',
+    xLabels: ['Week 1 (Opener)', 'Week 2 (Round 2)', 'Week 3 (Ellis Park)', 'Week 4 (Test 2)'],
+    saVader: [0.74, 0.76, 0.83, 0.81],
+    nzVader: [0.65, 0.61, 0.49, 0.52],
+    descSA: 'Springboks 4-Week Trend: Trending upwards (+0.74 ➔ +0.81) following physical dominance.',
+    descNZ: 'All Blacks 4-Week Trend: Tactical adjustment period reflected in sentiment trajectory (+0.65 ➔ +0.52).',
+    descBoth: '4-Week Dual Trend: Tracks Springboks (+0.81) vs All Blacks (+0.52) over the full 2026 series.'
+  },
+  '3m': {
+    label: 'Last 3 Months (Winter International Window)',
+    xLabels: ['Jun W1', 'Jun W3', 'Jul W1', 'Jul W3', 'Aug W1', 'Aug W4 (Current)'],
+    saVader: [0.78, 0.80, 0.79, 0.82, 0.84, 0.81],
+    nzVader: [0.70, 0.68, 0.62, 0.58, 0.50, 0.52],
+    descSA: 'Springboks 3-Month Trend: Consistently high (+0.78 to +0.84) across mid-year Tests.',
+    descNZ: 'All Blacks 3-Month Trend: Transition phase under new coaching group (+0.70 ➔ +0.52).',
+    descBoth: '3-Month Dual Comparison: Quarterly sentiment trajectory across all 2026 international fixtures.'
+  },
+  '1y': {
+    label: 'Last 12 Months (Post World Cup 2023 - 2024)',
+    xLabels: ['Sep 25', 'Nov 25', 'Jan 26', 'Mar 26', 'May 26', 'Jul 26', 'Aug 26'],
+    saVader: [0.92, 0.88, 0.82, 0.80, 0.83, 0.85, 0.81],
+    nzVader: [0.65, 0.60, 0.68, 0.70, 0.64, 0.58, 0.52],
+    descSA: 'Springboks 12-Month Trend: Peak post-World Cup victory (+0.92) maintaining strong momentum (+0.81).',
+    descNZ: 'All Blacks 12-Month Trend: Post-RWC rebuild transition (+0.65 ➔ +0.52).',
+    descBoth: '12-Month Dual Comparison: Full annual sentiment timeline following the 2023 World Cup Final.'
+  }
+};
+
+function setTimeframe(tf, btn){
+  activeTimeframe=tf;
+  document.querySelectorAll('.tf-btn').forEach(function(b){b.classList.remove('active');});
+  if(btn) btn.classList.add('active');
+  var navBox=document.getElementById('weekNavBox');
+  if(tf==='7d') navBox.style.display='flex';
+  else navBox.style.display='none';
+  updateAllCharts();
+}
+
+function navigateWeek(delta){
+  activeWeekOffset+=delta;
+  if(activeWeekOffset<0) activeWeekOffset=0;
+  if(activeWeekOffset>3) activeWeekOffset=3;
+
+  document.getElementById('btnNextWeek').disabled = (activeWeekOffset===0);
+  document.getElementById('btnPrevWeek').disabled = (activeWeekOffset===3);
+
+  var wLabel = activeWeekOffset===0 ? 'Offset 0 (Current Test)' : ('Offset -' + activeWeekOffset + ' (' + activeWeekOffset + ' Week' + (activeWeekOffset>1?'s':'') + ' Ago)');
+  document.getElementById('weekStepLabel').textContent = wLabel;
+
+  currentDataset = buildDataset(currentTeamScope, activeWeekOffset);
+  applyFilters();
+
+  var archBanner = document.getElementById('archiveBanner');
+  if(activeWeekOffset>0){
+    archBanner.style.display='block';
+    document.getElementById('archiveWeekText').textContent = historicalDataSets['7d_w'+activeWeekOffset].label;
+  } else {
+    archBanner.style.display='none';
+  }
+
+  updateAllCharts();
+}
+
+function updateAllCharts(){
+  var key = activeTimeframe==='7d' ? ('7d_w'+activeWeekOffset) : activeTimeframe;
+  var dataObj = historicalDataSets[key];
+  if(!dataObj) return;
+
+  document.getElementById('chartTimeframeLabel').textContent = dataObj.label;
+
+  // 1. SPRINGBOKS STANDALONE NLP GRAPH
+  document.getElementById('descSaChart').textContent = dataObj.descSA;
+  if(!springbokTrendChartInstance){
+    var ctxSA = document.getElementById('springbokTrendChart').getContext('2d');
+    springbokTrendChartInstance = new Chart(ctxSA, {
+      type:'line',
+      data:{
+        labels: dataObj.xLabels,
+        datasets:[{
+          label:'🇿🇦 Springbok Sentiment (VADER)',
+          data: dataObj.saVader,
+          borderColor:'#34d399',
+          backgroundColor:'rgba(52,211,153,0.15)',
+          tension:0.35,
+          pointBackgroundColor:'#34d399',
+          pointRadius:6,
+          borderWidth:3,
+          fill:true
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#34d399',font:{family:'Inter',weight:'bold',size:13}}}},
+        scales:{
+          x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},
+          y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'},min:0,max:1.0}
+        }
+      }
+    });
+  } else {
+    springbokTrendChartInstance.data.labels = dataObj.xLabels;
+    springbokTrendChartInstance.data.datasets[0].data = dataObj.saVader;
+    springbokTrendChartInstance.update();
+  }
+
+  // 2. ALL BLACKS STANDALONE NLP GRAPH
+  document.getElementById('descNzChart').textContent = dataObj.descNZ;
+  if(!allblackTrendChartInstance){
+    var ctxNZ = document.getElementById('allblackTrendChart').getContext('2d');
+    allblackTrendChartInstance = new Chart(ctxNZ, {
+      type:'line',
+      data:{
+        labels: dataObj.xLabels,
+        datasets:[{
+          label:'🇳🇿 All Black Sentiment (VADER)',
+          data: dataObj.nzVader,
+          borderColor:'#38bdf8',
+          backgroundColor:'rgba(56,189,248,0.15)',
+          tension:0.35,
+          pointBackgroundColor:'#38bdf8',
+          pointRadius:6,
+          borderWidth:3,
+          fill:true
+        }]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{labels:{color:'#38bdf8',font:{family:'Inter',weight:'bold',size:13}}}},
+        scales:{
+          x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},
+          y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'},min:0,max:1.0}
+        }
+      }
+    });
+  } else {
+    allblackTrendChartInstance.data.labels = dataObj.xLabels;
+    allblackTrendChartInstance.data.datasets[0].data = dataObj.nzVader;
+    allblackTrendChartInstance.update();
+  }
+
+  // 3. BOTH TEAMS HEAD-TO-HEAD COMPARISON NLP GRAPH
+  document.getElementById('descBothChart').textContent = dataObj.descBoth;
+  if(!bothTrendChartInstance){
+    var ctxBoth = document.getElementById('bothTrendChart').getContext('2d');
+    bothTrendChartInstance = new Chart(ctxBoth, {
+      type:'line',
+      data:{
+        labels: dataObj.xLabels,
+        datasets:[
+          {
+            label:'🇿🇦 Springboks',
+            data: dataObj.saVader,
+            borderColor:'#34d399',
+            backgroundColor:'transparent',
+            tension:0.35,
+            pointBackgroundColor:'#34d399',
+            pointRadius:5,
+            borderWidth:2.5
+          },
+          {
+            label:'🇳🇿 All Blacks',
+            data: dataObj.nzVader,
+            borderColor:'#38bdf8',
+            backgroundColor:'transparent',
+            tension:0.35,
+            pointBackgroundColor:'#38bdf8',
+            pointRadius:5,
+            borderWidth:2.5
+          }
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,
+        interaction:{mode:'index',intersect:false},
+        plugins:{legend:{labels:{color:'#f1f5f9',font:{family:'Inter',weight:'bold',size:12}}}},
+        scales:{
+          x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},
+          y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'},min:0,max:1.0}
+        }
+      }
+    });
+  } else {
+    bothTrendChartInstance.data.labels = dataObj.xLabels;
+    bothTrendChartInstance.data.datasets[0].data = dataObj.saVader;
+    bothTrendChartInstance.data.datasets[1].data = dataObj.nzVader;
+    bothTrendChartInstance.update();
+  }
+}
+
+function renderSentimentEmotionChart(){
+  var ctx=document.getElementById('sentimentChart').getContext('2d');
+  sentimentChartInstance = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:['Dominant Confidence', 'Tactical Rebuild Expectation', 'Referee & Decision Concern', 'Hype & Fan Excitement', 'Media Support Ratio'],
+      datasets:[
+        {
+          label:'🇿🇦 Springbok Fan & Media Share (%)',
+          data:[78, 15, 28, 88, 76],
+          backgroundColor:'rgba(52, 211, 153, 0.75)',
+          borderColor:'#34d399',
+          borderWidth:1.5,
+          borderRadius:6
+        },
+        {
+          label:'🇳🇿 All Black Fan & Media Share (%)',
+          data:[44, 62, 48, 65, 54],
+          backgroundColor:'rgba(56, 189, 248, 0.75)',
+          borderColor:'#38bdf8',
+          borderWidth:1.5,
+          borderRadius:6
+        }
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#f1f5f9',font:{family:'Inter',weight:'bold'}}},
+        tooltip:{backgroundColor:'#160e28',titleColor:'#f8fafc',bodyColor:'#cbd5e1',borderColor:'#c084fc',borderWidth:1}
+      },
+      scales:{
+        x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'}},
+        y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,0.05)'},title:{display:true,text:'Emotion & Driver Share (%)',color:'#c084fc',font:{weight:'bold'}},max:100}
+      }
+    }
+  });
+}
+
+// Initialise page
+renderMatrix(currentDataset);
+renderCommentStream(currentDataset);
+updateAllCharts();
+renderSentimentEmotionChart();
+startAutoStream();
+</script>
+</body>
+</html>

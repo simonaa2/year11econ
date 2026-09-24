@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sim Analytics — HSC Economics Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--bg:#05040f;--bg-card:rgba(255,255,255,0.03);--border:rgba(255,255,255,0.08);--text-primary:#f1f5f9;--text-secondary:#94a3b8;--text-muted:#64748b;--primary:#818cf8;--green:#34d399;--red:#f87171;--yellow:#fbbf24;--radius-sm:8px;--radius-md:16px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text-primary);font-family:'Inter',sans-serif;min-height:100vh;padding:2rem 1rem;}
+.container{max-width:1100px;margin:0 auto;}
+.page-header{text-align:center;margin-bottom:2.5rem;}
+.page-header h1{font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-header p{color:var(--text-secondary);margin-top:0.5rem;}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem;margin-bottom:1.5rem;}
+.card-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:800;margin-bottom:1rem;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem;}
+.stat-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem;text-align:center;}
+.stat-val{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;}
+.stat-label{font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;text-transform:uppercase;letter-spacing:0.05em;}
+.chart-wrap{position:relative;height:280px;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+@media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+.session-list{display:flex;flex-direction:column;gap:0.5rem;max-height:320px;overflow-y:auto;padding-right:4px;}
+.session-row{display:flex;align-items:center;gap:1rem;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem 1rem;cursor:pointer;transition:border-color 0.2s;}
+.session-row:hover,.session-row.active{border-color:var(--primary);background:rgba(129,140,248,0.04);}
+.s-badge{font-size:0.7rem;font-weight:700;padding:0.2rem 0.6rem;border-radius:999px;background:rgba(129,140,248,0.15);color:var(--primary);white-space:nowrap;}
+.s-badge.air{background:rgba(52,211,153,0.15);color:var(--green);}
+.btn{display:inline-flex;align-items:center;gap:0.4rem;padding:0.6rem 1.2rem;border-radius:var(--radius-sm);border:none;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary{background:linear-gradient(135deg,#818cf8,#6366f1);color:#fff;}
+.btn-green{background:rgba(52,211,153,0.1);border:1px solid rgba(52,211,153,0.3);color:var(--green);}
+.label{font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:0.5rem;}
+table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+th{text-align:left;padding:0.5rem 0.75rem;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);border-bottom:1px solid var(--border);}
+td{padding:0.55rem 0.75rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+tr:hover td{background:rgba(255,255,255,0.015);}
+.tg{color:var(--green);} .tr{color:var(--red);} .tp{color:var(--primary);} .ty{color:var(--yellow);}
+.pin-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(12px);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.pin-box{background:linear-gradient(135deg,#1a1a2e,#16213e);border:1px solid rgba(192,132,252,0.3);border-radius:24px;padding:2.5rem;max-width:360px;width:90%;text-align:center;box-shadow:0 0 60px rgba(192,132,252,0.1);}
+.pin-input{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:#f1f5f9;padding:0.85rem;font-size:1.5rem;font-weight:800;text-align:center;letter-spacing:0.3em;font-family:'Outfit',sans-serif;margin-bottom:0.75rem;}
+.empty{color:var(--text-muted);font-style:italic;font-size:0.85rem;padding:1rem 0;}
+.filter-bar{display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-bottom:1.5rem;}
+.filter-btn{padding:0.4rem 1rem;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.filter-btn.active{background:rgba(129,140,248,0.15);border-color:var(--primary);color:var(--primary);}
+.research-note{background:rgba(129,140,248,0.06);border:1px solid rgba(129,140,248,0.2);border-radius:var(--radius-sm);padding:0.85rem 1rem;font-size:0.82rem;color:var(--text-secondary);margin-bottom:1.5rem;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<!-- PIN OVERLAY -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-box">
+    <div style="font-size:2.5rem;margin-bottom:0.75rem">📊</div>
+    <div style="font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:0.5rem">Sim Analytics</div>
+    <div style="font-size:0.85rem;color:#94a3b8;margin-bottom:1.5rem">Teacher / Researcher access only</div>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="6" class="pin-input" placeholder="••••" onkeydown="if(event.key==='Enter')checkPin()">
+    <div id="pinMsg" style="color:#f87171;font-size:0.82rem;margin-bottom:1rem;min-height:1.2em"></div>
+    <button onclick="checkPin()" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.9rem;font-size:1rem">Unlock →</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="container" id="mainContent" style="display:none">
+
+  <div class="page-header">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem">📊</div>
+    <h1>Simulation Analytics</h1>
+    <p>HSC Economics — Stadium &amp; Airfare classroom simulation results</p>
+  </div>
+
+  <div class="research-note">
+    🔬 <strong>Research use:</strong> All results are saved automatically when the teacher clicks <em>Show Results</em>.
+    Each session snapshot includes individual pricing decisions, strategies, consumer surplus, deadweight loss events, and market shocks.
+    Use <strong>Export CSV</strong> to download for SPSS, Excel or R analysis.
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <span style="font-size:0.82rem;color:var(--text-muted);font-weight:600">Filter:</span>
+    <button class="filter-btn active" id="filterAll" onclick="setFilter('all')">All Sessions</button>
+    <button class="filter-btn" id="filterStadium" onclick="setFilter('stadium')">⚽ Stadium</button>
+    <button class="filter-btn" id="filterAirfare" onclick="setFilter('airfare')">✈️ Airfare</button>
+    <button class="btn btn-green" onclick="exportCSV()" style="margin-left:auto">⬇ Export CSV</button>
+    <button class="btn" style="background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:var(--red)" onclick="exportDetailedCSV()">⬇ Export Full Detail</button>
+  </div>
+
+  <!-- TOP ROW -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📁 Session History</div>
+      <div class="session-list" id="sessionList"><div class="empty">Loading…</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔢 Aggregate Summary</div>
+      <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+        <div class="stat-card"><div class="stat-val tp" id="aggSessions">—</div><div class="stat-label">Sessions Run</div></div>
+        <div class="stat-card"><div class="stat-val tg" id="aggStudents">—</div><div class="stat-label">Student Decisions</div></div>
+        <div class="stat-card"><div class="stat-val ty" id="aggAvgPrice">—</div><div class="stat-label">Avg Price Set</div></div>
+        <div class="stat-card"><div class="stat-val tr" id="aggPricedOut">—</div><div class="stat-label">Priced-Out (DWL)</div></div>
+      </div>
+      <div id="selectedDetail"><div class="empty">Click a session to see detail.</div></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 1 -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📋 Strategy Distribution</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Which pricing strategies students chose across all sessions.</p>
+      <div class="chart-wrap"><canvas id="stratChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">💰 Price Histogram</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Distribution of Cat 1 / Economy prices set by students.</p>
+      <div class="chart-wrap"><canvas id="histChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2 -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">📈 Avg Score by Strategy</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Stadium only — which strategy produced the best market outcomes.</p>
+      <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚖️ Surplus vs Revenue</div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1rem">Consumer surplus vs producer revenue per session.</p>
+      <div class="chart-wrap"><canvas id="surplusChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- RESEARCH TABLE -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <div class="card-title" style="margin:0">📄 Session Summary Table (Research Data)</div>
+      <span style="font-size:0.78rem;color:var(--text-muted)" id="rowCount"></span>
+    </div>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Date &amp; Time</th><th>Session Code</th><th>Sim</th>
+            <th>Producers</th><th>Consumers</th><th>Avg Price ($)</th>
+            <th>Avg Score</th><th>Avg Fill %</th><th>Revenue ($)</th>
+            <th>Surplus ($)</th><th>Priced Out</th><th>DWL Rate %</th><th>Shock</th>
+          </tr>
+        </thead>
+        <tbody id="rawBody"><tr><td colspan="13" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain:"www.datatrends.com.au",
+  projectId:"maths-f3c6d",
+  storageBucket:"maths-f3c6d.firebasestorage.app",
+  messagingSenderId:"76007634547",
+  appId:"1:76007634547:web:0b9773147e26dd2940dc06"
+});
+const db = firebase.firestore();
+
+// PIN
+function checkPin(){
+  if(document.getElementById('pinInput').value.trim() !== '1982'){
+    document.getElementById('pinMsg').textContent = 'Incorrect PIN.';
+    document.getElementById('pinInput').value = '';
+    return;
+  }
+  document.getElementById('pinOverlay').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  loadData();
+}
+window.addEventListener('DOMContentLoaded', () => document.getElementById('pinInput').focus());
+
+// State
+let all = [], filtered = [], filter = 'all', C = {};
+
+// Helpers
+const fmt  = n => '$' + Math.round(n||0).toLocaleString();
+const pct  = n => Math.round(n||0) + '%';
+const avg  = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+const stdev= arr => { if(arr.length < 2) return 0; const m=avg(arr); return Math.sqrt(arr.reduce((s,x)=>s+(x-m)**2,0)/(arr.length-1)); };
+function fmtDate(ts){
+  if(!ts) return '—';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}) + ' ' +
+         d.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+}
+
+const SL = {cost_plus:'Cost-Plus',skimming:'Skimming',penetration:'Penetration',loss_leader:'Loss Leader',dynamic:'Dynamic Pricing',fixed:'Fixed Rate',peak:'Peak Pricing',promo:'Promo Deal'};
+const SC = {cost_plus:'rgba(129,140,248,0.75)',skimming:'rgba(248,113,113,0.75)',penetration:'rgba(52,211,153,0.75)',loss_leader:'rgba(251,191,36,0.75)',dynamic:'rgba(192,132,252,0.75)',fixed:'rgba(56,189,248,0.75)',peak:'rgba(251,146,60,0.75)',promo:'rgba(163,230,53,0.75)'};
+
+// Load
+async function loadData(){
+  const snap = await db.collection('sim_results').orderBy('savedAt','desc').get();
+  all = snap.docs.map(d => ({id:d.id, ...d.data()}));
+  applyFilter();
+}
+
+function setFilter(f){
+  filter = f;
+  ['all','stadium','airfare'].forEach(x => {
+    const k = x === 'all' ? 'All' : x.charAt(0).toUpperCase()+x.slice(1);
+    const b = document.getElementById('filter'+k);
+    if(b) b.classList.toggle('active', f===x);
+  });
+  applyFilter();
+}
+
+function applyFilter(){
+  filtered = filter==='all' ? all : all.filter(s=>s.simType===filter);
+  renderList(); renderAggregate(); renderCharts(); renderTable();
+}
+
+// Session list
+function renderList(){
+  const el = document.getElementById('sessionList');
+  if(!filtered.length){el.innerHTML='<div class="empty">No sessions saved yet. Run a simulation and click Show Results.</div>';return;}
+  el.innerHTML = filtered.map((s,i) => {
+    const isS = s.simType==='stadium';
+    const count = isS ? (s.venueCount||0) : (s.airlineCount||0);
+    return '<div class="session-row" onclick="selectSession('+i+')" id="sr'+i+'">' +
+      '<span class="s-badge'+(isS?'':' air')+'">'+(isS?'⚽ Stadium':'✈️ Airfare')+'</span>' +
+      '<div style="flex:1"><div style="font-weight:700;font-size:0.88rem">'+s.sessionCode+'</div>' +
+      '<div style="font-size:0.75rem;color:var(--text-muted)">'+fmtDate(s.savedAt)+'</div></div>' +
+      '<div style="font-size:0.78rem;color:var(--text-muted)">'+count+(isS?' venues':' airlines')+'</div></div>';
+  }).join('');
+}
+
+function selectSession(i){
+  document.querySelectorAll('.session-row').forEach(r=>r.classList.remove('active'));
+  const row = document.getElementById('sr'+i);
+  if(row) row.classList.add('active');
+  const s = filtered[i];
+  const el = document.getElementById('selectedDetail');
+  const prices = s.simType==='stadium' ? (s.cat1Prices||[]) : (s.econPrices||[]);
+  const m = avg(prices), sd = stdev(prices);
+
+  let statsHtml = '<div class="label" style="margin-bottom:0.75rem">Session: '+s.sessionCode+' — Statistical Summary</div>' +
+    '<div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-top:0;">' +
+    '<div class="stat-card"><div class="stat-val ty" style="font-size:1.3rem">'+fmt(m)+'</div><div class="stat-label">Mean Price</div></div>' +
+    '<div class="stat-card"><div class="stat-val" style="font-size:1.3rem">'+fmt(sd)+'</div><div class="stat-label">Std Dev (Price)</div></div>' +
+    '<div class="stat-card"><div class="stat-val tg" style="font-size:1.3rem">'+(s.simType==='stadium'?pct((s.avgFillRate||0)*100):(s.bookedCount||0)+' bkd')+'</div><div class="stat-label">'+(s.simType==='stadium'?'Avg Fill':'Booked')+'</div></div>' +
+    '<div class="stat-card"><div class="stat-val tr" style="font-size:1.3rem">'+((s.pricedOutCount||0)+'/'+(s.fanCount||s.passengerCount||0))+'</div><div class="stat-label">Priced Out</div></div>' +
+    '</div>';
+
+  // Venue / airline table
+  if(s.simType==='stadium' && s.venues && s.venues.length){
+    statsHtml += '<div class="label" style="margin-top:1rem">Individual Venue Decisions</div>' +
+      '<div style="overflow-x:auto"><table><thead><tr><th>Venue</th><th>Strategy</th><th>Stage</th><th>Cat1</th><th>Score</th><th>Fill%</th><th>Revenue</th></tr></thead><tbody>' +
+      s.venues.map(v=>'<tr><td><strong>'+v.name+'</strong></td><td>'+(SL[v.strategy]||v.strategy)+'</td><td>'+v.stage+'</td><td class="ty">'+fmt(v.cat1)+'</td><td class="tp">'+v.score+'/100</td><td>'+v.fill+'%</td><td class="tg">'+fmt(v.revenue)+'</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+  if(s.simType==='airfare' && s.airlines && s.airlines.length){
+    statsHtml += '<div class="label" style="margin-top:1rem">Individual Airline Decisions</div>' +
+      '<div style="overflow-x:auto"><table><thead><tr><th>Airline</th><th>Strategy</th><th>Economy</th><th>Business</th><th>First</th></tr></thead><tbody>' +
+      s.airlines.map(a=>'<tr><td><strong>'+a.name+'</strong></td><td>'+(SL[a.strategy]||a.strategy)+'</td><td class="ty">'+fmt(a.econ)+'</td><td class="tp">'+fmt(a.biz)+'</td><td>'+fmt(a.first)+'</td></tr>').join('') +
+      '</tbody></table></div>';
+  }
+  el.innerHTML = statsHtml;
+}
+
+// Aggregate stats
+function renderAggregate(){
+  document.getElementById('aggSessions').textContent = filtered.length;
+  const students = filtered.reduce((t,s)=> t + (s.simType==='stadium' ? (s.venueCount||0)+(s.fanCount||0) : (s.airlineCount||0)+(s.passengerCount||0)), 0);
+  document.getElementById('aggStudents').textContent = students;
+  const prices = filtered.flatMap(s => s.simType==='stadium' ? (s.cat1Prices||[]) : (s.econPrices||[])).filter(Boolean);
+  document.getElementById('aggAvgPrice').textContent = fmt(avg(prices));
+  document.getElementById('aggPricedOut').textContent = filtered.reduce((t,s)=>t+(s.pricedOutCount||0),0);
+}
+
+// Charts
+function dc(id){ if(C[id]){C[id].destroy();C[id]=null;} }
+
+function renderCharts(){
+  // Strategy doughnut
+  dc('strat');
+  const counts = {};
+  filtered.forEach(s => Object.entries(s.strategyBreakdown||{}).forEach(([k,v])=>{ counts[k]=(counts[k]||0)+v; }));
+  if(Object.keys(counts).length){
+    C['strat'] = new Chart(document.getElementById('stratChart'),{
+      type:'doughnut',
+      data:{labels:Object.keys(counts).map(k=>SL[k]||k),datasets:[{data:Object.values(counts),backgroundColor:Object.keys(counts).map(k=>SC[k]||'#818cf8'),borderWidth:2,borderColor:'rgba(255,255,255,0.06)'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11},boxWidth:12}}}}
+    });
+  }
+
+  // Price histogram
+  dc('hist');
+  const allP = filtered.flatMap(s => s.simType==='stadium'?(s.cat1Prices||[]):(s.econPrices||[])).filter(Boolean);
+  if(allP.length){
+    const bins=[0,200,400,600,800,1000,1200,1500,1800,2000,2500,3000];
+    const cnts=new Array(bins.length-1).fill(0);
+    allP.forEach(p=>{ for(let i=0;i<bins.length-1;i++){ if(p>=bins[i]&&p<bins[i+1]){cnts[i]++;break;} } });
+    C['hist'] = new Chart(document.getElementById('histChart'),{
+      type:'bar',
+      data:{labels:bins.slice(0,-1).map((b,i)=>'$'+b+'-'+bins[i+1]),datasets:[{label:'# of decisions',data:cnts,backgroundColor:'rgba(251,191,36,0.65)',borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',font:{size:9},maxRotation:45},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#64748b',stepSize:1},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+  }
+
+  // Score by strategy (stadium)
+  dc('score');
+  const ss={};
+  filtered.filter(s=>s.simType==='stadium').forEach(s=>(s.venues||[]).forEach(v=>{ if(!ss[v.strategy])ss[v.strategy]=[]; ss[v.strategy].push(v.score||0); }));
+  if(Object.keys(ss).length){
+    C['score'] = new Chart(document.getElementById('scoreChart'),{
+      type:'bar',
+      data:{labels:Object.keys(ss).map(k=>SL[k]||k),datasets:[{label:'Avg Score /100',data:Object.values(ss).map(a=>Math.round(avg(a))),backgroundColor:Object.keys(ss).map(k=>SC[k]||'#818cf8'),borderRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{min:0,max:100,ticks:{color:'#64748b'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+  }
+
+  // Surplus vs Revenue
+  dc('surplus');
+  if(filtered.length){
+    C['surplus'] = new Chart(document.getElementById('surplusChart'),{
+      type:'bar',
+      data:{
+        labels:filtered.map(s=>s.sessionCode),
+        datasets:[
+          {label:'Producer Revenue',data:filtered.map(s=>s.totalRevenue||0),backgroundColor:'rgba(129,140,248,0.65)',borderRadius:4},
+          {label:'Consumer Surplus',data:filtered.map(s=>s.totalSurplus||0),backgroundColor:'rgba(52,211,153,0.65)',borderRadius:4}
+        ]
+      },
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',font:{size:10}}}},scales:{x:{ticks:{color:'#64748b',font:{size:9},maxRotation:45},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#64748b',callback:v=>'$'+Math.round(v/1000)+'k'},grid:{color:'rgba(255,255,255,0.04)'}}}}
+    });
+  }
+}
+
+// Research table
+function renderTable(){
+  const tbody = document.getElementById('rawBody');
+  document.getElementById('rowCount').textContent = filtered.length + ' sessions';
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="13" class="empty">No sessions yet.</td></tr>';return;}
+  tbody.innerHTML = filtered.map(s => {
+    const isS = s.simType==='stadium';
+    const producers  = isS ? (s.venueCount||0) : (s.airlineCount||0);
+    const consumers  = isS ? (s.fanCount||0) : (s.passengerCount||0);
+    const price      = isS ? Math.round(s.avgCat1Price||0) : Math.round(s.avgEconPrice||0);
+    const score      = isS ? (s.avgScore||0) : '—';
+    const fillRate   = isS ? Math.round((s.avgFillRate||0)*100) : '—';
+    const priced     = s.pricedOutCount||0;
+    const dwlRate    = consumers>0 ? Math.round((priced/consumers)*100) : 0;
+    return '<tr>' +
+      '<td style="white-space:nowrap;font-size:0.78rem">'+fmtDate(s.savedAt)+'</td>' +
+      '<td><strong>'+s.sessionCode+'</strong></td>' +
+      '<td><span style="font-size:0.72rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:999px;background:'+(isS?'rgba(129,140,248,0.15)':'rgba(52,211,153,0.15)')+';color:'+(isS?'var(--primary)':'var(--green)')+';">'+(isS?'⚽':'✈️')+' '+s.simType+'</span></td>' +
+      '<td>'+producers+'</td>' +
+      '<td>'+consumers+'</td>' +
+      '<td class="ty">'+price+'</td>' +
+      '<td class="tp">'+score+'</td>' +
+      '<td>'+(fillRate==='—'?'—':fillRate+'%')+'</td>' +
+      '<td class="tg">'+Math.round(s.totalRevenue||0).toLocaleString()+'</td>' +
+      '<td class="tg">'+Math.round(s.totalSurplus||0).toLocaleString()+'</td>' +
+      '<td class="'+(priced>0?'tr':'')+'">'+priced+'</td>' +
+      '<td class="'+(dwlRate>25?'tr':'')+'">'+dwlRate+'%</td>' +
+      '<td style="font-size:0.78rem">'+( s.shockUsed||'—')+'</td>' +
+      '</tr>';
+  }).join('');
+}
+
+// CSV exports
+function exportCSV(){
+  if(!filtered.length){alert('No data to export.');return;}
+  const h = ['Date','SessionCode','SimType','Producers','Consumers','AvgPrice','AvgScore','AvgFillPct','TotalRevenue','TotalSurplus','PricedOutCount','DWLRatePct','ShockUsed'];
+  const rows = filtered.map(s=>{
+    const isS=s.simType==='stadium';
+    const consumers=isS?(s.fanCount||0):(s.passengerCount||0);
+    const priced=s.pricedOutCount||0;
+    return [
+      fmtDate(s.savedAt), s.sessionCode, s.simType,
+      isS?(s.venueCount||0):(s.airlineCount||0), consumers,
+      isS?Math.round(s.avgCat1Price||0):Math.round(s.avgEconPrice||0),
+      isS?(s.avgScore||0):'', isS?Math.round((s.avgFillRate||0)*100):'',
+      Math.round(s.totalRevenue||0), Math.round(s.totalSurplus||0),
+      priced, consumers>0?Math.round((priced/consumers)*100):0,
+      s.shockUsed||''
+    ];
+  });
+  downloadCSV([h,...rows], 'sim_results_summary_'+today()+'.csv');
+}
+
+function exportDetailedCSV(){
+  if(!filtered.length){alert('No data to export.');return;}
+  const h = ['Date','SessionCode','SimType','Role','Name','Strategy','Price','Score','FillPct','Revenue','Surplus','PricedOut'];
+  const rows = [];
+  filtered.forEach(s=>{
+    const d = fmtDate(s.savedAt);
+    if(s.simType==='stadium'){
+      (s.venues||[]).forEach(v=>rows.push([d,s.sessionCode,'stadium','venue',v.name,v.strategy||'',v.cat1||'',v.score||'',v.fill||'',v.revenue||'','','']));
+      (s.fans||[]).forEach(f=>rows.push([d,s.sessionCode,'stadium','fan',f.name,f.type||'','','',(f.pricedOut?'0':''), '',f.surplus||'',f.pricedOut?1:0]));
+    } else {
+      (s.airlines||[]).forEach(a=>rows.push([d,s.sessionCode,'airfare','airline',a.name,a.strategy||'',a.econ||'','','','','','']));
+      (s.passengers||[]).forEach(p=>rows.push([d,s.sessionCode,'airfare','passenger',p.type||'','',p.paid||'','','','',p.surplus||'',p.booked?0:1]));
+    }
+  });
+  downloadCSV([h,...rows], 'sim_results_detailed_'+today()+'.csv');
+}
+
+function downloadCSV(data, filename){
+  const csv = data.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function today(){ return new Date().toISOString().slice(0,10); }
+</script>
+</body>
+</html>

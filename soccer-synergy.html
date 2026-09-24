@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>International Soccer Team Dynamics & Synergy Research Model | DATATRENDS</title>
+<meta name="description" content="Research model calculating international soccer team dynamics, club density, tactical integration, and synergy scores for 48 nations. Spain Ranked #1 (95.0).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#030a05;color:#f1f5f9;min-height:100vh;overflow-x:hidden;}
+.bg-layer{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 100% 55% at 50% -5%, rgba(34,197,94,0.18) 0%, transparent 65%),radial-gradient(ellipse 70% 40% at 90% 100%, rgba(251,191,36,0.08) 0%, transparent 55%),#030a05;}
+.wrapper{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:1.5rem;}
+.nav{display:flex;align-items:center;justify-space-between;padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(16px);background:rgba(3,10,5,0.85);position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;color:#f1f5f9;text-decoration:none;}
+.nav-logo span{color:#fbbf24;}
+.card{background:rgba(9,28,14,0.65);border:1px solid rgba(34,197,94,0.2);backdrop-filter:blur(16px);border-radius:1.25rem;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 10px 30px -10px rgba(0,0,0,0.5);}
+.hero{text-align:center;padding:2.5rem 1rem;}
+.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:999px;padding:0.35rem 1.1rem;font-size:0.72rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#4ade80;margin-bottom:1rem;}
+.hero-title{font-family:'Outfit',sans-serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.08;margin-bottom:0.75rem;color:#f8fafc;}
+.accent-green{background:linear-gradient(135deg,#4ade80,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:1.25rem;text-align:center;}
+.stat-num{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;color:#4ade80;}
+.stat-lbl{font-size:0.7rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:0.2rem;}
+.controls{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem;}
+.ctrl-select,.ctrl-input{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:0.75rem;color:#f1f5f9;padding:0.6rem 1rem;font-family:'Inter',sans-serif;font-size:0.85rem;}
+.ctrl-select option{background:#061409;}
+.methodology-box{background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:1rem;padding:1.25rem;margin-bottom:1.5rem;font-size:0.85rem;line-height:1.6;}
+.table-container{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;text-align:left;}
+th{color:#94a3b8;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.1);}
+td{padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+tr:hover{background:rgba(74,222,128,0.05);}
+.rank-badge{display:inline-block;width:28px;height:28px;line-height:28px;border-radius:50%;text-align:center;font-weight:800;font-size:0.8rem;}
+.rank-1{background:#fbbf24;color:#040d06;}
+.rank-2{background:#cbd5e1;color:#040d06;}
+.rank-3{background:#d97706;color:#ffffff;}
+.rank-other{background:rgba(255,255,255,0.1);color:#94a3b8;}
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">DATA<span>TRENDS</span></a>
+  <span style="font-size:0.75rem;color:#94a3b8;font-weight:600;">Soccer Team Dynamics &amp; Synergy Research Model</span>
+</nav>
+
+<div class="wrapper">
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">⚽ International Football Analytics</div>
+    <h1 class="hero-title">Soccer Team Dynamics &amp; <span class="accent-green">Synergy Model</span></h1>
+    <p style="color:#94a3b8;font-size:0.9rem;max-width:680px;margin:0 auto 1.5rem;line-height:1.6;">
+      Evaluating international soccer team cohesion, club co-playing density ($C_d$), tactical integration ($T_i$), and squad quality concentration ($Q_c$) across 48 national squads.
+    </p>
+  </div>
+
+  <!-- Key Statistics Banner -->
+  <div class="grid-4" style="margin-bottom:1.5rem;">
+    <div class="stat-box">
+      <div class="stat-num" style="color:#fbbf24;">#1 SPAIN</div>
+      <div class="stat-lbl">Top Synergy Score (95.0)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#cbd5e1;">#2 FRANCE</div>
+      <div class="stat-lbl">Synergy Score (94.3)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#d97706;">#3 GERMANY</div>
+      <div class="stat-lbl">Synergy Score (93.9)</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num" style="color:#38bdf8;">#4 ENGLAND</div>
+      <div class="stat-lbl">Synergy Score (90.9)</div>
+    </div>
+  </div>
+
+  <!-- Research Methodology & Formula -->
+  <div class="methodology-box">
+    <strong style="color:#fbbf24;font-size:0.95rem;">🔬 Research Model &amp; Mathematical Synergy Formula:</strong>
+    <p style="margin-top:0.4rem;color:#cbd5e1;">
+      The <strong>Multifactor Team Dynamics Index</strong> evaluates how domestic club familiarity and shared positional tactical systems compound national team performance:
+    </p>
+    <div style="background:rgba(0,0,0,0.3);padding:0.75rem 1rem;border-radius:0.5rem;font-family:monospace;color:#4ade80;margin:0.75rem 0;font-size:0.9rem;">
+      S = (T_i × 0.25 + C_d × 0.40 + A_t × 0.20 + Q_c × 0.15), normalised [40 – 95]
+    </div>
+    <ul style="margin-left:1.25rem;color:#94a3b8;font-size:0.82rem;line-height:1.6;">
+      <li><strong>T_i (Tactical Integration)</strong>: Alignment of club tactical roles and league tactical familiarity.</li>
+      <li><strong>C_d (Club Density)</strong>: Measure of co-playing frequency in shared domestic clubs (e.g. Barcelona/Real Madrid for Spain, Bayern for Germany).</li>
+      <li><strong>A_t (Age Alignment)</strong>: Peak athletic age synergy across squad core.</li>
+      <li><strong>Q_c (Quality Concentration)</strong>: World-class player depth distribution.</li>
+    </ul>
+  </div>
+
+  <!-- Interactive Comparison Chart -->
+  <div class="card">
+    <h3 style="font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:1rem;color:#f8fafc;">
+      📊 Compare Team Synergy &amp; Dynamics Sub-Metrics
+    </h3>
+
+    <div class="controls">
+      <div style="flex:1;min-width:200px;">
+        <label style="font-size:0.72rem;font-weight:800;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:0.4rem;">Select Nation 1:</label>
+        <select id="team1Select" class="ctrl-select" style="width:100%;" onchange="updateChart()"></select>
+      </div>
+
+      <div style="flex:1;min-width:200px;">
+        <label style="font-size:0.72rem;font-weight:800;color:#94a3b8;text-transform:uppercase;display:block;margin-bottom:0.4rem;">Select Nation 2:</label>
+        <select id="team2Select" class="ctrl-select" style="width:100%;" onchange="updateChart()"></select>
+      </div>
+    </div>
+
+    <div style="position:relative;height:340px;margin-top:1rem;">
+      <canvas id="synergyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Leaderboard Table -->
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;">
+      <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;color:#f8fafc;">
+        🏆 International Soccer Synergy Leaderboard (48 Squads)
+      </h3>
+      <input type="text" id="searchInput" class="ctrl-input" placeholder="Search country (e.g. Spain, France)..." onkeyup="filterTable()">
+    </div>
+
+    <div class="table-container">
+      <table id="leaderboardTable">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Nation</th>
+            <th>Synergy Score (S)</th>
+            <th>Tactical Integration (T_i)</th>
+            <th>Club Density (C_d)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+let teamsData = [];
+let chart = null;
+
+async function loadSynergyData() {
+  try {
+    const res = await fetch('teams_data.json');
+    const json = await res.json();
+    teamsData = json.teams;
+    
+    populateDropdowns();
+    renderTable(teamsData);
+    updateChart();
+  } catch(e) {
+    console.error('Error loading teams_data.json', e);
+  }
+}
+
+function populateDropdowns() {
+  const t1 = document.getElementById('team1Select');
+  const t2 = document.getElementById('team2Select');
+  
+  teamsData.forEach(t => {
+    t1.innerHTML += `<option value="${t.team}">${t.team} (Score: ${t.synergy})</option>`;
+    t2.innerHTML += `<option value="${t.team}">${t.team} (Score: ${t.synergy})</option>`;
+  });
+
+  t1.value = "Spain";
+  t2.value = "England";
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  let html = '';
+
+  data.forEach((t, idx) => {
+    const rank = idx + 1;
+    let badgeClass = 'rank-other';
+    if (rank === 1) badgeClass = 'rank-1';
+    else if (rank === 2) badgeClass = 'rank-2';
+    else if (rank === 3) badgeClass = 'rank-3';
+
+    html += `<tr>
+      <td><span class="rank-badge ${badgeClass}">${rank}</span></td>
+      <td style="font-weight:700;color:#f8fafc;">${t.team}</td>
+      <td style="font-weight:900;color:#4ade80;font-size:1rem;">${t.synergy}</td>
+      <td style="color:#cbd5e1;">${t.Ti}</td>
+      <td style="color:#fbbf24;font-weight:700;">${t.Cd}</td>
+      <td style="font-size:0.75rem;color:#94a3b8;">${rank <= 8 ? '🌟 Quarterfinal Synergy' : 'Group Contender'}</td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = html;
+}
+
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = teamsData.filter(t => t.team.toLowerCase().includes(q));
+  renderTable(filtered);
+}
+
+function updateChart() {
+  const name1 = document.getElementById('team1Select').value;
+  const name2 = document.getElementById('team2Select').value;
+
+  const t1 = teamsData.find(t => t.team === name1);
+  const t2 = teamsData.find(t => t.team === name2);
+
+  if (!t1 || !t2) return;
+
+  const ctx = document.getElementById('synergyChart').getContext('2d');
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Overall Synergy (S)', 'Tactical Integration (Ti × 10)', 'Club Density (Cd × 15)'],
+      datasets: [
+        {
+          label: t1.team,
+          data: [t1.synergy, t1.Ti * 10, t1.Cd * 15],
+          backgroundColor: 'rgba(74, 222, 128, 0.7)',
+          borderColor: '#4ade80',
+          borderWidth: 1.5
+        },
+        {
+          label: t2.team,
+          data: [t2.synergy, t2.Ti * 10, t2.Cd * 15],
+          backgroundColor: 'rgba(251, 191, 36, 0.7)',
+          borderColor: '#fbbf24',
+          borderWidth: 1.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#f1f5f9', font: { family: 'Inter', weight: 'bold' } } }
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' }, max: 100 }
+      }
+    }
+  });
+}
+
+window.onload = loadSynergyData;
+</script>
+</body>
+</html>

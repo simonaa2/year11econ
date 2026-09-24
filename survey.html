@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CourseCheck — End-of-Course Survey &amp; Analytics</title>
+<meta name="description" content="Anonymous end-of-course surveys for HSC Economics classes with tiered statistical analytics for teachers.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root {
+  --bg:#05040f; --bg-card:rgba(255,255,255,0.03);
+  --border:rgba(255,255,255,0.08); --border-strong:rgba(255,255,255,0.14);
+  --text-primary:#f1f5f9; --text-secondary:#94a3b8; --text-muted:#64748b;
+  --primary:#818cf8; --primary-dark:#6366f1; --primary-glow:rgba(129,140,248,0.18);
+  --secondary:#c084fc; --green:#34d399; --red:#f87171; --yellow:#fbbf24;
+  --blue:#38bdf8; --orange:#fb923c;
+  --radius-sm:8px; --radius-md:16px; --radius-lg:24px; --radius-full:9999px;
+  --transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text-primary); min-height:100vh; line-height:1.5; overflow-x:hidden; }
+.hidden { display:none !important; }
+a { color:var(--primary); text-decoration:none; }
+
+/* NAV */
+.top-bar { display:flex; align-items:center; justify-content:space-between; padding:0.9rem 1.5rem; border-bottom:1px solid var(--border); margin-bottom:2rem; gap:1rem; flex-wrap:wrap; }
+.top-bar-title { font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:800; background:linear-gradient(135deg,#818cf8,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; white-space:nowrap; }
+.nav-btns { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+.nav-link { background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:var(--radius-full); padding:0.35rem 0.9rem; font-size:0.78rem; color:var(--text-secondary); cursor:pointer; transition:var(--transition); text-decoration:none; white-space:nowrap; }
+.nav-link:hover { background:rgba(255,255,255,0.09); color:var(--text-primary); }
+.nav-link.active { background:rgba(129,140,248,0.15); border-color:rgba(129,140,248,0.35); color:var(--primary); font-weight:700; }
+
+/* LAYOUT */
+.screen { min-height:100vh; padding:1.5rem 1rem 4rem; }
+.container { max-width:820px; margin:0 auto; }
+
+/* CARDS */
+.card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:1.75rem; }
+.card-title { font-family:'Outfit',sans-serif; font-size:1.35rem; font-weight:800; margin-bottom:0.75rem; }
+.card-subtitle { font-size:0.9rem; color:var(--text-secondary); margin-bottom:1.5rem; line-height:1.6; }
+
+/* ROLE CARDS */
+.role-card { background:rgba(255,255,255,0.03); border:2px solid var(--border); border-radius:var(--radius-lg); padding:1.5rem; cursor:pointer; transition:var(--transition); text-align:center; }
+.role-card:hover { border-color:var(--primary); background:rgba(129,140,248,0.06); transform:translateY(-3px); }
+.role-icon { font-size:2.4rem; margin-bottom:0.6rem; }
+.role-title { font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:800; margin-bottom:0.3rem; }
+.role-desc { font-size:0.82rem; color:var(--text-secondary); line-height:1.4; }
+.three-col { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+.two-col { display:grid; grid-template-columns:1fr 1fr; gap:1.25rem; }
+@media(max-width:680px) { .three-col, .two-col { grid-template-columns:1fr; } }
+
+/* FORMS */
+.form-group { margin-bottom:1.2rem; }
+.form-label { display:block; font-size:0.8rem; font-weight:600; color:var(--text-secondary); margin-bottom:0.4rem; text-transform:uppercase; letter-spacing:0.04em; }
+.text-input, .select-input { width:100%; background:rgba(255,255,255,0.05); border:1px solid var(--border-strong); border-radius:var(--radius-sm); color:var(--text-primary); padding:0.7rem 1rem; font-size:0.95rem; font-family:'Inter',sans-serif; outline:none; transition:var(--transition); }
+.text-input:focus, .select-input:focus { border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-glow); }
+.select-input option { background:#1e1b4b; }
+
+/* BUTTONS */
+.btn { display:inline-flex; align-items:center; gap:0.5rem; padding:0.65rem 1.4rem; border-radius:var(--radius-full); font-size:0.9rem; font-weight:700; cursor:pointer; transition:var(--transition); border:none; font-family:'Inter',sans-serif; }
+.btn-primary { background:linear-gradient(135deg,#6366f1,#818cf8); color:#fff; box-shadow:0 4px 14px rgba(99,102,241,0.35); }
+.btn-primary:hover { transform:translateY(-2px); box-shadow:0 6px 20px rgba(99,102,241,0.5); }
+.btn-primary:disabled { opacity:0.45; transform:none; cursor:not-allowed; }
+.btn-secondary { background:rgba(255,255,255,0.06); border:1px solid var(--border-strong); color:var(--text-secondary); }
+.btn-secondary:hover { background:rgba(255,255,255,0.11); color:var(--text-primary); }
+.btn-green { background:linear-gradient(135deg,#059669,#34d399); color:#fff; box-shadow:0 4px 14px rgba(52,211,153,0.3); }
+.btn-green:hover { transform:translateY(-2px); }
+.btn-orange { background:linear-gradient(135deg,#d97706,#fb923c); color:#fff; }
+.btn-orange:hover { transform:translateY(-2px); }
+.btn-full { width:100%; justify-content:center; padding:0.85rem; }
+
+/* PROGRESS BAR */
+.progress-wrap { width:100%; height:6px; background:rgba(255,255,255,0.08); border-radius:3px; margin-bottom:1.5rem; overflow:hidden; }
+.progress-fill { height:100%; background:linear-gradient(90deg,#6366f1,#818cf8,#c084fc); border-radius:3px; transition:width 0.45s ease; }
+
+/* QUESTION CARD */
+.question-card { background:linear-gradient(145deg,rgba(99,102,241,0.05),rgba(192,132,252,0.05)); border:1px solid rgba(129,140,248,0.2); border-radius:var(--radius-lg); padding:2rem; margin-bottom:1.5rem; }
+.question-card.animate { animation:slideIn 0.35s cubic-bezier(0.34,1.56,0.64,1); }
+@keyframes slideIn { from{opacity:0;transform:translateX(28px);} to{opacity:1;transform:translateX(0);} }
+.q-num { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--primary); margin-bottom:0.4rem; }
+.q-dv-tag { display:inline-block; background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.3); color:#fbbf24; border-radius:var(--radius-full); font-size:0.7rem; font-weight:700; padding:0.15rem 0.6rem; margin-bottom:0.4rem; letter-spacing:0.04em; }
+.q-text { font-family:'Outfit',sans-serif; font-size:1.3rem; font-weight:700; line-height:1.35; margin-bottom:2rem; }
+.slider-val-wrap { text-align:center; margin-bottom:1rem; }
+.slider-val-num { font-family:'Outfit',sans-serif; font-size:4rem; font-weight:900; background:linear-gradient(135deg,#818cf8,#c084fc); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; line-height:1; }
+.slider-val-emoji { font-size:1.8rem; display:block; margin-top:0.1rem; }
+.range-slider { width:100%; -webkit-appearance:none; appearance:none; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; outline:none; cursor:pointer; }
+.range-slider::-webkit-slider-thumb { -webkit-appearance:none; width:28px; height:28px; border-radius:50%; background:var(--primary); box-shadow:0 0 14px rgba(129,140,248,0.6); cursor:pointer; }
+.slider-labels { display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:0.5rem; }
+
+/* STATS */
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.stat-card { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-md); padding:1rem 1.25rem; text-align:center; }
+.stat-val { font-family:'Outfit',sans-serif; font-size:2rem; font-weight:800; line-height:1; }
+.stat-label { font-size:0.72rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-top:0.3rem; }
+
+/* ANALYSIS PANEL */
+.analysis-panel { background:linear-gradient(135deg,rgba(56,189,248,0.04),rgba(129,140,248,0.04)); border:1px solid rgba(56,189,248,0.2); border-radius:var(--radius-md); padding:1.5rem; margin-bottom:1.5rem; }
+.coef-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+.coef-table th { font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); padding:0.5rem 0.75rem; text-align:left; border-bottom:1px solid var(--border); }
+.coef-table td { padding:0.6rem 0.75rem; border-bottom:1px solid rgba(255,255,255,0.04); vertical-align:middle; }
+.coef-table tr:last-child td { border-bottom:none; }
+.coef-bar { height:8px; border-radius:4px; display:inline-block; vertical-align:middle; margin-right:0.5rem; }
+.regression-eq { font-family:'Courier New',monospace; font-size:0.82rem; background:rgba(0,0,0,0.35); border-radius:var(--radius-sm); padding:0.85rem 1rem; color:var(--blue); margin:0.75rem 0 1rem; overflow-x:auto; white-space:nowrap; line-height:1.6; }
+
+/* MISC */
+.badge { display:inline-block; padding:0.18rem 0.55rem; border-radius:var(--radius-full); font-size:0.7rem; font-weight:700; }
+.badge-purple { background:rgba(129,140,248,0.12); color:#818cf8; }
+.badge-green { background:rgba(52,211,153,0.12); color:#34d399; }
+.badge-orange { background:rgba(251,146,60,0.12); color:#fb923c; }
+.hero-badge { display:inline-flex; align-items:center; gap:0.5rem; background:rgba(129,140,248,0.1); border:1px solid rgba(129,140,248,0.3); border-radius:var(--radius-full); padding:0.4rem 1rem; font-size:0.78rem; font-weight:700; color:var(--primary); letter-spacing:0.05em; margin-bottom:1.25rem; }
+.hero-title { font-family:'Outfit',sans-serif; font-size:2.6rem; font-weight:900; line-height:1.1; margin-bottom:1rem; }
+@media(max-width:600px) { .hero-title { font-size:1.9rem; } }
+.divider { height:1px; background:var(--border); margin:1.25rem 0; }
+.success-box { background:rgba(52,211,153,0.08); border:1px solid rgba(52,211,153,0.25); border-radius:var(--radius-md); padding:1.25rem; font-size:0.9rem; color:var(--text-secondary); line-height:1.6; }
+.code-display { font-family:'Outfit',sans-serif; font-size:2rem; font-weight:900; letter-spacing:0.15em; color:var(--green); display:block; margin:0.5rem 0; }
+.demo-banner { background:linear-gradient(135deg,rgba(251,146,60,0.08),rgba(251,191,36,0.08)); border:1px solid rgba(251,146,60,0.3); border-radius:var(--radius-md); padding:0.85rem 1rem; font-size:0.85rem; color:var(--orange); margin-bottom:1.25rem; }
+</style>
+</head>
+<body>
+
+<nav class="top-bar">
+  <span class="top-bar-title">📋 CourseCheck</span>
+  <div class="nav-btns">
+    <a href="https://www.datatrends.com.au" class="nav-link">🏠 Home</a>
+    <a href="https://www.datatrends.com.au/stadium.html" class="nav-link">⚽ Stadium</a>
+    <a href="https://www.datatrends.com.au/market.html" class="nav-link">✈️ SkyMarket</a>
+    <a href="https://www.datatrends.com.au/simulations.html" class="nav-link">📊 Simulations</a>
+    <a href="https://www.datatrends.com.au/survey.html" class="nav-link active">📋 Survey</a>
+  </div>
+</nav>
+
+<!-- ═══ ENTRY SCREEN ═══ -->
+<div class="screen" id="entryScreen">
+  <div class="container" style="max-width:700px;">
+    <div class="hero-badge">📋 End-of-Course Survey System</div>
+    <h1 class="hero-title">CourseCheck<br>
+      <span style="background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Anonymous Feedback</span>
+    </h1>
+    <p style="color:var(--text-secondary);font-size:1rem;margin-bottom:2rem;max-width:520px;">
+      Anonymous end-of-course surveys with live <strong style="color:var(--text-primary);">tiered statistical analytics</strong> — Spearman ρ for small classes, Pearson r for mid-size, full OLS regression when N ≥ 60.
+    </p>
+
+    <div class="form-group" style="max-width:340px;margin-bottom:2rem;">
+      <label class="form-label">Survey Code</label>
+      <input type="text" id="entryCode" class="text-input" placeholder="e.g. 11ECO-T2"
+        style="text-transform:uppercase;font-weight:700;letter-spacing:0.06em;" maxlength="16"
+        oninput="this.value=this.value.toUpperCase()">
+    </div>
+
+    <div class="three-col" style="max-width:680px;margin-bottom:1rem;">
+      <div class="role-card" onclick="beginSurvey('student')">
+        <div class="role-icon">🎓</div>
+        <div class="role-title">Student Survey</div>
+        <div class="role-desc">10-question anonymous end-of-course feedback</div>
+      </div>
+      <div class="role-card" onclick="beginSurvey('teacher')">
+        <div class="role-icon">👩‍🏫</div>
+        <div class="role-title">Teacher Survey</div>
+        <div class="role-desc">Reflect on course delivery &amp; student outcomes</div>
+      </div>
+      <div class="role-card" onclick="goToAnalytics()" style="border-color:rgba(192,132,252,0.3);">
+        <div class="role-icon">📊</div>
+        <div class="role-title">Analytics</div>
+        <div class="role-desc">PIN-protected regression dashboard (teachers only)</div>
+      </div>
+    </div>
+
+    <div class="role-card" onclick="goToSetup()"
+      style="max-width:680px;text-align:left;display:flex;align-items:center;gap:1.25rem;border-color:rgba(251,191,36,0.3);margin-top:0.75rem;">
+      <div style="font-size:2.2rem;flex-shrink:0;">⚙️</div>
+      <div>
+        <div class="role-title" style="font-size:1.05rem;">Create New Survey Session</div>
+        <div class="role-desc">Teachers: set up a course survey, choose a PIN, get a shareable code</div>
+      </div>
+    </div>
+
+    <!-- DEMO BUTTON -->
+    <div style="max-width:680px;margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.75rem;">Want to see how the analytics dashboard looks before collecting real data?</p>
+      <button class="btn btn-orange" onclick="openDemo()" style="gap:0.5rem;">
+        🎭 Preview Analytics with Demo Data
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETUP SCREEN ═══ -->
+<div class="screen hidden" id="setupScreen">
+  <div class="container" style="max-width:620px;">
+    <div class="card">
+      <h2 class="card-title">⚙️ Create Survey Session</h2>
+      <p class="card-subtitle">Set up a new end-of-course survey. Choose a short code to share with students. Your PIN is SHA-256 hashed before storage — keep it safe.</p>
+
+      <div class="form-group">
+        <label class="form-label">Course Name</label>
+        <input type="text" id="setupCourseName" class="text-input" placeholder="e.g. Year 11 Economics — Term 2 2026">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Survey Code <span style="font-weight:400;color:var(--text-muted);">(you choose — share with students)</span></label>
+        <input type="text" id="setupCode" class="text-input" placeholder="e.g. 11ECO-T2"
+          style="text-transform:uppercase;font-weight:700;letter-spacing:0.05em;" maxlength="16"
+          oninput="this.value=this.value.toUpperCase()">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Course Group Tag <span style="font-weight:400;color:var(--text-muted);">(optional — lets you combine multiple classes for pooled analysis)</span></label>
+        <input type="text" id="setupGroup" class="text-input"
+          placeholder="e.g. YEAR11ECO-T2  (same tag on 11ECO1 and 11ECO2 links them)"
+          style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+        <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.35rem;">Give the same tag to all classes running the same course in the same term. The analytics dashboard can then merge their responses to reach higher statistical tiers.</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimated Class Size</label>
+        <input type="number" id="setupClassSize" class="text-input" placeholder="e.g. 24" min="1" max="200" value="24">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Survey Closes</label>
+        <select id="setupCloseMethod" class="select-input" onchange="toggleDatePicker()">
+          <option value="manual">Manually (I'll close it from the dashboard)</option>
+          <option value="date">On a specific date &amp; time</option>
+        </select>
+      </div>
+      <div class="form-group hidden" id="closeDateGroup">
+        <label class="form-label">Close Date &amp; Time</label>
+        <input type="datetime-local" id="setupCloseDate" class="text-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Student Results Visibility</label>
+        <select id="setupVisibility" class="select-input">
+          <option value="aggregate">Show class average scores after student submits</option>
+          <option value="private">Thank-you page only — full data visible to teacher only</option>
+        </select>
+      </div>
+      <div class="divider"></div>
+      <div class="form-group">
+        <label class="form-label">Teacher PIN (4–8 digits)</label>
+        <input type="password" id="setupPin" class="text-input" placeholder="Choose a PIN" maxlength="8">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Confirm PIN</label>
+        <input type="password" id="setupPinConfirm" class="text-input" placeholder="Re-enter PIN" maxlength="8">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="createSession()">✓ Create Survey &amp; Generate Code</button>
+      <div id="setupMsg" style="margin-top:1rem;"></div>
+      <div style="text-align:center;margin-top:1rem;">
+        <button class="btn btn-secondary" onclick="showScreen('entryScreen')">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SURVEY SCREEN ═══ -->
+<div class="screen hidden" id="surveyScreen">
+  <div class="container" style="max-width:620px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem;flex-wrap:wrap;gap:0.5rem;">
+      <div style="font-size:0.78rem;color:var(--text-muted);" id="surveyCourseName"></div>
+      <div id="surveyShareLink" style="font-size:0.7rem;color:var(--blue);cursor:pointer;display:none;"
+        onclick="navigator.clipboard.writeText(this.dataset.url).then(()=>this.textContent='✅ Copied!')">
+        📋 Copy survey link
+      </div>
+    </div>
+    <div class="progress-wrap"><div class="progress-fill" id="progressFill" style="width:10%;"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-muted);margin-bottom:1.25rem;">
+      <span id="qCounter">Question 1 of 10</span>
+      <span id="surveyRoleLabel" style="color:var(--primary);font-weight:600;">Student Survey</span>
+    </div>
+    <div class="question-card" id="questionCard">
+      <div id="dvTag" class="q-dv-tag hidden">★ Outcome Variable</div>
+      <div class="q-num" id="qNumLabel">Question 1</div>
+      <div class="q-text" id="qText">Loading…</div>
+      <div class="slider-val-wrap">
+        <div class="slider-val-num" id="sliderNum">5</div>
+        <span class="slider-val-emoji" id="sliderEmoji">😐</span>
+      </div>
+      <input type="range" id="qSlider" class="range-slider" min="1" max="10" value="5"
+        oninput="onSlide(this.value)">
+      <div class="slider-labels"><span>1 — Strongly disagree</span><span>10 — Strongly agree</span></div>
+    </div>
+    <div style="display:flex;gap:1rem;justify-content:space-between;align-items:center;">
+      <button class="btn btn-secondary" id="prevBtn" onclick="goPrev()" style="display:none;">← Previous</button>
+      <div style="flex:1;"></div>
+      <button class="btn btn-primary" id="nextBtn" onclick="goNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ALREADY SUBMITTED ═══ -->
+<div class="screen hidden" id="alreadyScreen">
+  <div class="container" style="max-width:500px;text-align:center;padding-top:4rem;">
+    <div style="font-size:4rem;margin-bottom:1rem;">✅</div>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;margin-bottom:0.75rem;">Already Submitted</h2>
+    <p style="color:var(--text-secondary);margin-bottom:2rem;">You've already completed this survey from this device. Your feedback counts!</p>
+    <button class="btn btn-secondary" onclick="showScreen('entryScreen')">← Back to Home</button>
+  </div>
+</div>
+
+<!-- ═══ THANK YOU ═══ -->
+<div class="screen hidden" id="thankYouScreen">
+  <div class="container" style="max-width:620px;text-align:center;">
+    <div style="font-size:4.5rem;margin-bottom:1rem;">🎉</div>
+    <h2 style="font-family:'Outfit',sans-serif;font-size:2.2rem;font-weight:900;margin-bottom:0.75rem;">Thank you!</h2>
+    <p style="color:var(--text-secondary);margin-bottom:0.5rem;font-size:1rem;">Your anonymous response has been recorded.</p>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:2rem;" id="tyCount"></p>
+    <div id="tyAggPanel" class="card" style="text-align:left;margin-bottom:1.5rem;display:none;">
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:1rem;">📊 Class Average Scores So Far</div>
+      <canvas id="tyChart" height="180"></canvas>
+    </div>
+    <button class="btn btn-secondary" onclick="showScreen('entryScreen')">← Back to Home</button>
+  </div>
+</div>
+
+<!-- ═══ PIN SCREEN ═══ -->
+<div class="screen hidden" id="pinScreen">
+  <div class="container" style="max-width:420px;text-align:center;padding-top:3rem;">
+    <div class="card">
+      <div style="font-size:3rem;margin-bottom:0.75rem;">🔐</div>
+      <h2 style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:900;margin-bottom:0.5rem;">Teacher Analytics</h2>
+      <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;" id="pinCourseLabel">Enter your teacher PIN.</p>
+      <div class="form-group">
+        <input type="password" id="pinInput" class="text-input"
+          style="text-align:center;font-size:1.4rem;letter-spacing:0.25em;font-weight:700;max-width:200px;display:block;margin:0 auto;"
+          placeholder="••••" maxlength="8" onkeydown="if(event.key==='Enter')verifyPin()">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="verifyPin()">🔓 Access Dashboard</button>
+      <div id="pinError" style="color:var(--red);font-size:0.85rem;margin-top:0.75rem;min-height:1.2em;"></div>
+      <button class="btn btn-secondary" onclick="showScreen('entryScreen')" style="margin-top:0.75rem;width:100%;justify-content:center;">← Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ANALYTICS DASHBOARD ═══ -->
+<div class="screen hidden" id="analyticsScreen">
+  <div class="container">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.2rem;">Analytics Dashboard · <span id="dashCode"></span></div>
+        <h2 style="font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:900;" id="dashCourseName">Course</h2>
+      </div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+        <button class="btn btn-orange" style="font-size:0.8rem;" onclick="openDemo()">🎭 Preview Demo Data</button>
+        <button class="btn btn-secondary" style="font-size:0.8rem;" onclick="loadDashboard()">🔄 Refresh Live Data</button>
+        <button class="btn btn-secondary" style="font-size:0.8rem;" id="combineBtn" onclick="toggleCombine()" style="display:none;">🔗 Combine Classes</button>
+        <button class="btn btn-secondary" style="font-size:0.8rem;" id="closeSurveyBtn" onclick="closeSurvey()">🔒 Close Survey</button>
+      </div>
+    </div>
+
+    <div id="demoBanner" class="demo-banner hidden">
+      🎭 <strong>Demo Mode</strong> — showing 18 synthetic student responses and 4 teacher responses. Click <strong>Refresh Live Data</strong> to see real submissions.
+    </div>
+
+    <!-- COMBINE PANEL -->
+    <div id="combinePanelWrap" class="hidden" style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.2);border-radius:var(--radius-md);padding:1.25rem;margin-bottom:1.25rem;">
+      <div style="font-size:0.85rem;font-weight:700;color:var(--blue);margin-bottom:0.75rem;">🔗 Combine Classes — Course Group: <span id="combineGroupLabel" style="color:var(--text-primary);"></span></div>
+      <div id="combineClassList" style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:1rem;">Loading classes in this group…</div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-primary" style="font-size:0.82rem;" onclick="loadCombined()">📊 Merge &amp; Analyse Combined Data</button>
+        <button class="btn btn-secondary" style="font-size:0.82rem;" onclick="loadDashboard()">Show This Class Only</button>
+      </div>
+    </div>
+
+    <div id="closedBanner" class="hidden"
+      style="background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius-sm);padding:0.85rem 1rem;margin-bottom:1.25rem;font-size:0.85rem;color:var(--red);">
+      🔒 This survey is <strong>closed</strong>. No new responses are being accepted.
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-val" id="dStatTotal" style="color:var(--primary);">—</div><div class="stat-label">Total Responses</div></div>
+      <div class="stat-card"><div class="stat-val" id="dStatCompletion" style="color:var(--green);">—</div><div class="stat-label">Completion %</div></div>
+      <div class="stat-card"><div class="stat-val" id="dStatAvgGain" style="color:var(--yellow);">—</div><div class="stat-label">Avg Learning Gain</div></div>
+      <div class="stat-card"><div class="stat-val" id="dStatR2" style="color:var(--blue);">—</div><div class="stat-label">Top Correlation r</div></div>
+    </div>
+
+    <div style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" id="tabStudBtn" onclick="switchTab('student')" style="font-size:0.82rem;">🎓 Student Data</button>
+      <button class="btn btn-secondary" id="tabTeachBtn" onclick="switchTab('teacher')" style="font-size:0.82rem;">👩‍🏫 Teacher Data</button>
+    </div>
+
+    <!-- STUDENT PANEL -->
+    <div id="panelStudent">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:1rem;">Average Scores — Student Survey (1–10)</div>
+        <div id="noStudentData" style="color:var(--text-muted);font-size:0.85rem;font-style:italic;display:none;padding:1rem 0;">No student responses yet.</div>
+        <canvas id="sAvgChart" height="150"></canvas>
+      </div>
+      <div class="analysis-panel">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:0.5rem;">📐 Statistical Analysis — Learning Gain</div>
+        <p style="font-size:0.83rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+          Outcome variable: <strong style="color:var(--yellow);">learning_gain</strong> — what factors predict student improvement?
+        </p>
+        <div id="sAnalysisOutput">
+          <div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">Load data to see analysis.</div>
+        </div>
+      </div>
+      <div class="two-col" style="margin-bottom:1.5rem;">
+        <div class="card">
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--primary);margin-bottom:0.75rem;">Engagement vs Learning Gain</div>
+          <canvas id="scatter1" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--primary);margin-bottom:0.75rem;">Teaching Quality vs Learning Gain</div>
+          <canvas id="scatter2" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEACHER PANEL -->
+    <div id="panelTeacher" class="hidden">
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--primary);margin-bottom:1rem;">Average Scores — Teacher Survey (1–10)</div>
+        <div id="noTeacherData" style="color:var(--text-muted);font-size:0.85rem;font-style:italic;display:none;padding:1rem 0;">No teacher responses yet.</div>
+        <canvas id="tAvgChart" height="150"></canvas>
+      </div>
+      <div class="analysis-panel">
+        <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:0.5rem;">📐 Statistical Analysis — Student Engagement</div>
+        <p style="font-size:0.83rem;color:var(--text-secondary);margin-bottom:0.75rem;">
+          Outcome variable: <strong style="color:var(--yellow);">student_engagement</strong> — what teaching factors predict engagement?
+        </p>
+        <div id="tAnalysisOutput">
+          <div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">Load data to see analysis.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── URL PARAM AUTO-LAUNCH ────────────────────────────────
+// Teacher shares: survey.html?code=11ECO-T2&role=student
+// Student clicks link → code pre-filled, survey starts automatically
+window.addEventListener('DOMContentLoaded', ()=>{
+  const p=new URLSearchParams(window.location.search);
+  const code=p.get('code'); const role=p.get('role');
+  if(code){
+    const el=document.getElementById('entryCode');
+    if(el) el.value=code.toUpperCase();
+    if(role==='student'||role==='teacher') beginSurvey(role);
+  }
+});
+
+// ── FIREBASE ─────────────────────────────────────────────
+firebase.initializeApp({
+  apiKey:"AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+  authDomain:"www.datatrends.com.au",
+  projectId:"maths-f3c6d",
+  storageBucket:"maths-f3c6d.firebasestorage.app",
+  messagingSenderId:"76007634547",
+  appId:"1:76007634547:web:0b9773147e26dd2940dc06"
+});
+const db = firebase.firestore();
+
+// ── STATE ────────────────────────────────────────────────
+let surveyCode='', surveyRole='', currentQ=0, answers={}, sessionData=null;
+let charts={};
+
+// ── DEMO DATA ────────────────────────────────────────────
+// 18 synthetic student responses with realistic (not too clean) correlations
+// engagement/teaching_quality correlate ~0.6 with learning_gain; difficulty is mildly negative
+const DEMO_STUDENTS = [
+  {learning_gain:7,engagement:8,teaching_quality:7,support:6,relevance:7,difficulty:5,effort:8,assessment_quality:7,confidence:6,nps:8},
+  {learning_gain:5,engagement:6,teaching_quality:7,support:5,relevance:6,difficulty:7,effort:5,assessment_quality:6,confidence:5,nps:6},
+  {learning_gain:8,engagement:7,teaching_quality:9,support:8,relevance:8,difficulty:4,effort:9,assessment_quality:8,confidence:8,nps:9},
+  {learning_gain:4,engagement:5,teaching_quality:5,support:4,relevance:4,difficulty:9,effort:3,assessment_quality:4,confidence:3,nps:4},
+  {learning_gain:7,engagement:8,teaching_quality:6,support:7,relevance:8,difficulty:6,effort:7,assessment_quality:7,confidence:7,nps:8},
+  {learning_gain:6,engagement:5,teaching_quality:7,support:5,relevance:5,difficulty:7,effort:6,assessment_quality:6,confidence:5,nps:6},
+  {learning_gain:9,engagement:9,teaching_quality:8,support:8,relevance:9,difficulty:4,effort:9,assessment_quality:9,confidence:9,nps:10},
+  {learning_gain:5,engagement:6,teaching_quality:5,support:5,relevance:6,difficulty:8,effort:4,assessment_quality:5,confidence:4,nps:5},
+  {learning_gain:6,engagement:7,teaching_quality:7,support:6,relevance:6,difficulty:6,effort:6,assessment_quality:6,confidence:6,nps:7},
+  {learning_gain:8,engagement:8,teaching_quality:8,support:7,relevance:7,difficulty:5,effort:8,assessment_quality:8,confidence:7,nps:8},
+  {learning_gain:3,engagement:4,teaching_quality:4,support:3,relevance:3,difficulty:9,effort:2,assessment_quality:3,confidence:2,nps:3},
+  {learning_gain:7,engagement:7,teaching_quality:8,support:7,relevance:7,difficulty:5,effort:7,assessment_quality:7,confidence:7,nps:8},
+  {learning_gain:6,engagement:6,teaching_quality:6,support:6,relevance:7,difficulty:7,effort:5,assessment_quality:6,confidence:5,nps:6},
+  {learning_gain:8,engagement:9,teaching_quality:7,support:8,relevance:8,difficulty:5,effort:8,assessment_quality:8,confidence:8,nps:9},
+  {learning_gain:5,engagement:5,teaching_quality:6,support:4,relevance:5,difficulty:8,effort:5,assessment_quality:5,confidence:4,nps:5},
+  {learning_gain:7,engagement:7,teaching_quality:8,support:7,relevance:6,difficulty:6,effort:7,assessment_quality:7,confidence:6,nps:7},
+  {learning_gain:6,engagement:8,teaching_quality:6,support:6,relevance:7,difficulty:7,effort:6,assessment_quality:6,confidence:6,nps:7},
+  {learning_gain:9,engagement:8,teaching_quality:9,support:9,relevance:9,difficulty:3,effort:9,assessment_quality:9,confidence:9,nps:10},
+];
+// 4 synthetic teacher responses
+const DEMO_TEACHERS = [
+  {student_engagement:7,curriculum_fit:8,assessment_validity:7,observed_gain:7,workload_balance:6,tool_effectiveness:8,activity_quality:7,differentiation:6,outcomes_satisfaction:7,repeatability:8},
+  {student_engagement:5,curriculum_fit:6,assessment_validity:6,observed_gain:5,workload_balance:5,tool_effectiveness:6,activity_quality:5,differentiation:4,outcomes_satisfaction:5,repeatability:6},
+  {student_engagement:8,curriculum_fit:7,assessment_validity:8,observed_gain:8,workload_balance:7,tool_effectiveness:9,activity_quality:8,differentiation:7,outcomes_satisfaction:8,repeatability:9},
+  {student_engagement:6,curriculum_fit:7,assessment_validity:7,observed_gain:6,workload_balance:6,tool_effectiveness:7,activity_quality:6,differentiation:6,outcomes_satisfaction:6,repeatability:7},
+];
+
+// ── QUESTIONS ────────────────────────────────────────────
+const SQ=[
+  {key:'learning_gain',     dv:true, text:'How much did your understanding of the subject improve over this 10-week course?'},
+  {key:'engagement',                 text:'How engaging did you find the lessons and class activities?'},
+  {key:'teaching_quality',           text:'How effective was the teaching in helping you understand difficult concepts?'},
+  {key:'support',                    text:'How well were you supported when you struggled with the content?'},
+  {key:'relevance',                  text:'How relevant was the course content to real-world situations?'},
+  {key:'difficulty',                 text:'How appropriately challenging did you find the course overall?'},
+  {key:'effort',                     text:'How consistently did you complete weekly work and study throughout the course?'},
+  {key:'assessment_quality',         text:'How fair and clearly explained were the assessments and exams?'},
+  {key:'confidence',                 text:'How confident do you feel in this subject compared to when you started?'},
+  {key:'nps',                        text:'How likely are you to recommend this course to a friend? (1 = definitely not, 10 = definitely yes)'},
+];
+const TQ=[
+  {key:'student_engagement',  dv:true, text:'How well did students engage with the course content and activities overall?'},
+  {key:'curriculum_fit',               text:'How well did the curriculum design suit this cohort\'s needs and ability level?'},
+  {key:'assessment_validity',          text:'How well did assessments reflect actual student learning and understanding?'},
+  {key:'observed_gain',                text:'How much did you observe students improving over the 10 weeks?'},
+  {key:'workload_balance',             text:'How manageable was the overall course workload for your students?'},
+  {key:'tool_effectiveness',           text:'How effective were the digital tools and simulations used in this course?'},
+  {key:'activity_quality',             text:'How well did class discussions and activities support deeper understanding?'},
+  {key:'differentiation',              text:'How effectively did you adapt your teaching to meet the range of student needs?'},
+  {key:'outcomes_satisfaction',        text:'How satisfied are you with the overall learning outcomes achieved by this class?'},
+  {key:'repeatability',                text:'How likely are you to run this course again with minimal changes?'},
+];
+const S_IND=['engagement','teaching_quality','support','relevance','difficulty','effort'];
+const T_IND=['curriculum_fit','assessment_validity','workload_balance','tool_effectiveness','activity_quality','differentiation'];
+
+function getQs(){ return surveyRole==='student' ? SQ : TQ; }
+function emojiFor(v){ return v<=2?'😔':v<=4?'😕':v<=6?'😐':v<=8?'🙂':'😊'; }
+
+// ── FINGERPRINT ──────────────────────────────────────────
+function fingerprint(){
+  const s=[navigator.language||'',screen.width+'x'+screen.height,screen.colorDepth,
+    new Date().getTimezoneOffset(),navigator.hardwareConcurrency||0,
+    navigator.platform||'',navigator.userAgent.slice(0,80)].join('|');
+  let h=5381;
+  for(let i=0;i<s.length;i++) h=((h<<5)+h)+s.charCodeAt(i)|0;
+  return Math.abs(h).toString(36);
+}
+
+// ── PIN HASH ─────────────────────────────────────────────
+async function hashPin(pin){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(pin));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── SCREEN ROUTER ────────────────────────────────────────
+function showScreen(id){
+  ['entryScreen','setupScreen','surveyScreen','alreadyScreen','thankYouScreen','pinScreen','analyticsScreen']
+    .forEach(s=>{ const el=document.getElementById(s); if(el) el.classList.add('hidden'); });
+  const t=document.getElementById(id);
+  if(t) t.classList.remove('hidden');
+}
+
+// ── ENTRY ────────────────────────────────────────────────
+function getCode(){
+  const c=(document.getElementById('entryCode').value||'').trim().toUpperCase();
+  if(!c){ alert('Please enter a survey code first.'); return null; }
+  return c;
+}
+function goToSetup(){ showScreen('setupScreen'); }
+function goToAnalytics(){ const c=getCode(); if(!c) return; surveyCode=c; loadPinScreen(); }
+
+// ── SURVEY FLOW ───────────────────────────────────────────
+async function beginSurvey(role){
+  const code=getCode(); if(!code) return;
+  surveyCode=code; surveyRole=role;
+  let snap=await db.collection('survey_sessions').doc(code).get();
+  // Fuzzy fallback: strip spaces and hyphens, try again
+  if(!snap.exists){
+    const fuzzy=code.replace(/[\s\-_]/g,'');
+    if(fuzzy!==code){
+      snap=await db.collection('survey_sessions').doc(fuzzy).get();
+      if(snap.exists) surveyCode=fuzzy;
+    }
+  }
+  if(!snap.exists){
+    alert('Survey code "'+code+'" not found.\n\nTips:\n• Check for typos\n• Make sure you have the right code from your teacher\n• Codes are not case-sensitive'); return;
+  }
+  sessionData=snap.data();
+  if(sessionData.status==='closed'){ alert('This survey has been closed. Thank you!'); return; }
+  if(sessionData.closeMethod==='date'&&sessionData.closeDate&&new Date()>new Date(sessionData.closeDate)){
+    alert('This survey closed on '+new Date(sessionData.closeDate).toLocaleString()+'.'); return;
+  }
+  const lsKey='ccsubmit_'+code+'_'+role;
+  if(localStorage.getItem(lsKey)){ showScreen('alreadyScreen'); return; }
+  const fp=fingerprint();
+  const dup=await db.collection('survey_responses')
+    .where('sessionCode','==',code).where('role','==',role).where('deviceHash','==',fp).limit(1).get();
+  if(!dup.empty){ localStorage.setItem(lsKey,'1'); showScreen('alreadyScreen'); return; }
+  currentQ=0; answers={};
+  // Update browser URL bar so it shows the unique survey link
+  const newUrl=`${window.location.origin}${window.location.pathname}?code=${surveyCode}&role=${role}`;
+  history.replaceState(null,'',newUrl);
+  // Also show a copy-link button on the survey screen
+  const shareEl=document.getElementById('surveyShareLink');
+  if(shareEl){ shareEl.dataset.url=newUrl; shareEl.style.display='block'; shareEl.textContent='📋 Copy survey link'; }
+  document.getElementById('surveyCourseName').textContent=(sessionData.courseName||surveyCode)+' — anonymous survey';
+  document.getElementById('surveyRoleLabel').textContent=role==='student'?'Student Survey':'Teacher Survey';
+  renderQ();
+  showScreen('surveyScreen');
+}
+
+function renderQ(){
+  const qs=getQs(), q=qs[currentQ], total=qs.length, val=answers[q.key]||5;
+  document.getElementById('qNumLabel').textContent='Question '+(currentQ+1);
+  document.getElementById('qText').textContent=q.text;
+  document.getElementById('dvTag').classList.toggle('hidden',!q.dv);
+  document.getElementById('qSlider').value=val;
+  document.getElementById('sliderNum').textContent=val;
+  document.getElementById('sliderEmoji').textContent=emojiFor(val);
+  document.getElementById('qCounter').textContent='Question '+(currentQ+1)+' of '+total;
+  document.getElementById('progressFill').style.width=Math.round(((currentQ+1)/total)*100)+'%';
+  document.getElementById('prevBtn').style.display=currentQ===0?'none':'';
+  const nb=document.getElementById('nextBtn');
+  nb.textContent=currentQ===total-1?'✓ Submit':'Next →';
+  nb.className='btn '+(currentQ===total-1?'btn-green':'btn-primary');
+  nb.disabled=false;
+  const card=document.getElementById('questionCard');
+  card.classList.remove('animate'); void card.offsetWidth; card.classList.add('animate');
+}
+
+function onSlide(v){
+  const q=getQs()[currentQ]; answers[q.key]=parseInt(v);
+  document.getElementById('sliderNum').textContent=v;
+  document.getElementById('sliderEmoji').textContent=emojiFor(parseInt(v));
+}
+
+function goPrev(){
+  if(currentQ>0){
+    answers[getQs()[currentQ].key]=parseInt(document.getElementById('qSlider').value);
+    currentQ--; renderQ();
+  }
+}
+
+async function goNext(){
+  answers[getQs()[currentQ].key]=parseInt(document.getElementById('qSlider').value);
+  if(currentQ<getQs().length-1){ currentQ++; renderQ(); }
+  else { await submitSurvey(); }
+}
+
+async function submitSurvey(){
+  const nb=document.getElementById('nextBtn');
+  nb.disabled=true; nb.textContent='Submitting…';
+  const fp=fingerprint();
+  await db.collection('survey_responses').add({
+    sessionCode:surveyCode, role:surveyRole, deviceHash:fp,
+    responses:answers, submittedAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  localStorage.setItem('ccsubmit_'+surveyCode+'_'+surveyRole,'1');
+  showScreen('thankYouScreen');
+  const snap=await db.collection('survey_responses')
+    .where('sessionCode','==',surveyCode).where('role','==',surveyRole).get();
+  const count=snap.size, classSize=sessionData?.classSize||'?';
+  document.getElementById('tyCount').textContent=count+' of '+classSize+' students have responded so far.';
+  if(sessionData?.visibility==='aggregate'){
+    const responses=snap.docs.map(d=>d.data().responses);
+    const qs=getQs();
+    const labels=qs.map(q=>q.key.replace(/_/g,' '));
+    const avgs=qs.map(q=>responses.reduce((s,r)=>s+(r[q.key]||5),0)/responses.length);
+    document.getElementById('tyAggPanel').style.display='block';
+    if(charts.ty) charts.ty.destroy();
+    charts.ty=buildBarChart('tyChart',labels,avgs);
+  }
+}
+
+// ── TEACHER SETUP ─────────────────────────────────────────
+function toggleDatePicker(){
+  document.getElementById('closeDateGroup').classList.toggle('hidden',
+    document.getElementById('setupCloseMethod').value!=='date');
+}
+
+async function createSession(){
+  const name=document.getElementById('setupCourseName').value.trim();
+  const code=document.getElementById('setupCode').value.trim().toUpperCase();
+  const size=parseInt(document.getElementById('setupClassSize').value)||24;
+  const closeMethod=document.getElementById('setupCloseMethod').value;
+  const closeDate=document.getElementById('setupCloseDate').value||null;
+  const visibility=document.getElementById('setupVisibility').value;
+  const pin=document.getElementById('setupPin').value;
+  const pinC=document.getElementById('setupPinConfirm').value;
+  const msg=document.getElementById('setupMsg');
+
+  // Client-side validation first
+  if(!name){ msg.innerHTML='<span style="color:var(--red);">Please enter a course name.</span>'; return; }
+  if(!code){ msg.innerHTML='<span style="color:var(--red);">Please enter a survey code.</span>'; return; }
+  if(!/^[A-Z0-9\-]{2,16}$/.test(code)){ msg.innerHTML='<span style="color:var(--red);">Code must be 2–16 characters, letters, numbers and hyphens only.</span>'; return; }
+  if(pin.length<4){ msg.innerHTML='<span style="color:var(--red);">PIN must be at least 4 digits.</span>'; return; }
+  if(pin!==pinC){ msg.innerHTML='<span style="color:var(--red);">PINs do not match.</span>'; return; }
+
+  msg.innerHTML='<span style="color:var(--text-muted);">⏳ Creating survey…</span>';
+
+  try {
+    const existing=await db.collection('survey_sessions').doc(code).get();
+    if(existing.exists){
+      msg.innerHTML='<span style="color:var(--red);">That code is already in use. Choose a different one.</span>';
+      return;
+    }
+    const pinHash=await hashPin(pin);
+    const courseGroup=(document.getElementById('setupGroup').value||'').trim().toUpperCase()||null;
+    await db.collection('survey_sessions').doc(code).set({
+      courseName:name, classSize:size, closeMethod, closeDate,
+      visibility, pinHash, status:'open', courseGroup,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const baseUrl=window.location.origin+window.location.pathname;
+    const studentLink=`${baseUrl}?code=${code}&role=student`;
+    const teacherLink=`${baseUrl}?code=${code}&role=teacher`;
+    const qrId='qr_'+Date.now();
+    msg.innerHTML=`<div class="success-box">
+      <strong style="font-size:1rem;">✅ Survey created!</strong><br><br>
+      Share this code with your students:<br>
+      <span class="code-display">${code}</span>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin:0.75rem 0;">
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.35rem;">🔗 Student Direct Link</div>
+          <div style="background:rgba(0,0,0,0.25);border-radius:6px;padding:0.5rem;font-size:0.72rem;word-break:break-all;color:var(--blue);cursor:pointer;" onclick="navigator.clipboard.writeText('${studentLink}').then(()=>this.textContent='✅ Copied!')">📋 Click to copy student link</div>
+        </div>
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.35rem;">📊 Analytics Link</div>
+          <div style="background:rgba(0,0,0,0.25);border-radius:6px;padding:0.5rem;font-size:0.72rem;word-break:break-all;color:var(--primary);cursor:pointer;" onclick="navigator.clipboard.writeText('${teacherLink}').then(()=>this.textContent='✅ Copied!')">📋 Click to copy teacher link</div>
+        </div>
+      </div>
+      <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.5rem;">📱 QR Code — put this on the board</div>
+      <div id="${qrId}" style="background:white;padding:10px;border-radius:8px;display:inline-block;margin-bottom:0.75rem;"></div><br>
+      <strong>Keep your PIN safe</strong> — it unlocks the analytics dashboard.
+    </div>`;
+    // Generate QR code pointing to student direct link
+    setTimeout(()=>{
+      const el=document.getElementById(qrId);
+      if(el&&window.QRCode) new QRCode(el,{text:studentLink,width:160,height:160,colorDark:'#000',colorLight:'#fff'});
+    },100);
+  } catch(err) {
+    msg.innerHTML=`<span style="color:var(--red);">❌ Error: ${err.message || 'Could not save to database. Check your connection.'}</span>`;
+    console.error('createSession error:', err);
+  }
+}
+
+// ── ANALYTICS PIN ─────────────────────────────────────────
+async function loadPinScreen(){
+  const snap=await db.collection('survey_sessions').doc(surveyCode).get();
+  if(!snap.exists){ alert('Survey code not found.'); return; }
+  sessionData=snap.data();
+  document.getElementById('pinCourseLabel').textContent=
+    (sessionData.courseName||surveyCode)+' — enter your teacher PIN.';
+  showScreen('pinScreen');
+}
+
+async function verifyPin(){
+  const pin=document.getElementById('pinInput').value;
+  const err=document.getElementById('pinError');
+  if(!pin){ err.textContent='Please enter your PIN.'; return; }
+  const h=await hashPin(pin);
+  if(h!==sessionData.pinHash){ err.textContent='❌ Incorrect PIN. Try again.'; return; }
+  err.textContent='';
+  showScreen('analyticsScreen');
+  document.getElementById('dashCourseName').textContent=sessionData.courseName||surveyCode;
+  document.getElementById('dashCode').textContent=surveyCode;
+  if(sessionData.status==='closed'){
+    document.getElementById('closedBanner').classList.remove('hidden');
+    const cb=document.getElementById('closeSurveyBtn');
+    cb.textContent='🔒 Closed'; cb.disabled=true;
+  }
+  // Show Combine Classes button if this session has a courseGroup
+  if(sessionData.courseGroup){
+    const cb=document.getElementById('combineBtn');
+    cb.style.display='';
+    cb.title='Combine with other '+sessionData.courseGroup+' classes';
+  }
+  loadDashboard();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────
+let currentTab='student';
+
+function switchTab(tab){
+  currentTab=tab;
+  document.getElementById('panelStudent').classList.toggle('hidden',tab!=='student');
+  document.getElementById('panelTeacher').classList.toggle('hidden',tab!=='teacher');
+  document.getElementById('tabStudBtn').className='btn btn-'+(tab==='student'?'primary':'secondary');
+  document.getElementById('tabStudBtn').style.fontSize='0.82rem';
+  document.getElementById('tabTeachBtn').className='btn btn-'+(tab==='teacher'?'primary':'secondary');
+  document.getElementById('tabTeachBtn').style.fontSize='0.82rem';
+}
+
+async function loadDashboard(){
+  document.getElementById('demoBanner').classList.add('hidden');
+  document.getElementById('combinePanelWrap').classList.add('hidden');
+  const [sSnap,tSnap]=await Promise.all([
+    db.collection('survey_responses').where('sessionCode','==',surveyCode).where('role','==','student').get(),
+    db.collection('survey_responses').where('sessionCode','==',surveyCode).where('role','==','teacher').get()
+  ]);
+  const sData=sSnap.docs.map(d=>d.data().responses);
+  const tData=tSnap.docs.map(d=>d.data().responses);
+  renderDashboard(sData, tData, sessionData?.classSize||24);
+}
+
+async function toggleCombine(){
+  const panel=document.getElementById('combinePanelWrap');
+  if(!panel.classList.contains('hidden')){ panel.classList.add('hidden'); return; }
+  if(!sessionData?.courseGroup){
+    alert('This survey session has no Course Group tag. Edit it in Firestore or create a new session with a group tag.'); return;
+  }
+  panel.classList.remove('hidden');
+  document.getElementById('combineGroupLabel').textContent=sessionData.courseGroup;
+  document.getElementById('combineClassList').textContent='Loading…';
+  try{
+    const snap=await db.collection('survey_sessions')
+      .where('courseGroup','==',sessionData.courseGroup).get();
+    if(snap.empty){
+      document.getElementById('combineClassList').innerHTML='<em>No other classes found with this group tag.</em>'; return;
+    }
+    const rows=snap.docs.map(d=>{
+      const s=d.data();
+      const isCurrent=d.id===surveyCode;
+      return `<div style="display:flex;align-items:center;gap:0.75rem;padding:0.4rem 0;border-bottom:1px solid var(--border);">
+        <span style="font-weight:700;color:${isCurrent?'var(--primary)':'var(--text-primary)'}">${d.id}</span>
+        <span style="color:var(--text-muted);font-size:0.82rem;">${s.courseName||''}${isCurrent?' ← current':''}</span>
+        <span class="badge badge-purple" style="margin-left:auto;">class size ${s.classSize||'?'}</span>
+      </div>`;
+    }).join('');
+    const totalSize=snap.docs.reduce((s,d)=>s+(d.data().classSize||0),0);
+    document.getElementById('combineClassList').innerHTML=
+      rows+`<div style="margin-top:0.75rem;font-size:0.82rem;color:var(--blue);">Combined estimated class size: <strong>${totalSize}</strong> students across <strong>${snap.size}</strong> classes.</div>`;
+  } catch(e){
+    document.getElementById('combineClassList').innerHTML='<span style="color:var(--red);">Error loading group: '+e.message+'</span>';
+  }
+}
+
+async function loadCombined(){
+  if(!sessionData?.courseGroup){ alert('No course group set.'); return; }
+  document.getElementById('demoBanner').classList.add('hidden');
+  document.getElementById('combineClassList').innerHTML+='<br><span style="color:var(--text-muted);">Merging responses…</span>';
+  try{
+    // Get all session codes in this group
+    const sessSnap=await db.collection('survey_sessions')
+      .where('courseGroup','==',sessionData.courseGroup).get();
+    const codes=sessSnap.docs.map(d=>d.id);
+    const totalClassSize=sessSnap.docs.reduce((s,d)=>s+(d.data().classSize||0),0);
+    // Firestore 'in' supports up to 30 values
+    const chunks=(arr,size)=>Array.from({length:Math.ceil(arr.length/size)},(_,i)=>arr.slice(i*size,(i+1)*size));
+    const codeChunks=chunks(codes,30);
+    // Fetch all student and teacher responses across all codes
+    const [sResults,tResults]=await Promise.all([
+      Promise.all(codeChunks.map(c=>db.collection('survey_responses').where('sessionCode','in',c).where('role','==','student').get())),
+      Promise.all(codeChunks.map(c=>db.collection('survey_responses').where('sessionCode','in',c).where('role','==','teacher').get()))
+    ]);
+    const sData=sResults.flatMap(snap=>snap.docs.map(d=>d.data().responses));
+    const tData=tResults.flatMap(snap=>snap.docs.map(d=>d.data().responses));
+    // Update dashboard heading
+    document.getElementById('dashCourseName').textContent=
+      sessionData.courseGroup+' — '+codes.length+' classes combined (N='+sData.length+' students)';
+    document.getElementById('combinePanelWrap').classList.add('hidden');
+    renderDashboard(sData, tData, totalClassSize);
+  } catch(e){
+    document.getElementById('combineClassList').innerHTML+='<br><span style="color:var(--red);">Merge failed: '+e.message+'</span>';
+  }
+}
+
+function openDemo(){
+  // Jump straight to analytics screen with demo data — no code or PIN needed
+  showScreen('analyticsScreen');
+  document.getElementById('dashCourseName').textContent='Year 11 Economics — Term 2 (Demo)';
+  document.getElementById('dashCode').textContent='DEMO';
+  document.getElementById('closeSurveyBtn').textContent='🔒 Close Survey';
+  document.getElementById('closeSurveyBtn').disabled=false;
+  loadDemoData();
+}
+
+function loadDemoData(){
+  document.getElementById('demoBanner').classList.remove('hidden');
+  renderDashboard(DEMO_STUDENTS, DEMO_TEACHERS, 24);
+}
+
+function renderDashboard(sData, tData, classSize){
+  document.getElementById('dStatTotal').textContent=sData.length+tData.length;
+  document.getElementById('dStatCompletion').textContent=Math.min(100,Math.round((sData.length/classSize)*100))+'%';
+  const avgG=sData.length ? sData.reduce((s,r)=>s+(r.learning_gain||5),0)/sData.length : null;
+  document.getElementById('dStatAvgGain').textContent=avgG ? avgG.toFixed(1)+'/10' : '—';
+
+  buildStudentPanel(sData);
+  buildTeacherPanel(tData);
+}
+
+function buildStudentPanel(data){
+  const n=data.length;
+  if(n===0){ document.getElementById('noStudentData').style.display='block'; return; }
+  document.getElementById('noStudentData').style.display='none';
+  const labels=SQ.map(q=>q.key.replace(/_/g,' '));
+  const avgs=SQ.map(q=>data.reduce((s,r)=>s+(r[q.key]||5),0)/n);
+  if(charts.sAvg) charts.sAvg.destroy();
+  charts.sAvg=buildBarChart('sAvgChart',labels,avgs);
+  const result=tieredAnalysis(data,'learning_gain',S_IND);
+  const topR=result&&result.correlations ? Math.abs(result.correlations[0].r) : null;
+  document.getElementById('dStatR2').textContent=topR!=null ? topR.toFixed(2) : '—';
+  renderAnalysis(result,n,'sAnalysisOutput','learning_gain',S_IND);
+  buildScatter('scatter1',data,'engagement','learning_gain','Engagement','Learning Gain');
+  buildScatter('scatter2',data,'teaching_quality','learning_gain','Teaching Quality','Learning Gain');
+}
+
+function buildTeacherPanel(data){
+  const n=data.length;
+  if(n===0){ document.getElementById('noTeacherData').style.display='block'; return; }
+  document.getElementById('noTeacherData').style.display='none';
+  const labels=TQ.map(q=>q.key.replace(/_/g,' '));
+  const avgs=TQ.map(q=>data.reduce((s,r)=>s+(r[q.key]||5),0)/n);
+  if(charts.tAvg) charts.tAvg.destroy();
+  charts.tAvg=new Chart(document.getElementById('tAvgChart'),{
+    type:'bar', data:{labels, datasets:[{label:'Avg',data:avgs,backgroundColor:'rgba(192,132,252,0.7)',borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false}},
+      scales:{y:{min:1,max:10,ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+        x:{ticks:{color:'#64748b',font:{size:9},maxRotation:35},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+  const result=tieredAnalysis(data,'student_engagement',T_IND);
+  renderAnalysis(result,n,'tAnalysisOutput','student_engagement',T_IND);
+}
+
+function buildBarChart(id,labels,avgs){
+  return new Chart(document.getElementById(id),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Avg',data:avgs,
+      backgroundColor:avgs.map(v=>v>=7?'rgba(52,211,153,0.7)':v>=5?'rgba(129,140,248,0.7)':'rgba(248,113,113,0.7)'),borderRadius:6}]},
+    options:{responsive:true,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${c.parsed.y.toFixed(1)} / 10`}}},
+      scales:{y:{min:1,max:10,ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,0.05)'}},
+        x:{ticks:{color:'#64748b',font:{size:9},maxRotation:35},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+}
+
+function buildScatter(id,data,xk,yk,xl,yl){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{
+    type:'scatter',
+    data:{datasets:[{label:xl+' vs '+yl,data:data.map(r=>({x:r[xk]||5,y:r[yk]||5})),
+      backgroundColor:'rgba(129,140,248,0.75)',pointRadius:7,pointHoverRadius:9}]},
+    options:{responsive:true,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${xl}: ${c.parsed.x} | ${yl}: ${c.parsed.y}`}}},
+      scales:{
+        x:{min:1,max:10,title:{display:true,text:xl,color:'#64748b',font:{size:10}},ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,0.05)'}},
+        y:{min:1,max:10,title:{display:true,text:yl,color:'#64748b',font:{size:10}},ticks:{color:'#64748b',font:{size:9}},grid:{color:'rgba(255,255,255,0.05)'}}}}});
+}
+
+// ── CLOSE SURVEY ──────────────────────────────────────────
+async function closeSurvey(){
+  if(!confirm('Close this survey? Students will no longer be able to submit.')) return;
+  await db.collection('survey_sessions').doc(surveyCode).update({
+    status:'closed', closedAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  document.getElementById('closedBanner').classList.remove('hidden');
+  const cb=document.getElementById('closeSurveyBtn');
+  cb.textContent='🔒 Closed'; cb.disabled=true;
+  if(sessionData) sessionData.status='closed';
+}
+
+// ── STATISTICS ────────────────────────────────────────────
+// Tier 0 (N  < 4): descriptive only — no stats yet
+// Tier 1 (N  4–7): Spearman ρ (non-parametric rank correlation)
+// Tier 2 (N 8–29): Pearson r (parametric correlation)
+// Tier 3 (N 30–59): Pearson r + simple OLS (top 2 predictors only)
+// Tier 4 (N ≥ 60): Pearson r + full OLS (all predictors)
+
+function rankArray(arr){
+  const idx=arr.map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v);
+  const ranks=new Array(arr.length);
+  idx.forEach((s,r)=>{ ranks[s.i]=r+1; });
+  return ranks;
+}
+
+function spearmanR(data,xk,yk){
+  if(data.length<3) return 0;
+  const xr=rankArray(data.map(r=>r[xk]||5));
+  const yr=rankArray(data.map(r=>r[yk]||5));
+  const n=data.length;
+  const mx=xr.reduce((s,v)=>s+v,0)/n, my=yr.reduce((s,v)=>s+v,0)/n;
+  let num=0,dx2=0,dy2=0;
+  xr.forEach((x,i)=>{const dx=x-mx,dy=yr[i]-my; num+=dx*dy; dx2+=dx*dx; dy2+=dy*dy;});
+  const d=Math.sqrt(dx2*dy2);
+  return d<1e-10 ? 0 : num/d;
+}
+
+function pearsonR(data,xk,yk){
+  const n=data.length;
+  if(n<3) return 0;
+  const mx=data.reduce((s,r)=>s+(r[xk]||5),0)/n;
+  const my=data.reduce((s,r)=>s+(r[yk]||5),0)/n;
+  let num=0,dx2=0,dy2=0;
+  data.forEach(r=>{const dx=(r[xk]||5)-mx,dy=(r[yk]||5)-my; num+=dx*dy; dx2+=dx*dx; dy2+=dy*dy;});
+  const d=Math.sqrt(dx2*dy2);
+  return d<1e-10 ? 0 : num/d;
+}
+
+function tieredAnalysis(data,depVar,indVars){
+  const n=data.length;
+  if(n<4) return {tier:0,n};
+  const corrFn=n<8 ? spearmanR : pearsonR;
+  const corrs=indVars.map(v=>({v,r:corrFn(data,v,depVar)})).sort((a,b)=>Math.abs(b.r)-Math.abs(a.r));
+  if(n<8)  return {tier:1,n,correlations:corrs};
+  if(n<30) return {tier:2,n,correlations:corrs};
+  const top2=corrs.slice(0,2).map(c=>c.v);
+  const ols2=runOLS(data,depVar,top2);
+  if(n<60) return {tier:3,n,correlations:corrs,ols:ols2,r2:ols2?ols2.r2:null};
+  const olsFull=runOLS(data,depVar,indVars);
+  return {tier:4,n,correlations:corrs,ols:olsFull,r2:olsFull?olsFull.r2:null};
+}
+
+function renderAnalysis(result,n,containerId,depVar,allInd){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  const depLabel=depVar.replace(/_/g,' ');
+
+  const poolNote=`<div style="background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.2);border-radius:8px;padding:0.75rem 1rem;font-size:0.8rem;color:var(--text-secondary);margin-top:1rem;line-height:1.5;">
+    💡 <strong>Pool cohorts for stronger power.</strong> Each class of ~15 students adds one tier toward full regression. Run the same survey across multiple classes of the same course and combine results.
+  </div>`;
+
+  if(!result||result.tier===0){
+    el.innerHTML=`<div style="background:rgba(0,0,0,0.2);border-left:3px solid var(--red);border-radius:4px;padding:0.75rem 1rem;font-size:0.85rem;color:var(--text-secondary);">
+      <strong style="color:var(--red);">Descriptive Only</strong> — N = ${n}. Need ≥ 4 responses for any correlation analysis.
+    </div>${poolNote}`;
+    return;
+  }
+
+  const T={
+    1:{lbl:'Spearman ρ (non-parametric)',col:'var(--orange)',
+       warn:`⚠️ N = ${n} — very small class. Using <strong>Spearman rank correlation</strong> which is robust for small N and ordinal Likert scales. Treat as exploratory.`,
+       cLbl:'ρ',note:'ρ ∈ [−1,+1]. Rank-based, robust to outliers. Valid from N ≥ 4. |ρ| ≥ 0.7 = strong, ≥ 0.4 = moderate.'},
+    2:{lbl:'Pearson r Correlations',col:'var(--yellow)',
+       warn:`⚠️ N = ${n} — too small for regression (need N ≥ 30). Pearson r is valid and interpretable here.`,
+       cLbl:'r',note:'|r| ≥ 0.7 = strong, ≥ 0.4 = moderate, ≥ 0.2 = weak. Valid at N ≥ 8.'},
+    3:{lbl:'Pearson r + Partial OLS (top 2 predictors)',col:'var(--yellow)',
+       warn:`⚠️ N = ${n} — using top 2 predictors only to avoid overfitting. Full OLS with ${allInd.length} predictors needs N ≥ 60.`,
+       cLbl:'r',note:'|r| ≥ 0.7 = strong, ≥ 0.4 = moderate.'},
+    4:{lbl:'Pearson r + Full OLS Regression',col:'var(--green)',
+       warn:`✅ N = ${n} — sufficient for full OLS with all ${allInd.length} predictors.`,
+       cLbl:'r',note:'|r| ≥ 0.7 = strong, ≥ 0.4 = moderate.'},
+  };
+  const t=T[result.tier];
+
+  let html=`<div style="background:rgba(0,0,0,0.2);border-left:3px solid ${t.col};border-radius:4px;padding:0.75rem 1rem;font-size:0.82rem;color:var(--text-secondary);margin-bottom:1.25rem;line-height:1.6;">
+    <strong style="color:${t.col}">${t.lbl}</strong><br>${t.warn}
+  </div>`;
+
+  // Correlation table
+  const maxR=Math.max(...result.correlations.map(c=>Math.abs(c.r)),0.001);
+  const corrRows=result.correlations.map((c,i)=>{
+    const bw=Math.round((Math.abs(c.r)/maxR)*90);
+    const bc=c.r>0?'rgba(52,211,153,0.8)':'rgba(248,113,113,0.8)';
+    const str=Math.abs(c.r)>=0.7?'Strong':Math.abs(c.r)>=0.4?'Moderate':Math.abs(c.r)>=0.2?'Weak':'Negligible';
+    return `<tr>
+      <td style="font-weight:${i===0?700:400};color:var(--text-primary);">${i===0?'⭐ ':''}${c.v.replace(/_/g,' ')}</td>
+      <td style="font-weight:700;color:${c.r>=0?'var(--green)':'var(--red)'};">${c.r>=0?'+':''}${c.r.toFixed(3)}</td>
+      <td><span class="coef-bar" style="width:${bw}px;background:${bc};"></span><span style="font-size:0.76rem;color:var(--text-muted);"> ${str} ${c.r>=0?'↑':'↓'}</span></td>
+    </tr>`;
+  }).join('');
+
+  html+=`<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:0.5rem;">${t.cLbl} with ${depLabel}</div>
+  <table class="coef-table" style="margin-bottom:0.75rem;">
+    <thead><tr><th>Factor</th><th>${t.cLbl}</th><th>Strength</th></tr></thead>
+    <tbody>${corrRows}</tbody>
+  </table>
+  <p style="font-size:0.76rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.5;">${t.note}</p>`;
+
+  // OLS block (tiers 3 & 4)
+  if((result.tier===3||result.tier===4)&&result.ols){
+    const {intercept,coefficients,r2}=result.ols;
+    const sorted=[...coefficients].sort((a,b)=>Math.abs(b.beta)-Math.abs(a.beta));
+    const maxB=Math.max(...sorted.map(c=>Math.abs(c.beta)),0.001);
+    const r2c=r2>=0.5?'var(--green)':r2>=0.3?'var(--yellow)':'var(--red)';
+    const top=sorted[0];
+    const eq=coefficients.map(c=>`${c.beta>=0?' + ':' − '}${Math.abs(c.beta).toFixed(2)}·${c.v}`).join('');
+    const betaRows=sorted.map((c,i)=>{
+      const bw=Math.round((Math.abs(c.beta)/maxB)*90);
+      const bc=c.beta>0?'rgba(52,211,153,0.8)':'rgba(248,113,113,0.8)';
+      return `<tr>
+        <td style="font-weight:${i===0?700:400};color:var(--text-primary);">${i===0?'⭐ ':''}${c.v.replace(/_/g,' ')}</td>
+        <td style="font-weight:700;color:${c.beta>=0?'var(--green)':'var(--red)'};">${c.beta>=0?'+':''}${c.beta.toFixed(3)}</td>
+        <td><span class="coef-bar" style="width:${bw}px;background:${bc};"></span>${i===0?' <span class="badge badge-purple">Largest β</span>':''}</td>
+      </tr>`;
+    }).join('');
+    html+=`<div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--blue);margin-bottom:0.5rem;">OLS Regression${result.tier===3?' (top 2 predictors)':''}</div>
+    <div style="background:rgba(251,191,36,0.07);border:1px solid rgba(251,191,36,0.2);border-radius:8px;padding:0.75rem 1rem;margin-bottom:0.75rem;font-size:0.85rem;line-height:1.6;">
+      <strong>${top.v.replace(/_/g,' ')}</strong> is the strongest predictor (β = ${top.beta>=0?'+':''}${top.beta.toFixed(3)}).<br>
+      R² = <strong style="color:${r2c};">${r2.toFixed(3)}</strong> — explains ${Math.round(r2*100)}% of variance in ${depLabel}.
+      ${result.ols.adjR2!=null ? `&nbsp;&nbsp;|&nbsp;&nbsp; Adj. R² = <strong style="color:${r2c};">${Math.max(0,result.ols.adjR2).toFixed(3)}</strong> <span style="font-size:0.76rem;color:var(--text-muted);">(corrected for N=${result.ols.n}, ${result.ols.p} predictors)</span>` : ''}
+      ${result.tier===3?'<br><em style="font-size:0.78rem;color:var(--text-muted);">(Partial model — top 2 predictors only. Full OLS needs N ≥ 60.)</em>':''}
+    </div>
+    <div class="regression-eq">${depLabel} = ${intercept.toFixed(2)}${eq}</div>
+    <table class="coef-table" style="margin-bottom:1rem;">
+      <thead><tr><th>Predictor</th><th>β Coefficient</th><th>Influence</th></tr></thead>
+      <tbody>${betaRows}</tbody>
+    </table>
+    <p style="font-size:0.76rem;color:var(--text-muted);line-height:1.5;">β = predicted change in ${depLabel} per 1-point increase in predictor, holding others constant.</p>`;
+  }
+
+  el.innerHTML=html+poolNote;
+}
+
+// ── OLS MATRIX MATH ───────────────────────────────────────
+function mT(A){ return A[0].map((_,j)=>A.map(r=>r[j])); }
+function mMul(A,B){
+  return Array.from({length:A.length},(_,i)=>
+    Array.from({length:B[0].length},(_,j)=>
+      A[i].reduce((s,_,l)=>s+A[i][l]*B[l][j],0)));
+}
+function mInv(A){
+  const n=A.length;
+  const M=A.map((r,i)=>[...r,...Array.from({length:n},(_,j)=>i===j?1:0)]);
+  for(let c=0;c<n;c++){
+    let p=c;
+    for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[p][c])) p=r;
+    [M[c],M[p]]=[M[p],M[c]];
+    const d=M[c][c]; if(Math.abs(d)<1e-10) return null;
+    for(let j=0;j<2*n;j++) M[c][j]/=d;
+    for(let r=0;r<n;r++){
+      if(r===c) continue;
+      const f=M[r][c];
+      for(let j=0;j<2*n;j++) M[r][j]-=f*M[c][j];
+    }
+  }
+  return M.map(r=>r.slice(n));
+}
+function runOLS(data,depVar,indVars){
+  const n=data.length;
+  if(n<indVars.length+2) return null;
+  const X=data.map(r=>[1,...indVars.map(v=>r[v]||5)]);
+  const y=data.map(r=>[r[depVar]||5]);
+  const Xt=mT(X), XtXinv=mInv(mMul(Xt,X));
+  if(!XtXinv) return null;
+  const beta=mMul(XtXinv,mMul(Xt,y));
+  const p=indVars.length; // number of predictors (excl. intercept)
+  const yMean=y.reduce((s,v)=>s+v[0],0)/n;
+  const yHat=mMul(X,beta);
+  const SSres=y.reduce((s,v,i)=>s+(v[0]-yHat[i][0])**2,0);
+  const SStot=y.reduce((s,v)=>s+(v[0]-yMean)**2,0);
+  const r2=SStot>0 ? Math.max(0,1-SSres/SStot) : 0;
+  // Adjusted R² corrects for number of predictors and sample size
+  // adj R² = 1 - (1-R²)(n-1)/(n-p-1)
+  const adjR2 = n>p+1 ? 1-(1-r2)*(n-1)/(n-p-1) : null;
+  return {
+    intercept:beta[0][0],
+    coefficients:indVars.map((v,i)=>({v,beta:beta[i+1][0]})),
+    r2, adjR2, n, p
+  };
+}
+</script>
+</body>
+</html>

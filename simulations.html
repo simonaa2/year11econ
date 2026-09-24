@@ -1,0 +1,4087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SME Classroom Simulation Hub - DataTrends</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Compat SDKs (CDN) & Chart.js -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    :root {
+      --bg: #090810;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.08);
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --primary: #818cf8;
+      --primary-glow: rgba(129, 140, 248, 0.15);
+      --secondary: #c084fc;
+      --secondary-glow: rgba(192, 132, 252, 0.15);
+      
+      --color-green: #34d399;
+      --color-red: #f87171;
+      --color-blue: #38bdf8;
+      --color-yellow: #fbbf24;
+      
+      --radius-sm: 8px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-full: 9999px;
+      
+      --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    body.light-mode {
+      --bg: #f8fafc;
+      --bg-card: rgba(255, 255, 255, 0.8);
+      --border: rgba(0, 0, 0, 0.06);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --shadow: 0 8px 32px 0 rgba(148, 163, 184, 0.15);
+      --primary-glow: rgba(129, 140, 248, 0.08);
+      --secondary-glow: rgba(192, 132, 252, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      line-height: 1.5;
+      padding: 2rem 1rem;
+      transition: var(--transition);
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      transition: max-width 0.4s ease;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--primary-glow);
+      color: var(--primary);
+      padding: 0.4rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(129, 140, 248, 0.2);
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #fff, var(--text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    body.light-mode h1 {
+      background: linear-gradient(135deg, #0f172a, #475569);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lead {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Top Navigation bar */
+    .nav-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      backdrop-filter: blur(10px);
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .nav-btn-back {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+    }
+    .nav-btn-back:hover {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .theme-toggle-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.5rem;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      width: 40px;
+      height: 40px;
+    }
+    .theme-toggle-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--primary);
+    }
+
+    /* Selector Cards / Grid Layouts */
+    .hub-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    @media (min-width: 768px) {
+      .hub-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 1024px) {
+      .hub-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .selector-card {
+      cursor: pointer;
+    }
+    .selector-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--primary);
+      box-shadow: 0 12px 30px rgba(129, 140, 248, 0.1);
+    }
+
+    .card-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      display: inline-block;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-desc {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      letter-spacing: 0.05em;
+    }
+
+    .text-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+      transition: var(--transition);
+    }
+    body.light-mode .text-input {
+      background: #fff;
+    }
+    .text-input:focus {
+      border-color: var(--primary);
+    }
+
+    .select-input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      outline: none;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+    body.light-mode .select-input {
+      background: #fff;
+      color: #0f172a;
+    }
+    .select-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Range slider customized styling */
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .range-slider {
+      flex-grow: 1;
+      height: 6px;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: var(--radius-full);
+      outline: none;
+    }
+    body.light-mode .range-slider {
+      background: rgba(0, 0, 0, 0.1);
+    }
+    .range-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(129, 140, 248, 0.5);
+      transition: var(--transition);
+    }
+    .range-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .slider-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* Simulation Hub Screens (State view control) */
+    .screen {
+      display: none;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      padding: 0.8rem 1.8rem;
+      border-radius: var(--radius-full);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(129, 140, 248, 0.25);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(129, 140, 248, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+    }
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--primary);
+    }
+
+    /* Dashboard Layout Components */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    @media (min-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr 1.2fr;
+      }
+    }
+
+    .chart-card {
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      height: 480px;
+    }
+    body.light-mode .chart-card {
+      background: rgba(0, 0, 0, 0.005);
+    }
+
+    .chart-card h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    .chart-container {
+      position: relative;
+      flex-grow: 1;
+      width: 100%;
+      height: calc(100% - 2.5rem);
+    }
+
+    /* Stats Grid */
+    .stats-summary-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .summary-box {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      text-align: center;
+    }
+    .summary-number {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.1;
+      margin-bottom: 0.25rem;
+    }
+    .summary-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    /* Pitch Cards Grid */
+    .pitches-card-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .pitches-card-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .pitch-item-card {
+      background: rgba(255, 255, 255, 0.01);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: var(--transition);
+    }
+    .pitch-item-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .pitch-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Modals */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .modal-content {
+      background: #0f0e1a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      max-width: 600px;
+      width: 90%;
+      position: relative;
+    }
+    body.light-mode .modal-content {
+      background: #fff;
+      color: #0f172a;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      margin-top: 2rem;
+      overflow-x: auto;
+    }
+
+    .sim-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+
+    .sim-table th, .sim-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sim-table th {
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    /* Dilemma Cards styling */
+    .dilemma-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      background: rgba(255, 255, 255, 0.015);
+      margin-bottom: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .dilemma-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .dilemma-btn-option {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      padding: 1rem;
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.95rem;
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    body.light-mode .dilemma-btn-option {
+      background: #fff;
+      color: #0f172a;
+    }
+    .dilemma-btn-option:hover {
+      border-color: var(--primary);
+      background: var(--primary-glow);
+    }
+    .dilemma-btn-option.selected {
+      border-color: var(--secondary);
+      background: var(--secondary-glow);
+      box-shadow: 0 0 10px rgba(192, 132, 252, 0.2);
+    }
+
+    .csr-score-badge {
+      display: inline-block;
+      padding: 0.2rem 0.5rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .text-success { color: var(--color-green); }
+    .text-danger { color: var(--color-red); }
+
+    /* Gamified Awards Panel styling */
+    .awards-panel {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+      background: rgba(129, 140, 248, 0.05);
+      border: 1px dashed rgba(129, 140, 248, 0.3);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+    }
+    .award-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+    }
+    .award-icon {
+      font-size: 2.2rem;
+    }
+    .award-details {
+      display: flex;
+      flex-direction: column;
+    }
+    .award-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--secondary);
+    }
+    .award-winner {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+    .award-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+
+    /* ===== GAMIFICATION STYLES ===== */
+    .scorecard-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .scorecard-overlay.hidden { display: none; }
+    .scorecard-box {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      border: 1px solid rgba(129,140,248,0.3);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem;
+      max-width: 480px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 0 60px rgba(129,140,248,0.2), 0 20px 60px rgba(0,0,0,0.5);
+      animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes slideUp {
+      from { transform: translateY(40px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .scorecard-badge { font-size: 4rem; display: block; margin-bottom: 0.5rem; filter: drop-shadow(0 0 20px rgba(251,191,36,0.5)); }
+    .scorecard-score {
+      font-family: 'Outfit', sans-serif; font-size: 4rem; font-weight: 800;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1;
+    }
+    .scorecard-rank { font-size: 1rem; color: var(--text-secondary); margin: 0.5rem 0 1rem; }
+    .scorecard-verdict {
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: var(--radius-sm); padding: 1rem;
+      font-size: 0.9rem; color: var(--text-secondary); margin: 1rem 0 1.5rem; line-height: 1.5;
+    }
+    .shock-banner {
+      display: none;
+      background: linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(248,113,113,0.12) 100%);
+      border: 1px solid rgba(251,191,36,0.4);
+      border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 1.5rem;
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+    .shock-banner.active { display: block; }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(251,191,36,0.2); }
+      50% { box-shadow: 0 0 20px 4px rgba(251,191,36,0.15); }
+    }
+    .shock-banner-title { font-weight: 800; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; margin-bottom: 0.25rem; }
+    .shock-banner-text { font-size: 0.9rem; color: var(--text-primary); }
+    .round-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      background: rgba(129,140,248,0.12); border: 1px solid rgba(129,140,248,0.3);
+      border-radius: var(--radius-full); padding: 0.25rem 0.75rem;
+      font-size: 0.78rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem;
+    }
+    .rival-feed {
+      background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.5rem;
+    }
+    .rival-feed-title {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 0.75rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .rival-feed-title::before {
+      content: ''; display: inline-block; width: 6px; height: 6px;
+      background: #34d399; border-radius: 50%; box-shadow: 0 0 6px #34d399;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .rival-row {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.5rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .rival-row:last-child { border-bottom: none; }
+    .rival-rank { font-weight: 800; font-size: 0.9rem; width: 22px; text-align: center; flex-shrink: 0; }
+    .rival-name { flex: 1; color: var(--text-secondary); }
+    .rival-score { font-weight: 700; color: var(--primary); }
+    .rival-empty { font-size: 0.8rem; color: var(--text-muted); font-style: italic; padding: 0.5rem 0; }
+    .shock-trigger-panel {
+      background: linear-gradient(135deg, rgba(251,191,36,0.05) 0%, rgba(248,113,113,0.05) 100%);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 2rem;
+    }
+    .shock-trigger-panel h4 { font-family: 'Outfit', sans-serif; font-size: 1rem; font-weight: 700; color: #fbbf24; margin-bottom: 0.75rem; }
+    .shock-trigger-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    .shock-select {
+      flex: 1; min-width: 200px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text-primary);
+      padding: 0.5rem 0.75rem; font-size: 0.85rem; font-family: 'Inter', sans-serif;
+    }
+    .btn-shock {
+      background: linear-gradient(135deg, #f59e0b, #ef4444); color: white;
+      border: none; border-radius: var(--radius-sm); padding: 0.5rem 1.25rem;
+      font-size: 0.85rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: var(--transition);
+    }
+    .btn-shock:hover { opacity: 0.85; transform: translateY(-1px); }
+    .score-preview-bar {
+      background: rgba(129,140,248,0.05); border: 1px solid rgba(129,140,248,0.15);
+      border-radius: var(--radius-sm); padding: 0.75rem 1rem; margin-bottom: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+  </style>
+</head>
+<body>
+<style>
+  body { padding-top: 52px; }
+  .snav{position:fixed;top:0;left:0;right:0;z-index:10000;background:rgba(8,9,18,0.97);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(255,255,255,0.07);height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;font-family:'Inter',sans-serif;}
+  .snav-brand{display:flex;align-items:center;gap:0.4rem;text-decoration:none;flex-shrink:0;}
+  .snav-brand-text{font-family:'Outfit',sans-serif;font-size:0.95rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .snav-links{display:flex;align-items:center;gap:0.1rem;}
+  .snav-link{display:flex;align-items:center;gap:0.3rem;padding:0.3rem 0.65rem;border-radius:6px;font-size:0.78rem;font-weight:500;color:rgba(255,255,255,0.5);text-decoration:none;transition:background 0.15s,color 0.15s;white-space:nowrap;}
+  .snav-link:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.88);}
+  .snav-link.snav-active{background:rgba(129,140,248,0.15);color:#a5b4fc;font-weight:700;}
+  .snav-tag{font-size:0.58rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.2);padding-left:0.75rem;border-left:1px solid rgba(255,255,255,0.07);margin-left:0.3rem;display:flex;align-items:center;}
+  @media(max-width:640px){.snav-tag{display:none;}.snav-link .lbl{display:none;}.snav-link{padding:0.3rem 0.45rem;}}
+</style>
+<nav class="snav">
+  <a href="/" class="snav-brand"><span style="font-size:1.2rem;">🎓</span><span class="snav-brand-text">EduSims</span></a>
+  <div class="snav-links">
+    <a href="/" class="snav-link">📊 <span class="lbl">Survey</span></a>
+    <a href="/audit.html" class="snav-link">💡 <span class="lbl">Qualities Audit</span></a>
+    <a href="/simulations.html" class="snav-link snav-active">🏪 <span class="lbl">SME Simulations</span></a>
+    <a href="/market.html" class="snav-link">🛫 <span class="lbl">SkyMarket Live</span></a>
+    <div class="snav-tag">Know yourself → Apply it → Understand markets</div>
+  </div>
+</nav>
+
+  <div class="container">
+    
+    <!-- Top Nav bar -->
+    <div class="nav-bar">
+      <div class="nav-left">
+        <button class="nav-btn-back" id="backToHubBtn" onclick="showHub()" style="display:none;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          Back to Selector
+        </button>
+        <span class="badge" id="navIndicator" style="margin-bottom:0;">SME Simulation Hub</span>
+      </div>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+        <svg id="themeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+    </div>
+
+    <!-- MAIN HUB SELECTOR SCREEN -->
+    <div class="screen" id="hubScreen" style="display:block;">
+      <header>
+        <div class="badge">Small to Medium Enterprises (SMEs)</div>
+        <h1>Classroom Simulation Suite</h1>
+        <p class="lead">Select an interactive simulation below to test your operational, financial, and strategic startup skills.</p>
+      </header>
+
+      <div class="hub-grid">
+        <!-- Card 1: Pitch Arena -->
+        <div class="card selector-card" onclick="startActivity('pitch')">
+          <span class="card-icon">🚀</span>
+          <h3 class="card-title">Startup Pitch Arena</h3>
+          <p class="card-desc">Pitch your business concept, target market, and pricing to the class. Rate peer pitches and view the live class feasibility leaderboard.</p>
+        </div>
+
+        <!-- Card 2: Cafe Break-Even Battle -->
+        <div class="card selector-card" onclick="startActivity('cafe')">
+          <span class="card-icon">🍔</span>
+          <h3 class="card-title">Café Break-Even Battle</h3>
+          <p class="card-desc">Launch a Gourmet Burger Cart. Compete on price and variable cost upgrades, then analyze supply, demand, sales volume, and class-wide profit margins.</p>
+        </div>
+
+        <!-- Card 3: CSR Dilemmas Poll -->
+        <div class="card selector-card" onclick="startActivity('csr')">
+          <span class="card-icon">🌱</span>
+          <h3 class="card-title">CSR Dilemma Poll</h3>
+          <p class="card-desc">Manage ethical, environmental, and financial trade-offs in local business decisions. Visualize the class balance between profit focus and ethical index.</p>
+        </div>
+
+        <!-- Card 4: SME Failure Risk Simulator -->
+        <div class="card selector-card" onclick="startActivity('failure')">
+          <span class="card-icon">📉</span>
+          <h3 class="card-title">Failure Risk Simulator</h3>
+          <p class="card-desc">Allocate a $100,000 startup budget across lease, inventory, cash reserves, and marketing. Run the NESA risk model to test your business survival probability.</p>
+        </div>
+
+        <!-- Card 5: World Cup Ticket Demand Simulator -->
+        <div class="card selector-card" onclick="startActivity('tickets')">
+          <span class="card-icon">⚽</span>
+          <h3 class="card-title">World Cup Ticket Simulator</h3>
+          <p class="card-desc">Set Category 1 ticket prices for the FIFA World Cup. Analyze dynamic demand curves, stadium atmosphere, local fan equity, and scalper risk.</p>
+        </div>
+
+        <!-- Card 6: Airfare Yield Simulator -->
+        <div class="card selector-card" onclick="startActivity('airfare')">
+          <span class="card-icon">✈️</span>
+          <h3 class="card-title">Airfare Yield Simulator</h3>
+          <p class="card-desc">Manage pricing for a Sydney-to-LA flight. Balance ticket rates and dynamic bookings across leisure and business segments over 12 weeks.</p>
+        </div>
+
+        <!-- Card 7: SkyMarket Live (NEW) -->
+        <div class="card selector-card" onclick="window.location.href='market.html'" style="background:linear-gradient(135deg,rgba(56,189,248,0.06),rgba(129,140,248,0.06));border-color:rgba(56,189,248,0.25);position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0.75rem;right:0.75rem;background:linear-gradient(135deg,#818cf8,#38bdf8);color:#fff;font-size:0.65rem;font-weight:800;padding:0.2rem 0.6rem;border-radius:9999px;letter-spacing:0.05em;">NEW</div>
+          <span class="card-icon">🛫</span>
+          <h3 class="card-title">SkyMarket Live</h3>
+          <p class="card-desc">Multiplayer airfare market simulation. Play as an airline (set prices, compete for passengers) or a passenger (shop the live board, earn consumer surplus). Teacher triggers economic shocks in real-time.</p>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ROLE CHOOSE SCREEN (Student vs Teacher for selected activity) -->
+    <div class="screen" id="roleScreen">
+      <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+        <h2 class="card-title" id="roleScreenTitle" style="font-size:1.8rem; margin-bottom:1.5rem;">Select Your Role</h2>
+        
+        <div style="display:flex; flex-direction:column; gap:1.5rem; margin-top:2rem;">
+          <button class="btn btn-primary" onclick="chooseRole('student')" style="padding:1.2rem; font-size:1.1rem;">
+            I am a Student (Submit Inputs)
+          </button>
+          <button class="btn btn-secondary" onclick="chooseRole('teacher')" style="padding:1.2rem; font-size:1.1rem;">
+            I am the Teacher (Open Live Dashboard)
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= ACTIVITY 1: STARTUP PITCH ARENA ================= -->
+    <!-- Student Form -->
+    <div class="screen" id="pitchStudentScreen">
+      <div class="card" style="max-width:650px; margin: 0 auto;">
+        <h2 class="card-title" style="margin-bottom:1.5rem;">Pitch Your SME Concept</h2>
+        
+        <div class="form-group">
+          <label class="form-label">Student Name</label>
+          <input type="text" id="pitchName" class="text-input" placeholder="e.g. Liam & Sarah">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="pitchClass" class="text-input" placeholder="e.g. JOSHUAANDERSON123*" style="text-transform:uppercase;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Business Name</label>
+          <input type="text" id="pitchBusName" class="text-input" placeholder="e.g. EcoSprout Cafe">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Concept Description</label>
+          <textarea id="pitchConcept" class="text-input" placeholder="Explain your product/service, what you sell, and pricing..." style="height:100px; resize:none; font-family:inherit;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Competitive Advantage</label>
+          <input type="text" id="pitchAdvantage" class="text-input" placeholder="Why will customers choose you over established SMEs?">
+        </div>
+
+        <button class="btn btn-primary" onclick="submitPitch()" style="width:100%; margin-top:1rem;">
+          Submit Pitch to Arena
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="screen" id="pitchTeacherScreen">
+      <div class="card">
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:1.5rem;" id="pitchDashboardTitle">Live Pitch Arena: TEST</h2>
+        
+        <div class="stats-summary-bar">
+          <div class="summary-box"><div class="summary-number" id="pitchN">0</div><div class="summary-label">Pitches Submitted</div></div>
+          <div class="summary-box"><div class="summary-number" id="pitchAvgRating">0.0</div><div class="summary-label">Average Class Rating</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Left: Submissions Grid -->
+          <div>
+            <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Submitted Pitch Cards</h3>
+            <div class="pitches-card-grid" id="pitchesListContainer">
+              <!-- Pitch cards dynamically loaded -->
+            </div>
+          </div>
+
+          <!-- Right: Leaderboard Chart -->
+          <div class="chart-card">
+            <h3>SME Feasibility Leaderboard</h3>
+            <div class="chart-container">
+              <canvas id="pitchLeaderboardChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= ACTIVITY 2: CAFÉ BREAK-EVEN BATTLE ================= -->
+    <!-- Student Form -->
+    <div class="screen" id="cafeStudentScreen">
+      <div class="card" style="max-width:600px; margin: 0 auto;">
+        <h2 class="card-title" style="margin-bottom:1.5rem;">Configure Burger Cart</h2>
+        
+        <div class="form-group">
+          <label class="form-label">Student Name</label>
+          <input type="text" id="cafeName" class="text-input" placeholder="e.g. Alex Cooper">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="cafeClass" class="text-input" placeholder="e.g. JOSHUAANDERSON123*" style="text-transform:uppercase;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Selling Price ($ per burger)</label>
+          <div class="slider-container">
+            <input type="range" id="cafePriceSlider" class="range-slider" min="4" max="15" step="0.5" value="8" oninput="updateCafePriceDisplay(this.value)">
+            <span class="slider-value" id="cafePriceDisplay">$8.00</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Burger Ingredient Upgrade</label>
+          <select id="cafeUpgrade" class="select-input" onchange="updateCafeCostDisplay(this.value)">
+            <option value="standard">Standard Ingredients (Cost: $2.00/burger)</option>
+            <option value="premium">Premium Angus Beef (Cost: $3.50/burger)</option>
+            <option value="organic">Organic & Biodegradable Packaging (Cost: $4.50/burger)</option>
+          </select>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin:1.5rem 0;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem;">
+            <span>Selling Price</span><strong id="summaryCafePrice">$8.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem;">
+            <span>Variable Cost (Ingredients)</span><strong id="summaryCafeCost">$2.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+            <span>Margin per Burger</span><strong id="summaryCafeMargin" class="text-success">$6.00</strong>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitCafeBattle()" style="width:100%;">
+          Launch Cart in Battle
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="screen" id="cafeTeacherScreen">
+      <div class="card">
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:1.5rem;" id="cafeDashboardTitle">Live Cafe Battle: TEST</h2>
+        
+        <div class="stats-summary-bar">
+          <div class="summary-box"><div class="summary-number" id="cafeN">0</div><div class="summary-label">Competitors</div></div>
+          <div class="summary-box"><div class="summary-number" id="cafeAvgPrice">$0.00</div><div class="summary-label">Average Price</div></div>
+          <div class="summary-box"><div class="summary-number" id="cafeTopProfit">$0.00</div><div class="summary-label">Top Profit</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Left: Pricing Distribution -->
+          <div class="chart-card">
+            <h3>Price Distribution Chart</h3>
+            <div class="chart-container">
+              <canvas id="cafePriceDistributionChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Profit vs Volume -->
+          <div class="chart-card">
+            <h3>Profit vs Sales Volume Scatter</h3>
+            <div class="chart-container">
+              <canvas id="cafeProfitScatterChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; margin-top:2rem; margin-bottom:0.75rem;">Competitor Financial Results</h3>
+          <table class="sim-table">
+            <thead>
+              <tr>
+                <th>Operator</th>
+                <th>Selling Price</th>
+                <th>Cost Type</th>
+                <th>Variable Cost</th>
+                <th>Margin</th>
+                <th>Burgers Sold</th>
+                <th>Fixed Cost</th>
+                <th>Net Profit</th>
+              </tr>
+            </thead>
+            <tbody id="cafeTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= ACTIVITY 3: CSR DILEMMA POLL ================= -->
+    <!-- Student Form -->
+    <div class="screen" id="csrStudentScreen">
+      <div class="card" style="max-width:650px; margin: 0 auto;">
+        <h2 class="card-title" style="margin-bottom:1rem;">Ethical & Profit Dilemmas</h2>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:2rem;">Evaluate options for your retail store. Balancing profitability with ethical responsibility is a core SME management challenge.</p>
+        
+        <div class="form-group" style="margin-bottom:1.5rem;">
+          <label class="form-label">Student Name</label>
+          <input type="text" id="csrName" class="text-input" placeholder="e.g. Mia Anderson">
+        </div>
+        <div class="form-group" style="margin-bottom:2rem;">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="csrClass" class="text-input" placeholder="e.g. JOSHUAANDERSON123*" style="text-transform:uppercase;">
+        </div>
+
+        <!-- Dilemma 1 -->
+        <div class="dilemma-card">
+          <h4 style="font-size:1rem; font-weight:700; color:var(--primary);">Dilemma 1: Supplier Ethical Sourcing</h4>
+          <p style="font-size:0.9rem; color:var(--text-secondary);">Your current coffee bean supplier offers non-fairtrade beans at a cheap rate. An ethical fairtrade supplier costs $2.00 more per kilogram.</p>
+          <div class="dilemma-options">
+            <button class="dilemma-btn-option" id="d1optA" onclick="chooseDilemma(1, 'A')">
+              <span style="font-weight:800;">Option A:</span> Save $2.00/kg to maximize profit margins.
+            </button>
+            <button class="dilemma-btn-option" id="d1optB" onclick="chooseDilemma(1, 'B')">
+              <span style="font-weight:800;">Option B:</span> Pay premium for Fairtrade certification to support small farmers.
+            </button>
+          </div>
+        </div>
+
+        <!-- Dilemma 2 -->
+        <div class="dilemma-card">
+          <h4 style="font-size:1rem; font-weight:700; color:var(--primary);">Dilemma 2: Wage & Staff Strategy</h4>
+          <p style="font-size:0.9rem; color:var(--text-secondary);">Business is slow in the afternoons. You can pay staff the bare award wages and cut shifts, or guarantee hours and pay a living wage (+15%).</p>
+          <div class="dilemma-options">
+            <button class="dilemma-btn-option" id="d2optA" onclick="chooseDilemma(2, 'A')">
+              <span style="font-weight:800;">Option A:</span> Cut hours and pay base award rates to control operational costs.
+            </button>
+            <button class="dilemma-btn-option" id="d2optB" onclick="chooseDilemma(2, 'B')">
+              <span style="font-weight:800;">Option B:</span> Pay a living wage to build workforce loyalty and staff morale.
+            </button>
+          </div>
+        </div>
+
+        <!-- Dilemma 3 -->
+        <div class="dilemma-card">
+          <h4 style="font-size:1rem; font-weight:700; color:var(--primary);">Dilemma 3: Sustainable Packaging</h4>
+          <p style="font-size:0.9rem; color:var(--text-secondary);">Traditional single-use plastic containers cost $0.05 per unit. Biodegradable packaging costs $0.35 per unit.</p>
+          <div class="dilemma-options">
+            <button class="dilemma-btn-option" id="d3optA" onclick="chooseDilemma(3, 'A')">
+              <span style="font-weight:800;">Option A:</span> Use plastic containers to protect margins.
+            </button>
+            <button class="dilemma-btn-option" id="d3optB" onclick="chooseDilemma(3, 'B')">
+              <span style="font-weight:800;">Option B:</span> Transition to eco-friendly packaging and absorb the cost.
+            </button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitCSR()" style="width:100%; margin-top:1rem;">
+          Submit Dilemma Choices
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="screen" id="csrTeacherScreen">
+      <div class="card">
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:1.5rem;" id="csrDashboardTitle">Classroom Ethics vs. Profit Poll: TEST</h2>
+        
+        <div class="stats-summary-bar">
+          <div class="summary-box"><div class="summary-number" id="csrN">0</div><div class="summary-label">Polls Completed</div></div>
+          <div class="summary-box"><div class="summary-number" id="classCSRScore">0%</div><div class="summary-label">Ethical Focus Rating</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Left: Gauge/Radial CSR Indicator -->
+          <div class="chart-card">
+            <h3>Class Balance Index</h3>
+            <div class="chart-container">
+              <canvas id="csrGaugeChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Dilemma Breakdown -->
+          <div class="chart-card">
+            <h3>Dilemma Breakdown Options</h3>
+            <div class="chart-container">
+              <canvas id="csrBreakdownChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= ACTIVITY 4: SME FAILURE RISK SIMULATOR ================= -->
+    <!-- Student Form -->
+    <div class="screen" id="failureStudentScreen">
+      <div class="card" style="max-width:650px; margin: 0 auto;">
+        <h2 class="card-title" style="margin-bottom:0.5rem;">Startup Budget Allocation</h2>
+        <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:2rem;">Allocate a $100,000 budget across 4 functions. Balance capital constraints to maximize the business survival score.</p>
+        
+        <div class="form-group">
+          <label class="form-label">Student Name</label>
+          <input type="text" id="failureName" class="text-input" placeholder="e.g. Lucas Green">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="failureClass" class="text-input" placeholder="e.g. JOSHUAANDERSON123*" style="text-transform:uppercase;">
+        </div>
+
+        <!-- Rent Lease -->
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Location Rent (Foot Traffic & Visibility)</span>
+            <span id="allocVal-rent" style="font-weight:700;">$25,000</span>
+          </label>
+          <input type="range" id="alloc-rent" class="range-slider" min="0" max="100000" step="5000" value="25000" oninput="updateAllocationDisplay()">
+          <p style="font-size:0.75rem; color:var(--text-muted);">Optimal rent ranges between $20k - $40k. Underinvesting causes zero foot-traffic; overinvesting drains cash flow.</p>
+        </div>
+
+        <!-- Inventory/Equipment -->
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Inventory & Operations Equipment</span>
+            <span id="allocVal-inventory" style="font-weight:700;">$25,000</span>
+          </label>
+          <input type="range" id="alloc-inventory" class="range-slider" min="0" max="100000" step="5000" value="25000" oninput="updateAllocationDisplay()">
+          <p style="font-size:0.75rem; color:var(--text-muted);">You need inventory to trade. Minimum $20k is recommended to function.</p>
+        </div>
+
+        <!-- Reserves -->
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Working Cash Reserves (Liquidity buffer)</span>
+            <span id="allocVal-reserves" style="font-weight:700;">$25,000</span>
+          </label>
+          <input type="range" id="alloc-reserves" class="range-slider" min="0" max="100000" step="5000" value="25000" oninput="updateAllocationDisplay()">
+          <p style="font-size:0.75rem; color:var(--text-muted);">SMEs fail when they run out of liquidity. Maintaining reserves handles unexpected business slow periods.</p>
+        </div>
+
+        <!-- Marketing -->
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Promotion & Marketing</span>
+            <span id="allocVal-marketing" style="font-weight:700;">$25,000</span>
+          </label>
+          <input type="range" id="alloc-marketing" class="range-slider" min="0" max="100000" step="5000" value="25000" oninput="updateAllocationDisplay()">
+          <p style="font-size:0.75rem; color:var(--text-muted);">Attracts early adapters and market share. Essential for brand establishment.</p>
+        </div>
+
+        <!-- Allocation indicator -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin-top:2rem; margin-bottom:1.5rem;">
+          <div>Total Allocated: <strong id="totalAllocText" style="font-size:1.1rem;">$100,000</strong></div>
+          <div id="allocationStatus" class="text-success" style="font-weight:700; font-size:0.9rem;">Balanced ($0 remaining)</div>
+        </div>
+
+        <button class="btn btn-primary" id="submitFailureBtn" onclick="submitFailureRisk()" style="width:100%;">
+          Run Failure Risk Simulator
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="screen" id="failureTeacherScreen">
+      <div class="card">
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:1.5rem;" id="failureDashboardTitle">Live Failure Risk Dashboard: TEST</h2>
+        
+        <div class="stats-summary-bar">
+          <div class="summary-box"><div class="summary-number" id="failureN">0</div><div class="summary-label">Submitted Setups</div></div>
+          <div class="summary-box"><div class="summary-number" id="failureAvgSurvival">0%</div><div class="summary-label">Class Avg Survival Rate</div></div>
+          <div class="summary-box"><div class="summary-number" id="failureBankruptcyN">0</div><div class="summary-label">Simulated Insolvencies</div></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Left: Average Budget Distribution (Pie Chart) -->
+          <div class="chart-card">
+            <h3>Average Class Budget Allocation</h3>
+            <div class="chart-container">
+              <canvas id="failureBudgetPieChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Survival Map Scatter Plot -->
+          <div class="chart-card">
+            <h3>Student Survival Coordinate Map</h3>
+            <div class="chart-container">
+              <canvas id="failureScatterChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student allocations list -->
+        <div class="table-wrapper">
+          <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; margin-top:2rem; margin-bottom:0.75rem;">SME Financial Viability Logs</h3>
+          <table class="sim-table">
+            <thead>
+              <tr>
+                <th>Student</th>
+                <th>Rent/Lease</th>
+                <th>Inventory</th>
+                <th>Cash Reserves</th>
+                <th>Marketing</th>
+                <th>Survival Score</th>
+                <th>Status Outcome</th>
+              </tr>
+            </thead>
+            <tbody id="failureTableBody">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= ACTIVITY 5: WORLD CUP TICKET SIMULATOR ================= -->
+    <!-- Student Form -->
+    <div class="screen" id="ticketsStudentScreen">
+      <div class="card" style="max-width:680px; margin: 0 auto;">
+        <div class="round-badge" id="ticketsRoundBadge">⚽ Round 1 &mdash; Initial Strategy</div>
+        <h2 class="card-title" style="margin-bottom:1rem;">FIFA World Cup Ticketing</h2>
+
+        <!-- Market Shock Banner (appears when teacher triggers) -->
+        <div class="shock-banner" id="ticketsShockBanner">
+          <div class="shock-banner-title">⚡ Market Shock &mdash; Round 2 Now Open!</div>
+          <div class="shock-banner-text" id="ticketsShockText">A market event has occurred. Adjust your strategy and re-submit!</div>
+        </div>
+
+        <!-- Live Rival Feed -->
+        <div class="rival-feed">
+          <div class="rival-feed-title">Live Class Leaderboard</div>
+          <div id="ticketsRivalRows"><div class="rival-empty">Enter your class code below to see live rankings.</div></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Student Name</label>
+          <input type="text" id="ticketsName" class="text-input" placeholder="e.g. Leo Messi">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="ticketsClass" class="text-input" placeholder="e.g. 11BUS" style="text-transform:uppercase;" oninput="onTicketsClassInput(this.value)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Match Stage / Level of Demand</label>
+          <select id="ticketsStage" class="select-input" onchange="updateTicketsMath()">
+            <option value="group">Group Stage Match (50,000 Capacity, Normal Demand)</option>
+            <option value="semifinal">Semi-Final Match (70,000 Capacity, High Demand)</option>
+            <option value="final">World Cup Final (80,000 Capacity, Extreme Demand)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Pricing Strategy (NESA Syllabus)</label>
+          <select id="ticketsStrategy" class="select-input" onchange="updateTicketsMath()">
+            <option value="cost_plus">Cost-Plus Margin (Standard baseline performance)</option>
+            <option value="skimming">Market Skimming (High Cat 1 Price, capture high-income tickets)</option>
+            <option value="penetration">Penetration Pricing (Low Price, boosts demand by +25% to sell out early)</option>
+            <option value="loss_leader">Loss Leader (Flat $20 Local Resident ticket, boosts atmosphere/equity)</option>
+            <option value="dynamic">Dynamic Pricing (Adjusts based on sales wave, +10% sales conversion)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Category 1 Ticket Price</span>
+            <span id="ticketsPriceDisplay" style="font-weight:700;">$600.00</span>
+          </label>
+          <div class="slider-container">
+            <input type="range" id="ticketsPriceSlider" class="range-slider" min="100" max="2000" step="50" value="600" oninput="updateTicketsPriceDisplay(this.value)">
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin:1.5rem 0;">
+          <h4 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:var(--primary); margin-bottom:0.75rem;">Calculated Price Tiers</h4>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span>Category 2 Price (60%)</span><strong id="ticketsCat2Price">$360.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span>Category 3 Price (35%)</span><strong id="ticketsCat3Price">$210.00</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.75rem; font-size:0.85rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+            <span>Category 4 (Local Discount - 15%)</span><strong id="ticketsCat4Price">$90.00</strong>
+          </div>
+          <h4 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:var(--primary); margin-bottom:0.75rem;">Live Sales Projections</h4>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem;">
+            <span>Estimated Tickets Demanded</span><strong id="ticketsProjDemanded">0</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.9rem;">
+            <span>Expected Stadium Fill Rate</span><strong id="ticketsProjFill" class="text-success">0%</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+            <span>Projected Revenue</span><strong id="ticketsProjRevenue" class="text-success">$0.00</strong>
+          </div>
+        </div>
+
+        <!-- Score Preview -->
+        <div class="score-preview-bar">
+          <span style="font-size:0.85rem; color:var(--text-secondary);">Your estimated score:</span>
+          <strong id="ticketsScorePreview" style="color:var(--primary); font-size:1rem;">&mdash; / 100</strong>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitTickets()" style="width:100%;">
+          Submit Pricing Strategy
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="screen" id="ticketsTeacherScreen">
+      <div class="card">
+        <!-- Market Shock Control Panel -->
+        <div class="shock-trigger-panel">
+          <h4>⚡ Market Shock Events (Round 2)</h4>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">Trigger a real-world market event. It broadcasts instantly to all student screens so they can re-price for Round 2.</p>
+          <div class="shock-trigger-row">
+            <select class="shock-select" id="ticketsShockSelect">
+              <option value="rain">🌧️ Rain Alert &mdash; All demand drops 15%</option>
+              <option value="star">⭐ Star Player Announced &mdash; Premium demand surges +25%</option>
+              <option value="subsidy">🏛️ Government Subsidy &mdash; Cat 4 tickets capped at $50</option>
+              <option value="streaming">📡 Live Streaming Deal &mdash; In-person demand falls -10%</option>
+              <option value="corporate">🎫 Corporate Buyout &mdash; 30% of Cat 1 pre-sold at full price</option>
+            </select>
+            <button class="btn-shock" onclick="triggerTicketsShock()">⚡ Trigger Shock</button>
+            <button class="btn btn-secondary" onclick="clearTicketsShock()" style="padding:0.5rem 1rem; font-size:0.85rem;">Clear</button>
+          </div>
+          <div style="margin-top:0.5rem; font-size:0.8rem; color:var(--text-muted);" id="ticketsShockStatus">No shock active.</div>
+        </div>
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:1.5rem;" id="ticketsDashboardTitle">World Cup Ticketing Dashboard</h2>
+        
+        <div class="stats-summary-bar">
+          <div class="summary-box"><div class="summary-number" id="ticketsN">0</div><div class="summary-label">Sectors Price Models</div></div>
+          <div class="summary-box"><div class="summary-number" id="ticketsAvgPrice">$0.00</div><div class="summary-label">Average Cat 1 Price</div></div>
+          <div class="summary-box"><div class="summary-number" id="ticketsAvgFill">0%</div><div class="summary-label">Average Stadium Fill</div></div>
+          <div class="summary-box"><div class="summary-number" id="ticketsTotalRev">$0.00</div><div class="summary-label">Total Projected Revenue</div></div>
+        </div>
+
+        <!-- Live Awards Panel -->
+        <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; margin-bottom:0.75rem;">Live Tournament Awards</h3>
+        <div class="awards-panel">
+          <div class="award-card">
+            <span class="award-icon">🥇</span>
+            <div class="award-details">
+              <span class="award-title">The Golden Boot</span>
+              <span class="award-winner" id="awardWC-revenue">TBD</span>
+              <span class="award-desc">Highest Ticket Revenue Generated</span>
+            </div>
+          </div>
+          <div class="award-card">
+            <span class="award-icon">🔊</span>
+            <div class="award-details">
+              <span class="award-title">The 12th Man Award</span>
+              <span class="award-winner" id="awardWC-atmosphere">TBD</span>
+              <span class="award-desc">Best Crowd Atmosphere & Max Occupancy</span>
+            </div>
+          </div>
+          <div class="award-card">
+            <span class="award-icon">🌱</span>
+            <div class="award-details">
+              <span class="award-title">FIFA Fair Play Award</span>
+              <span class="award-winner" id="awardWC-accessibility">TBD</span>
+              <span class="award-desc">Highest Local Accessibility Score (min 90% fill)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Left: Demand Curve vs Student Placements -->
+          <div class="chart-card">
+            <h3>Demand Curve & Student Coordinates</h3>
+            <div class="chart-container">
+              <canvas id="ticketsDemandChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Revenue Bar Chart -->
+          <div class="chart-card">
+            <h3>Revenue Projection Comparison</h3>
+            <div class="chart-container">
+              <canvas id="ticketsRevenueChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; margin-top:2rem; margin-bottom:0.75rem;">FIFA Ticketing Models Log</h3>
+          <table class="sim-table">
+            <thead>
+              <tr>
+                <th>Director</th>
+                <th>Match Stage</th>
+                <th>Strategy</th>
+                <th>Cat 1 Price</th>
+                <th>Avg Price</th>
+                <th>Est. Demand</th>
+                <th>Fill Rate</th>
+                <th>Revenue</th>
+                <th>Atmosphere</th>
+                <th>Accessibility</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- ================= ACTIVITY 6: AIRFARE YIELD SIMULATOR ================= -->
+    <!-- Student Form -->
+    <div class="screen" id="airfareStudentScreen">
+      <div class="card" style="max-width:680px; margin: 0 auto;">
+        <div class="round-badge" id="airfareRoundBadge">✈️ Round 1 &mdash; Initial Strategy</div>
+        <h2 class="card-title" style="margin-bottom:1rem;">Airline Yield Management</h2>
+
+        <!-- Market Shock Banner -->
+        <div class="shock-banner" id="airfareShockBanner">
+          <div class="shock-banner-title">⚡ Market Shock &mdash; Round 2 Now Open!</div>
+          <div class="shock-banner-text" id="airfareShockText">A market event has occurred. Adjust your strategy and re-submit!</div>
+        </div>
+
+        <!-- Live Rival Feed -->
+        <div class="rival-feed">
+          <div class="rival-feed-title">Live Class Leaderboard</div>
+          <div id="airfareRivalRows"><div class="rival-empty">Enter your class code below to see live rankings.</div></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Student/Airline Name</label>
+          <input type="text" id="airfareName" class="text-input" placeholder="e.g. Qantas Team A">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Session Code</label>
+          <input type="text" id="airfareClass" class="text-input" placeholder="e.g. 11BUS" style="text-transform:uppercase;" oninput="onAirfareClassInput(this.value)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Dynamic Booking Yield Strategy (NESA Syllabus)</label>
+          <select id="airfareStrategy" class="select-input" onchange="updateAirfareMath()">
+            <option value="penetration">Penetration Pricing (Low flat rates to capture market share)</option>
+            <option value="dynamic">Dynamic Yield Management (Algorithms raise prices as seats fill: +25% leisure, +20% business)</option>
+            <option value="prestige">Prestige Price Skimming (Focus on premium corporate segment: high margins, 4x-6x business markup)</option>
+            <option value="budget">Budget Carrier LCC (All economy configuration: 300 seats, lower operations overhead, no business class)</option>
+            <option value="clearance">Last-Minute Clearance (High early price, dump unsold inventory: business demand falls -15%, leisure rises +15%)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Base Economy Ticket Price</span>
+            <span id="airfareEconPriceDisplay" style="font-weight:700;">$1,200.00</span>
+          </label>
+          <div class="slider-container">
+            <input type="range" id="airfareEconPrice" class="range-slider" min="300" max="3000" step="50" value="1200" oninput="updateAirfareEconDisplay(this.value)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Business Class Markup</span>
+            <span id="airfareMarkupDisplay" style="font-weight:700;">3.0x ($3,600.00)</span>
+          </label>
+          <div class="slider-container">
+            <input type="range" id="airfareMarkup" class="range-slider" min="2.0" max="6.0" step="0.5" value="3.0" oninput="updateAirfareMarkupDisplay(this.value)">
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:var(--radius-sm); padding:1rem; margin:1.5rem 0;">
+          <h4 style="font-size:0.85rem; font-weight:700; text-transform:uppercase; color:var(--primary); margin-bottom:0.75rem;">Projected Operations (Sydney to LA)</h4>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span>Economy Seats Sold (Max 250)</span><strong id="airfareProjEconSold">0</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span>Business Seats Sold (Max 50)</span><strong id="airfareProjBusSold">0</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem;">
+            <span>Total Passenger Load Factor</span><strong id="airfareProjLoad">0%</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.85rem; padding-bottom:0.5rem; border-bottom:1px solid var(--border);">
+            <span>Fixed Flight Overhead Cost</span><strong>$150,000</strong>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:0.95rem; margin-top:0.5rem;">
+            <span>Projected Net Profit/Loss</span><strong id="airfareProjProfit" class="text-success">$0.00</strong>
+          </div>
+        </div>
+
+        <!-- Score Preview -->
+        <div class="score-preview-bar">
+          <span style="font-size:0.85rem; color:var(--text-secondary);">Your estimated score:</span>
+          <strong id="airfareScorePreview" style="color:var(--primary); font-size:1rem;">&mdash; / 100</strong>
+        </div>
+
+        <button class="btn btn-primary" onclick="submitAirfare()" style="width:100%;">
+          Launch Flight Configuration
+        </button>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div class="screen" id="airfareTeacherScreen">
+      <div class="card">
+        <!-- Market Shock Control Panel -->
+        <div class="shock-trigger-panel">
+          <h4>⚡ Market Shock Events (Round 2)</h4>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:0.75rem;">Trigger a real-world aviation event. Students see it instantly and can re-price for Round 2.</p>
+          <div class="shock-trigger-row">
+            <select class="shock-select" id="airfareShockSelect">
+              <option value="fuel">⛽ Fuel Spike &mdash; Operating costs +$25,000</option>
+              <option value="health">😷 Health Warning &mdash; Leisure demand drops -20%</option>
+              <option value="conference">💼 Corporate Conference &mdash; Business demand surges +35%</option>
+              <option value="weather">🌩️ Weather Diversion &mdash; 10% economy capacity blocked</option>
+              <option value="competitor">🏷️ Competitor Sale &mdash; Rival airline drops price -20%</option>
+            </select>
+            <button class="btn-shock" onclick="triggerAirfareShock()">⚡ Trigger Shock</button>
+            <button class="btn btn-secondary" onclick="clearAirfareShock()" style="padding:0.5rem 1rem; font-size:0.85rem;">Clear</button>
+          </div>
+          <div style="margin-top:0.5rem; font-size:0.8rem; color:var(--text-muted);" id="airfareShockStatus">No shock active.</div>
+        </div>
+        <h2 style="font-family:'Outfit',sans-serif; font-size:1.8rem; font-weight:800; margin-bottom:1.5rem;" id="airfareDashboardTitle">Airfare Yield Management Dashboard</h2>
+        
+        <div class="stats-summary-bar">
+          <div class="summary-box"><div class="summary-number" id="airfareN">0</div><div class="summary-label">Airlines Running</div></div>
+          <div class="summary-box"><div class="summary-number" id="airfareAvgLoad">0%</div><div class="summary-label">Average Load Factor</div></div>
+          <div class="summary-box"><div class="summary-number" id="airfareAvgProfit">$0.00</div><div class="summary-label">Average Flight Profit</div></div>
+          <div class="summary-box"><div class="summary-number" id="airfareTopAirline">-</div><div class="summary-label">Most Profitable Airline</div></div>
+        </div>
+
+        <!-- Live Awards Panel -->
+        <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; margin-bottom:0.75rem;">Live Flight Trophies</h3>
+        <div class="awards-panel">
+          <div class="award-card">
+            <span class="award-icon">🏆</span>
+            <div class="award-details">
+              <span class="award-title">The Golden Jet</span>
+              <span class="award-winner" id="awardAF-profit">TBD</span>
+              <span class="award-desc">Highest Net Profit Sydney to LA</span>
+            </div>
+          </div>
+          <div class="award-card">
+            <span class="award-icon">👥</span>
+            <div class="award-details">
+              <span class="award-title">Cabin Crew Award</span>
+              <span class="award-winner" id="awardAF-load">TBD</span>
+              <span class="award-desc">Highest Passenger Load Factor (Break-even)</span>
+            </div>
+          </div>
+          <div class="award-card">
+            <span class="award-icon">💎</span>
+            <div class="award-details">
+              <span class="award-title">Yield Master Award</span>
+              <span class="award-winner" id="awardAF-yield">TBD</span>
+              <span class="award-desc">Highest Profit Margin per Passenger</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <!-- Left: Load Factor vs Profit Scatter Chart -->
+          <div class="chart-card">
+            <h3>Load Factor vs Profit Coordinate Zone</h3>
+            <div class="chart-container">
+              <canvas id="airfareScatterChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Right: Yield Strategy Choice Pie Chart -->
+          <div class="chart-card">
+            <h3>Dynamic Yield Strategy Mix</h3>
+            <div class="chart-container">
+              <canvas id="airfareStrategyPieChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <h3 style="font-family:'Outfit',sans-serif; font-size:1.2rem; font-weight:700; margin-top:2rem; margin-bottom:0.75rem;">Airlines Flight Yield Ledger</h3>
+          <table class="sim-table">
+            <thead>
+              <tr>
+                <th>Airline Operator</th>
+                <th>Strategy Mode</th>
+                <th>Econ Price</th>
+                <th>Business Price</th>
+                <th>Econ Sold</th>
+                <th>Business Sold</th>
+                <th>Load Factor</th>
+                <th>Revenue</th>
+                <th>Fixed Cost</th>
+                <th>Net Profit</th>
+              </tr>
+            </thead>
+            <tbody id="airfareTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- PITCH RATING MODAL (Overlay) -->
+    <div class="modal-overlay" id="pitchRatingModal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closePitchRatingModal()">&times;</button>
+        <h3 style="font-family:'Outfit',sans-serif; font-size:1.4rem; font-weight:800; margin-bottom:0.25rem;" id="modalPitchBusName">Startup</h3>
+        <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:1.5rem;">Pitched by: <span id="modalPitchStudentName">Student</span></p>
+        
+        <div style="background:rgba(255,255,255,0.02); border:1px solid var(--border); padding:1rem; border-radius:var(--radius-sm); margin-bottom:1.5rem;">
+          <div style="margin-bottom:0.75rem; font-size:0.9rem;"><strong>Concept:</strong></div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4;" id="modalPitchConcept">Concept text...</p>
+          <div style="margin-top:1rem; margin-bottom:0.5rem; font-size:0.9rem;"><strong>Competitive Advantage:</strong></div>
+          <p style="font-size:0.85rem; color:var(--text-secondary);" id="modalPitchAdvantage">Advantage...</p>
+        </div>
+
+        <h4 style="font-family:'Outfit',sans-serif; font-size:1.05rem; font-weight:700; margin-bottom:1rem; color:var(--primary);">Your Peer Feasibility Rating</h4>
+
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Concept Innovation & Creativity</span>
+            <span id="rateVal-innovation" style="font-weight:700;">3 / 5</span>
+          </label>
+          <input type="range" id="rate-innovation" class="range-slider" min="1" max="5" step="1" value="3" oninput="document.getElementById('rateVal-innovation').textContent = this.value + ' / 5'">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>SME Commercial Feasibility</span>
+            <span id="rateVal-feasibility" style="font-weight:700;">3 / 5</span>
+          </label>
+          <input type="range" id="rate-feasibility" class="range-slider" min="1" max="5" step="1" value="3" oninput="document.getElementById('rateVal-feasibility').textContent = this.value + ' / 5'">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display:flex; justify-content:space-between;">
+            <span>Investment Appeal</span>
+            <span id="rateVal-investment" style="font-weight:700;">3 / 5</span>
+          </label>
+          <input type="range" id="rate-investment" class="range-slider" min="1" max="5" step="1" value="3" oninput="document.getElementById('rateVal-investment').textContent = this.value + ' / 5'">
+        </div>
+
+        <button class="btn btn-primary" onclick="submitPitchRating()" style="width:100%; margin-top:1rem;">
+          Submit Rating
+        </button>
+      </div>
+    </div>
+
+    <!-- SCORE CARD MODAL -->
+    <div class="scorecard-overlay hidden" id="scorecardOverlay">
+      <div class="scorecard-box">
+        <span class="scorecard-badge" id="scorecardBadgeEmoji">🥇</span>
+        <div class="scorecard-score" id="scorecardScore">87</div>
+        <div style="font-family:'Outfit',sans-serif; font-size:1.1rem; font-weight:600; margin:0.25rem 0; color:var(--text-secondary);">out of 100</div>
+        <div class="scorecard-rank" id="scorecardRank">You are the first to submit!</div>
+        <div style="font-size:1.4rem; font-weight:800; margin:0.5rem 0;" id="scorecardBadgeLabel">🥇 Gold</div>
+        <div class="scorecard-verdict" id="scorecardVerdict">Loading verdict...</div>
+        <button class="btn btn-primary" onclick="closeScorecard()" style="width:100%;">View Class Dashboard &rarr;</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // Firebase connection configuration
+    const firebaseConfig = {
+      projectId: "maths-f3c6d",
+      appId: "1:76007634547:web:0b9773147e26dd2940dc06",
+      storageBucket: "maths-f3c6d.firebasestorage.app",
+      apiKey: "AIzaSyCvbWTB94JYqAECVSOKLIepI5vXeTaTwww",
+      authDomain: "www.datatrends.com.au",
+      messagingSenderId: "76007634547"
+    };
+
+    let db = null;
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      console.log("Firebase initialized in SME Hub.");
+    } catch (e) {
+      console.warn("Could not connect to Firebase online, running local/offline mode:", e);
+    }
+
+    // Active state tracking
+    let currentActivity = null; // 'pitch', 'cafe', 'csr', 'failure', 'tickets', 'airfare'
+    let currentRole = null;     // 'student', 'teacher'
+    let activeClassCode = "";
+    
+    // DB Listeners
+    let currentUnsubscribe = null;
+    let secondaryUnsubscribe = null;
+
+    // Chart objects for reuse
+    let charts = {};
+
+    // CSR State view storage
+    let selectedCSROptions = { 1: null, 2: null, 3: null };
+
+    // Activity Selector Router
+    function startActivity(activity) {
+      currentActivity = activity;
+      
+      // Update badge indicator in nav
+      const names = { 
+        pitch: "Startup Pitch Arena", 
+        cafe: "Café Break-Even Battle", 
+        csr: "CSR Dilemma Poll", 
+        failure: "Failure Risk Simulator",
+        tickets: "World Cup Ticket Simulator",
+        airfare: "Airfare Yield Simulator"
+      };
+      document.getElementById("navIndicator").textContent = names[activity];
+
+      // Transition to Role Choice Screen
+      document.getElementById("hubScreen").style.display = "none";
+      document.getElementById("roleScreen").style.display = "block";
+      document.getElementById("backToHubBtn").style.display = "inline-flex";
+
+      // Customize Role screen title
+      document.getElementById("roleScreenTitle").textContent = `Configure Role for: ${names[activity]}`;
+    }
+
+    function chooseRole(role) {
+      currentRole = role;
+      document.getElementById("roleScreen").style.display = "none";
+
+      if (role === "student") {
+        // Load the specific Student form screen
+        document.getElementById(`${currentActivity}StudentScreen`).style.display = "block";
+        
+        // Reset CSR options UI if it is the CSR activity
+        if (currentActivity === 'csr') {
+          selectedCSROptions = { 1: null, 2: null, 3: null };
+          document.querySelectorAll('.dilemma-btn-option').forEach(btn => btn.classList.remove('selected'));
+        }
+        
+        // Call initial math calculations for new dynamic forms
+        if (currentActivity === 'tickets') {
+          updateTicketsMath();
+        } else if (currentActivity === 'airfare') {
+          updateAirfareMath();
+        }
+      } else {
+        // Prompt for Class Code to view the teacher dashboard
+        const code = prompt("Enter a Class Session Code to open live dashboard (e.g. JOSHUAANDERSON123*):");
+        if (!code) {
+          showHub();
+          return;
+        }
+        activeClassCode = code.trim().toUpperCase();
+        
+        // Render teacher screen
+        document.getElementById(`${currentActivity}TeacherScreen`).style.display = "block";
+        
+        // Load Live calculations & listeners
+        loadDashboardData();
+      }
+    }
+
+    function showHub() {
+      // Clear active listeners
+      if (currentUnsubscribe) { currentUnsubscribe(); currentUnsubscribe = null; }
+      if (secondaryUnsubscribe) { secondaryUnsubscribe(); secondaryUnsubscribe = null; }
+
+      // Destroy active charts
+      Object.keys(charts).forEach(key => {
+        if (charts[key]) {
+          charts[key].destroy();
+          charts[key] = null;
+        }
+      });
+      charts = {};
+
+      // Hide all simulation pages
+      document.querySelectorAll(".screen").forEach(s => s.style.display = "none");
+
+      // Show selector
+      document.getElementById("hubScreen").style.display = "block";
+      document.getElementById("backToHubBtn").style.display = "none";
+      document.getElementById("navIndicator").textContent = "SME Simulation Hub";
+
+      // Reset values
+      currentActivity = null;
+      currentRole = null;
+      activeClassCode = "";
+    }
+
+    // Toggle Light/Dark modes
+    function toggleTheme() {
+      const body = document.body;
+      const themeIcon = document.getElementById("themeIcon");
+      body.classList.toggle("light-mode");
+      if (body.classList.contains("light-mode")) {
+        themeIcon.innerHTML = `<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>`;
+      } else {
+        themeIcon.innerHTML = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
+      }
+      
+      // Trigger charts update to update colors
+      updateActiveChartsThemes();
+    }
+
+    function updateActiveChartsThemes() {
+      if (Object.keys(charts).length === 0) return;
+      
+      const isDarkMode = !document.body.classList.contains("light-mode");
+      const gridColor = isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.1)";
+      const labelColor = isDarkMode ? "#94a3b8" : "#475569";
+
+      Object.keys(charts).forEach(key => {
+        const chart = charts[key];
+        if (!chart) return;
+
+        if (chart.options.scales) {
+          if (chart.options.scales.x) {
+            chart.options.scales.x.grid.color = gridColor;
+            if (chart.options.scales.x.ticks) chart.options.scales.x.ticks.color = labelColor;
+            if (chart.options.scales.x.title) chart.options.scales.x.title.color = labelColor;
+          }
+          if (chart.options.scales.y) {
+            chart.options.scales.y.grid.color = gridColor;
+            if (chart.options.scales.y.ticks) chart.options.scales.y.ticks.color = labelColor;
+            if (chart.options.scales.y.title) chart.options.scales.y.title.color = labelColor;
+          }
+          if (chart.options.scales.r) {
+            chart.options.scales.r.grid.color = gridColor;
+            chart.options.scales.r.angleLines.color = gridColor;
+            if (chart.options.scales.r.pointLabels) chart.options.scales.r.pointLabels.color = labelColor;
+          }
+        }
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+          chart.options.plugins.legend.labels.color = labelColor;
+        }
+        chart.update();
+      });
+    }
+
+    function getChartThemeOptions() {
+      const isDarkMode = !document.body.classList.contains("light-mode");
+      return {
+        gridColor: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "rgba(15, 23, 42, 0.1)",
+        labelColor: isDarkMode ? "#94a3b8" : "#475569",
+        ticksColor: isDarkMode ? "#64748b" : "#94a3b8"
+      };
+    }
+
+
+    // ================= DYNAMIC FORMS INPUT SYNCING =================
+
+    // Cafe price/cost display sync
+    function updateCafePriceDisplay(val) {
+      document.getElementById("cafePriceDisplay").textContent = `$${parseFloat(val).toFixed(2)}`;
+      document.getElementById("summaryCafePrice").textContent = `$${parseFloat(val).toFixed(2)}`;
+      calculateCafeSummary();
+    }
+    
+    function updateCafeCostDisplay(val) {
+      let cost = 2.00;
+      if (val === "premium") cost = 3.50;
+      else if (val === "organic") cost = 4.50;
+      
+      document.getElementById("summaryCafeCost").textContent = `$${cost.toFixed(2)}`;
+      calculateCafeSummary();
+    }
+
+    function calculateCafeSummary() {
+      const price = parseFloat(document.getElementById("cafePriceSlider").value);
+      const upgrade = document.getElementById("cafeUpgrade").value;
+      
+      let cost = 2.00;
+      if (upgrade === "premium") cost = 3.50;
+      else if (upgrade === "organic") cost = 4.50;
+      
+      const margin = price - cost;
+      const marginText = document.getElementById("summaryCafeMargin");
+      marginText.textContent = `$${margin.toFixed(2)}`;
+      
+      if (margin > 0) {
+        marginText.className = "text-success";
+      } else {
+        marginText.className = "text-danger";
+      }
+    }
+
+    // CSR dilemma button select
+    function chooseDilemma(dilemmaNum, option) {
+      selectedCSROptions[dilemmaNum] = option;
+      
+      // Update UI classes
+      document.getElementById(`d${dilemmaNum}optA`).classList.remove('selected');
+      document.getElementById(`d${dilemmaNum}optB`).classList.remove('selected');
+      
+      document.getElementById(`d${dilemmaNum}opt${option}`).classList.add('selected');
+    }
+
+    // SME Failure Budget allocation sum checker
+    function updateAllocationDisplay() {
+      const rent = parseInt(document.getElementById("alloc-rent").value, 10);
+      const inventory = parseInt(document.getElementById("alloc-inventory").value, 10);
+      const reserves = parseInt(document.getElementById("alloc-reserves").value, 10);
+      const marketing = parseInt(document.getElementById("alloc-marketing").value, 10);
+
+      document.getElementById("allocVal-rent").textContent = `$${rent.toLocaleString()}`;
+      document.getElementById("allocVal-inventory").textContent = `$${inventory.toLocaleString()}`;
+      document.getElementById("allocVal-reserves").textContent = `$${reserves.toLocaleString()}`;
+      document.getElementById("allocVal-marketing").textContent = `$${marketing.toLocaleString()}`;
+
+      const total = rent + inventory + reserves + marketing;
+      const totalText = document.getElementById("totalAllocText");
+      const statusText = document.getElementById("allocationStatus");
+      
+      totalText.textContent = `$${total.toLocaleString()}`;
+
+      if (total === 100000) {
+        totalText.style.color = "var(--color-green)";
+        statusText.textContent = "Balanced ($0 remaining)";
+        statusText.className = "text-success";
+        document.getElementById("submitFailureBtn").disabled = false;
+      } else {
+        totalText.style.color = "var(--color-red)";
+        const diff = 100000 - total;
+        if (diff > 0) {
+          statusText.textContent = `Under-allocated ($${diff.toLocaleString()} left)`;
+          statusText.className = "text-danger";
+        } else {
+          statusText.textContent = `Over-allocated ($${Math.abs(diff).toLocaleString()} over)`;
+          statusText.className = "text-danger";
+        }
+      }
+    }
+
+
+    // ================= SIMULATION FIRESTORE CONNECTORS & SUBMITTERS =================
+
+    // Submission: Startup Pitch Arena
+    async function submitPitch() {
+      const name = document.getElementById("pitchName").value.trim();
+      const classCode = document.getElementById("pitchClass").value.trim().toUpperCase();
+      const busName = document.getElementById("pitchBusName").value.trim();
+      const concept = document.getElementById("pitchConcept").value.trim();
+      const advantage = document.getElementById("pitchAdvantage").value.trim();
+
+      if (!name || !classCode || !busName || !concept || !advantage) {
+        alert("Please complete all input fields.");
+        return;
+      }
+
+      if (db) {
+        try {
+          await db.collection("audit_submissions").add({
+            activityType: "pitch",
+            studentName: name,
+            classCode: classCode,
+            businessName: busName,
+            concept: concept,
+            advantage: advantage,
+            scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+            archetype: "SME Simulation",
+            topTrait: "none",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          alert("Your pitch has been successfully uploaded to the class arena!");
+          showHub();
+        } catch (e) {
+          console.error(e);
+          alert("Database upload failed.");
+        }
+      } else {
+        alert("Running offline. Submission simulated successfully.");
+        showHub();
+      }
+    }
+
+    // Submission: Cafe Break-Even Battle
+    async function submitCafeBattle() {
+      const name = document.getElementById("cafeName").value.trim();
+      const classCode = document.getElementById("cafeClass").value.trim().toUpperCase();
+      const price = parseFloat(document.getElementById("cafePriceSlider").value);
+      const upgrade = document.getElementById("cafeUpgrade").value;
+
+      if (!name || !classCode) {
+        alert("Please fill in your name and class code.");
+        return;
+      }
+
+      if (db) {
+        try {
+          await db.collection("audit_submissions").add({
+            activityType: "cafe",
+            studentName: name,
+            classCode: classCode,
+            price: price,
+            upgrade: upgrade,
+            scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+            archetype: "SME Simulation",
+            topTrait: "none",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          alert("Your Cart config has been launched into the market!");
+          showHub();
+        } catch (e) {
+          console.error(e);
+          alert("Launch failed.");
+        }
+      } else {
+        alert("Offline. Burger cart registered in local simulation.");
+        showHub();
+      }
+    }
+
+    // Submission: CSR Dilemma Poll
+    async function submitCSR() {
+      const name = document.getElementById("csrName").value.trim();
+      const classCode = document.getElementById("csrClass").value.trim().toUpperCase();
+
+      if (!name || !classCode) {
+        alert("Please fill in your name and class code.");
+        return;
+      }
+      
+      if (!selectedCSROptions[1] || !selectedCSROptions[2] || !selectedCSROptions[3]) {
+        alert("Please choose an option for all 3 ethical dilemmas.");
+        return;
+      }
+
+      if (db) {
+        try {
+          await db.collection("audit_submissions").add({
+            activityType: "csr",
+            studentName: name,
+            classCode: classCode,
+            choices: [selectedCSROptions[1], selectedCSROptions[2], selectedCSROptions[3]],
+            scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+            archetype: "SME Simulation",
+            topTrait: "none",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          alert("Your dilemma decisions have been logged.");
+          showHub();
+        } catch (e) {
+          console.error(e);
+          alert("Failed to submit choices.");
+        }
+      } else {
+        alert("Offline. Choices saved locally.");
+        showHub();
+      }
+    }
+
+    // Submission: SME Failure Risk Simulator
+    async function submitFailureRisk() {
+      const name = document.getElementById("failureName").value.trim();
+      const classCode = document.getElementById("failureClass").value.trim().toUpperCase();
+      const rent = parseInt(document.getElementById("alloc-rent").value, 10);
+      const inventory = parseInt(document.getElementById("alloc-inventory").value, 10);
+      const reserves = parseInt(document.getElementById("alloc-reserves").value, 10);
+      const marketing = parseInt(document.getElementById("alloc-marketing").value, 10);
+
+      if (!name || !classCode) {
+        alert("Please enter your name and class code.");
+        return;
+      }
+
+      if (rent + inventory + reserves + marketing !== 100000) {
+        alert("Budget allocation must equal exactly $100,000.");
+        return;
+      }
+
+      if (db) {
+        try {
+          await db.collection("audit_submissions").add({
+            activityType: "failure",
+            studentName: name,
+            classCode: classCode,
+            allocation: { rent, inventory, reserves, marketing },
+            scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+            archetype: "SME Simulation",
+            topTrait: "none",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          alert("Your startup setup is submitted. Let's see if you survive the first year!");
+          showHub();
+        } catch (e) {
+          console.error(e);
+          alert("Failed to submit financial model.");
+        }
+      } else {
+        alert("Offline. Run simulation Locally.");
+        showHub();
+      }
+    }
+
+
+    // ================= REAL-TIME TEACHER LIVE DASHBOARDS =================
+
+    function loadDashboardData() {
+      if (!db) {
+        alert("Cannot load live dashboard offline (Firebase connection missing).");
+        showHub();
+        return;
+      }
+
+      const classCode = activeClassCode;
+
+      if (currentActivity === "pitch") {
+        document.getElementById("pitchDashboardTitle").textContent = `Live Pitch Arena: ${classCode}`;
+        
+        // Listen to all submissions under this class code and filter client-side
+        currentUnsubscribe = db.collection("audit_submissions")
+          .where("classCode", "==", classCode)
+          .onSnapshot((snapshot) => {
+            const pitches = [];
+            const ratings = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.activityType === "pitch") {
+                pitches.push({ id: doc.id, ...data });
+              } else if (data.activityType === "pitch_rating") {
+                ratings.push(data);
+              }
+            });
+            renderPitchDashboard(pitches, ratings);
+          }, (error) => {
+            console.error("Pitch snapshot error:", error);
+            alert("Database connection error. Try refreshing.");
+          });
+      }
+      
+      else if (currentActivity === "cafe") {
+        document.getElementById("cafeDashboardTitle").textContent = `Live Burger Battle: ${classCode}`;
+        
+        currentUnsubscribe = db.collection("audit_submissions")
+          .where("classCode", "==", classCode)
+          .onSnapshot((snapshot) => {
+            const inputs = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.activityType === "cafe") {
+                inputs.push(data);
+              }
+            });
+            renderCafeDashboard(inputs);
+          });
+      }
+      
+      else if (currentActivity === "csr") {
+        document.getElementById("csrDashboardTitle").textContent = `CSR Class Index Poll: ${classCode}`;
+        
+        currentUnsubscribe = db.collection("audit_submissions")
+          .where("classCode", "==", classCode)
+          .onSnapshot((snapshot) => {
+            const polls = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.activityType === "csr") {
+                polls.push(data);
+              }
+            });
+            renderCSRDashboard(polls);
+          });
+      }
+      
+      else if (currentActivity === "failure") {
+        document.getElementById("failureDashboardTitle").textContent = `SME Survival Risk Dashboard: ${classCode}`;
+        
+        currentUnsubscribe = db.collection("audit_submissions")
+          .where("classCode", "==", classCode)
+          .onSnapshot((snapshot) => {
+            const models = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.activityType === "failure") {
+                models.push(data);
+              }
+            });
+            renderFailureDashboard(models);
+          });
+      }
+      
+      else if (currentActivity === "tickets") {
+        document.getElementById("ticketsDashboardTitle").textContent = `World Cup Tickets: ${classCode}`;
+        
+        currentUnsubscribe = db.collection("audit_submissions")
+          .where("classCode", "==", classCode)
+          .onSnapshot((snapshot) => {
+            const submissions = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.activityType === "tickets") {
+                submissions.push(data);
+              }
+            });
+            renderTicketsDashboard(submissions);
+          });
+      }
+      
+      else if (currentActivity === "airfare") {
+        document.getElementById("airfareDashboardTitle").textContent = `Airfare Yield Management: ${classCode}`;
+        
+        currentUnsubscribe = db.collection("audit_submissions")
+          .where("classCode", "==", classCode)
+          .onSnapshot((snapshot) => {
+            const submissions = [];
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.activityType === "airfare") {
+                submissions.push(data);
+              }
+            });
+            renderAirfareDashboard(submissions);
+          });
+      }
+    }
+
+
+    // ================= ACTIVITY RENDERERS (DASHBOARD VIEWS) =================
+
+    // --- ACTIVITY 1: STARTUP PITCH ARENA ---
+    let selectedPitchId = null;
+    let activePitchesMap = [];
+
+    function renderPitchDashboard(pitches, ratings) {
+      document.getElementById("pitchN").textContent = pitches.length;
+      activePitchesMap = pitches;
+
+      // Group ratings by pitchId
+      const pitchScores = {};
+      pitches.forEach(p => {
+        pitchScores[p.id] = { sum: 0, count: 0, innovation: 0, feasibility: 0, investment: 0 };
+      });
+
+      ratings.forEach(r => {
+        if (pitchScores[r.pitchId]) {
+          const ratingAvg = (r.innovation + r.feasibility + r.investment) / 3;
+          pitchScores[r.pitchId].sum += ratingAvg;
+          pitchScores[r.pitchId].count++;
+          pitchScores[r.pitchId].innovation += r.innovation;
+          pitchScores[r.pitchId].feasibility += r.feasibility;
+          pitchScores[r.pitchId].investment += r.investment;
+        }
+      });
+
+      // Calculate total class average rating
+      let classSum = 0;
+      let classCount = 0;
+      
+      const leaderboardData = pitches.map(p => {
+        const sc = pitchScores[p.id];
+        const avg = sc.count > 0 ? (sc.sum / sc.count) : 0;
+        
+        if (sc.count > 0) {
+          classSum += avg;
+          classCount++;
+        }
+
+        return {
+          id: p.id,
+          name: p.businessName,
+          student: p.studentName,
+          score: parseFloat(avg.toFixed(1))
+        };
+      });
+
+      // Sort leaderboard descending
+      leaderboardData.sort((a, b) => b.score - a.score);
+
+      document.getElementById("pitchAvgRating").textContent = classCount > 0 ? (classSum / classCount).toFixed(1) + " / 5" : "0.0";
+
+      // Render Cards
+      const container = document.getElementById("pitchesListContainer");
+      container.innerHTML = "";
+
+      if (pitches.length === 0) {
+        container.innerHTML = `<p style="color:var(--text-muted); padding:1rem 0;">No pitches submitted yet.</p>`;
+      }
+
+      pitches.forEach(p => {
+        const sc = pitchScores[p.id];
+        const card = document.createElement("div");
+        card.className = "pitch-item-card";
+        card.innerHTML = `
+          <div>
+            <div style="font-size:0.7rem; text-transform:uppercase; font-weight:800; color:var(--primary); margin-bottom:0.25rem;">Startup Pitch</div>
+            <h4 style="font-family:'Outfit',sans-serif; font-size:1.15rem; font-weight:700; margin-bottom:0.5rem;">${p.businessName}</h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); line-height:1.4; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${p.concept}</p>
+          </div>
+          <div>
+            <div class="pitch-meta" style="border-top:1px solid var(--border); padding-top:0.75rem; margin-top:0.5rem;">
+              <span>By: <strong>${p.studentName}</strong></span>
+              <span style="color:var(--secondary); font-weight:700;">⭐ ${sc.count > 0 ? (sc.sum / sc.count).toFixed(1) : "0.0"} (${sc.count} reviews)</span>
+            </div>
+            <button class="btn btn-secondary" onclick="openPitchRatingModal('${p.id}')" style="width:100%; margin-top:0.75rem; padding:0.4rem; font-size:0.8rem;">
+              Rate this Pitch
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Render Leaderboard Chart
+      const chartLabels = leaderboardData.map(item => `${item.name} (${item.student})`);
+      const chartValues = leaderboardData.map(item => item.score);
+
+      const theme = getChartThemeOptions();
+      const ctx = document.getElementById("pitchLeaderboardChart").getContext("2d");
+
+      if (charts.pitchLeaderboard) {
+        charts.pitchLeaderboard.data.labels = chartLabels;
+        charts.pitchLeaderboard.data.datasets[0].data = chartValues;
+        charts.pitchLeaderboard.options.scales.x.grid.color = theme.gridColor;
+        charts.pitchLeaderboard.options.scales.x.ticks.color = theme.labelColor;
+        charts.pitchLeaderboard.options.scales.y.grid.color = theme.gridColor;
+        charts.pitchLeaderboard.options.scales.y.ticks.color = theme.labelColor;
+        charts.pitchLeaderboard.update();
+      } else {
+        charts.pitchLeaderboard = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: chartLabels,
+            datasets: [{
+              label: 'Feasibility Score',
+              data: chartValues,
+              backgroundColor: 'rgba(129, 140, 248, 0.4)',
+              borderColor: '#818cf8',
+              borderWidth: 1.5,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: {
+                min: 0,
+                max: 5,
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor, stepSize: 1 }
+              },
+              y: {
+                grid: { display: false },
+                ticks: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function openPitchRatingModal(pitchId) {
+      selectedPitchId = pitchId;
+      const pitch = activePitchesMap.find(p => p.id === pitchId);
+      if (!pitch) return;
+
+      document.getElementById("modalPitchBusName").textContent = pitch.businessName;
+      document.getElementById("modalPitchStudentName").textContent = pitch.studentName;
+      document.getElementById("modalPitchConcept").textContent = pitch.concept;
+      document.getElementById("modalPitchAdvantage").textContent = pitch.advantage;
+
+      // Reset rating sliders
+      document.getElementById("rate-innovation").value = 3;
+      document.getElementById("rate-feasibility").value = 3;
+      document.getElementById("rate-investment").value = 3;
+      document.getElementById("rateVal-innovation").textContent = "3 / 5";
+      document.getElementById("rateVal-feasibility").textContent = "3 / 5";
+      document.getElementById("rateVal-investment").textContent = "3 / 5";
+
+      document.getElementById("pitchRatingModal").style.display = "flex";
+    }
+
+    function closePitchRatingModal() {
+      document.getElementById("pitchRatingModal").style.display = "none";
+      selectedPitchId = null;
+    }
+
+    async function submitPitchRating() {
+      if (!selectedPitchId || !db) return;
+
+      const raterName = prompt("Enter your group/student name to log this review:") || "Anonymous";
+      const innovation = parseInt(document.getElementById("rate-innovation").value, 10);
+      const feasibility = parseInt(document.getElementById("rate-feasibility").value, 10);
+      const investment = parseInt(document.getElementById("rate-investment").value, 10);
+
+      try {
+        await db.collection("audit_submissions").add({
+          activityType: "pitch_rating",
+          classCode: activeClassCode,
+          pitchId: selectedPitchId,
+          raterName: raterName,
+          studentName: raterName, // Satisfy schema
+          innovation: innovation,
+          feasibility: feasibility,
+          investment: investment,
+          scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+          archetype: "SME Simulation",
+          topTrait: "none",
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert("Rating submitted successfully!");
+        closePitchRatingModal();
+      } catch (e) {
+        console.error(e);
+        alert("Failed to submit review.");
+      }
+    }
+
+
+    // --- ACTIVITY 2: CAFÉ BREAK-EVEN BATTLE ---
+    function renderCafeDashboard(competitors) {
+      const count = competitors.length;
+      document.getElementById("cafeN").textContent = count;
+
+      if (count === 0) {
+        document.getElementById("cafeTableBody").innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; color:var(--text-muted); padding:2rem 0;">No competitors launched yet.</td>
+          </tr>
+        `;
+        document.getElementById("cafeAvgPrice").textContent = "$0.00";
+        document.getElementById("cafeTopProfit").textContent = "$0.00";
+        return;
+      }
+
+      // Calculations / Market Simulation
+      // Standard cost: $2, Premium cost: $3.5, Organic: $4.5
+      // Fixed cost: $150 daily
+      // Target market total: count * 60 burgers
+      const totalMarket = count * 60;
+      
+      const costMap = { standard: 2.00, premium: 3.50, organic: 4.50 };
+      const qualityFactorMap = { standard: 1.0, premium: 1.5, organic: 2.0 };
+
+      let priceSum = 0;
+      
+      // Compute attractiveness score for each competitor
+      const results = competitors.map(comp => {
+        priceSum += comp.price;
+        const cost = costMap[comp.upgrade];
+        const factor = qualityFactorMap[comp.upgrade];
+        
+        // Attractiveness decreases as price increases, increases with quality factor
+        // Formula: Score = Factor * Math.max(0, 16 - Price)
+        const score = factor * Math.max(0.2, 16 - comp.price);
+        
+        return {
+          name: comp.studentName,
+          price: comp.price,
+          costType: comp.upgrade,
+          cost: cost,
+          margin: comp.price - cost,
+          attractionScore: score,
+          sold: 0,
+          profit: 0
+        };
+      });
+
+      document.getElementById("cafeAvgPrice").textContent = `$${(priceSum / count).toFixed(2)}`;
+
+      // Distribute sales based on market share
+      const totalScoreSum = results.reduce((sum, r) => sum + r.attractionScore, 0);
+
+      results.forEach(r => {
+        const share = totalScoreSum > 0 ? (r.attractionScore / totalScoreSum) : (1 / count);
+        r.sold = Math.round(share * totalMarket);
+        r.revenue = r.price * r.sold;
+        r.totalVarCost = r.cost * r.sold;
+        r.fixedCost = 150.00; // Daily rent
+        r.profit = r.revenue - r.totalVarCost - r.fixedCost;
+      });
+
+      // Find top profit
+      const sortedByProfit = [...results].sort((a,b) => b.profit - a.profit);
+      document.getElementById("cafeTopProfit").textContent = `$${sortedByProfit[0].profit.toFixed(2)}`;
+
+      // Render Table
+      const tableBody = document.getElementById("cafeTableBody");
+      tableBody.innerHTML = "";
+      results.forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${r.name}</strong></td>
+          <td>$${r.price.toFixed(2)}</td>
+          <td style="text-transform:capitalize;">${r.costType}</td>
+          <td>$${r.cost.toFixed(2)}</td>
+          <td class="${r.margin > 0 ? 'text-success' : 'text-danger'}">$${r.margin.toFixed(2)}</td>
+          <td><strong>${r.sold} units</strong></td>
+          <td>$${r.fixedCost.toFixed(2)}</td>
+          <td style="font-weight:700;" class="${r.profit > 0 ? 'text-success' : 'text-danger'}">$${r.profit.toFixed(2)}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Price distribution (histogram values)
+      const priceBins = { "4-6": 0, "6.5-8": 0, "8.5-10": 0, "10.5-12": 0, "12.5-15": 0 };
+      results.forEach(r => {
+        if (r.price <= 6) priceBins["4-6"]++;
+        else if (r.price <= 8) priceBins["6.5-8"]++;
+        else if (r.price <= 10) priceBins["8.5-10"]++;
+        else if (r.price <= 12) priceBins["10.5-12"]++;
+        else priceBins["12.5-15"]++;
+      });
+
+      // Render Charts
+      const theme = getChartThemeOptions();
+      
+      // Chart 1: Price Histogram
+      const ctxDist = document.getElementById("cafePriceDistributionChart").getContext("2d");
+      if (charts.cafeDist) {
+        charts.cafeDist.data.datasets[0].data = Object.values(priceBins);
+        charts.cafeDist.options.scales.x.grid.color = theme.gridColor;
+        charts.cafeDist.options.scales.x.ticks.color = theme.labelColor;
+        charts.cafeDist.options.scales.y.grid.color = theme.gridColor;
+        charts.cafeDist.options.scales.y.ticks.color = theme.labelColor;
+        charts.cafeDist.update();
+      } else {
+        charts.cafeDist = new Chart(ctxDist, {
+          type: 'bar',
+          data: {
+            labels: Object.keys(priceBins),
+            datasets: [{
+              label: 'Number of Carts',
+              data: Object.values(priceBins),
+              backgroundColor: 'rgba(192, 132, 252, 0.4)',
+              borderColor: '#c084fc',
+              borderWidth: 1.5,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: theme.labelColor } },
+              y: { grid: { color: theme.gridColor }, ticks: { color: theme.labelColor, stepSize: 1 } }
+            }
+          }
+        });
+      }
+
+      // Chart 2: Profit Scatter Plot
+      const scatterPoints = results.map(r => ({
+        x: r.sold,
+        y: parseFloat(r.profit.toFixed(2)),
+        label: r.name,
+        price: r.price
+      }));
+
+      const ctxScatter = document.getElementById("cafeProfitScatterChart").getContext("2d");
+      if (charts.cafeScatter) {
+        charts.cafeScatter.data.datasets[0].data = scatterPoints;
+        charts.cafeScatter.options.scales.x.grid.color = theme.gridColor;
+        charts.cafeScatter.options.scales.x.ticks.color = theme.labelColor;
+        charts.cafeScatter.options.scales.y.grid.color = theme.gridColor;
+        charts.cafeScatter.options.scales.y.ticks.color = theme.labelColor;
+        charts.cafeScatter.update();
+      } else {
+        charts.cafeScatter = new Chart(ctxScatter, {
+          type: 'scatter',
+          data: {
+            datasets: [{
+              label: 'Competitors',
+              data: scatterPoints,
+              backgroundColor: '#34d399',
+              borderColor: '#34d399',
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const pt = context.raw;
+                    return ` ${pt.label}: Sold: ${pt.x} units, Profit: $${pt.y} (Price: $${pt.price.toFixed(2)})`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: { display: true, text: 'Burgers Sold (Volume)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              },
+              y: {
+                title: { display: true, text: 'Net Profit ($)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+    }
+
+
+    // --- ACTIVITY 3: CSR DILEMMA POLL ---
+    function renderCSRDashboard(polls) {
+      const count = polls.length;
+      document.getElementById("csrN").textContent = count;
+
+      if (count === 0) {
+        document.getElementById("classCSRScore").textContent = "0%";
+        return;
+      }
+
+      // Aggregate calculations
+      // Choice options: A = Profit, B = Ethical
+      const stats = {
+        d1: { A: 0, B: 0 },
+        d2: { A: 0, B: 0 },
+        d3: { A: 0, B: 0 }
+      };
+
+      polls.forEach(p => {
+        if (p.choices) {
+          if (p.choices[0] === 'A') stats.d1.A++; else stats.d1.B++;
+          if (p.choices[1] === 'A') stats.d2.A++; else stats.d2.B++;
+          if (p.choices[2] === 'A') stats.d3.A++; else stats.d3.B++;
+        }
+      });
+
+      // Total percent ethical options chosen
+      const totalEthical = stats.d1.B + stats.d2.B + stats.d3.B;
+      const ethicalPercentage = Math.round((totalEthical / (count * 3)) * 100);
+      const profitPercentage = 100 - ethicalPercentage;
+      
+      document.getElementById("classCSRScore").textContent = `${ethicalPercentage}%`;
+
+      // Render Charts
+      const theme = getChartThemeOptions();
+
+      // Chart 1: Gauge (Radial Bar Chart)
+      const ctxGauge = document.getElementById("csrGaugeChart").getContext("2d");
+      if (charts.csrGauge) {
+        charts.csrGauge.data.datasets[0].data = [ethicalPercentage, profitPercentage];
+        charts.csrGauge.options.plugins.legend.labels.color = theme.labelColor;
+        charts.csrGauge.update();
+      } else {
+        charts.csrGauge = new Chart(ctxGauge, {
+          type: 'doughnut',
+          data: {
+            labels: ['Social Responsibility Focus', 'Profit Maximisation Focus'],
+            datasets: [{
+              data: [ethicalPercentage, profitPercentage],
+              backgroundColor: ['#34d399', 'rgba(248, 113, 113, 0.75)'],
+              borderWidth: 2,
+              borderColor: 'var(--bg)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: theme.labelColor, font: { family: 'Inter', weight: '600' } }
+              }
+            },
+            cutout: '65%'
+          }
+        });
+      }
+
+      // Chart 2: Dilemma Comparison breakdown
+      const ctxBreakdown = document.getElementById("csrBreakdownChart").getContext("2d");
+      const dilemmaLabels = ['Supplier Choice', 'Wage Strategy', 'Packaging Sourcing'];
+      const dataEthical = [stats.d1.B, stats.d2.B, stats.d3.B];
+      const dataProfit = [stats.d1.A, stats.d2.A, stats.d3.A];
+
+      if (charts.csrBreakdown) {
+        charts.csrBreakdown.data.datasets[0].data = dataEthical;
+        charts.csrBreakdown.data.datasets[1].data = dataProfit;
+        charts.csrBreakdown.options.scales.x.grid.color = theme.gridColor;
+        charts.csrBreakdown.options.scales.x.ticks.color = theme.labelColor;
+        charts.csrBreakdown.options.scales.y.grid.color = theme.gridColor;
+        charts.csrBreakdown.options.scales.y.ticks.color = theme.labelColor;
+        charts.csrBreakdown.options.plugins.legend.labels.color = theme.labelColor;
+        charts.csrBreakdown.update();
+      } else {
+        charts.csrBreakdown = new Chart(ctxBreakdown, {
+          type: 'bar',
+          data: {
+            labels: dilemmaLabels,
+            datasets: [
+              {
+                label: 'Ethical Sourcing (B)',
+                data: dataEthical,
+                backgroundColor: '#34d399',
+                borderRadius: 4
+              },
+              {
+                label: 'Cost Control (A)',
+                data: dataProfit,
+                backgroundColor: 'rgba(248, 113, 113, 0.75)',
+                borderRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: theme.labelColor }
+              }
+            },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: theme.labelColor } },
+              y: { grid: { color: theme.gridColor }, ticks: { color: theme.labelColor, stepSize: 1 } }
+            }
+          }
+        });
+      }
+    }
+
+
+    // --- ACTIVITY 4: SME FAILURE RISK SIMULATOR ---
+    function renderFailureDashboard(students) {
+      const count = students.length;
+      document.getElementById("failureN").textContent = count;
+
+      if (count === 0) {
+        document.getElementById("failureTableBody").innerHTML = `
+          <tr>
+            <td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem 0;">No financial models submitted yet.</td>
+          </tr>
+        `;
+        document.getElementById("failureAvgSurvival").textContent = "0%";
+        document.getElementById("failureBankruptcyN").textContent = "0";
+        return;
+      }
+
+      // Calculations based on NESA failure risk engine
+      let survivalSum = 0;
+      let bankruptCount = 0;
+      
+      const sums = { rent: 0, inventory: 0, reserves: 0, marketing: 0 };
+
+      const records = students.map(st => {
+        const alloc = st.allocation;
+        sums.rent += alloc.rent;
+        sums.inventory += alloc.inventory;
+        sums.reserves += alloc.reserves;
+        sums.marketing += alloc.marketing;
+
+        // Survival Score Engine
+        // Base survival score: 40 points
+        let score = 40;
+        let reasons = [];
+
+        // 1. Rent Lease Score (Foot Traffic / Cost Overheads balance)
+        if (alloc.rent >= 20000 && alloc.rent <= 40000) {
+          score += 15; // Optimal foot traffic balance
+        } else if (alloc.rent < 20000) {
+          score += 5; // Rent too cheap (zero visibility/customers)
+          reasons.push("Invisible Location");
+        } else {
+          score += 10; // Location good but high overheads drain cash reserves
+          reasons.push("Excessive Rent Overhead");
+        }
+
+        // 2. Operations Equipment/Inventory Score
+        if (alloc.inventory >= 20000 && alloc.inventory <= 45000) {
+          score += 20; // Correct stock levels
+        } else if (alloc.inventory < 20000) {
+          score += 5; // Stockouts and poor capability
+          reasons.push("Inventory Shortages");
+        } else {
+          score += 10; // Overstocked, cash tied up in dead inventory
+          reasons.push("Overcapitalized Stock");
+        }
+
+        // 3. Marketing Score
+        if (alloc.marketing >= 15000 && alloc.marketing <= 35000) {
+          score += 15; // Great brand attraction
+        } else if (alloc.marketing < 15000) {
+          score += 5; // Low customer awareness
+          reasons.push("Underspent Marketing");
+        } else {
+          score += 10; // Low returns on heavy promotion spend
+          reasons.push("Inefficient Marketing Bloat");
+        }
+
+        // 4. Cash Reserves Score (Critical SME Liquidity buffer)
+        if (alloc.reserves >= 20000) {
+          score += 10;
+        } else if (alloc.reserves < 10000) {
+          // Severe liquidity crisis penalty
+          score -= 30;
+          reasons.push("Severe Cash Liquidity Crisis");
+        } else {
+          score += (alloc.reserves / 2000);
+        }
+
+        // Keep bounds between 0 and 100
+        const finalScore = Math.max(5, Math.min(99, score));
+        survivalSum += finalScore;
+
+        let status = "SURVIVED (Year 1)";
+        let statusColor = "text-success";
+        if (finalScore < 50) {
+          status = "INSOLVENT / BANKRUPT";
+          statusColor = "text-danger";
+          bankruptCount++;
+        }
+
+        return {
+          name: st.studentName,
+          rent: alloc.rent,
+          inventory: alloc.inventory,
+          reserves: alloc.reserves,
+          marketing: alloc.marketing,
+          survival: finalScore,
+          status: status,
+          statusColor: statusColor,
+          reasons: reasons.join(', ') || "Healthy Operation"
+        };
+      });
+
+      // Aggregates
+      document.getElementById("failureAvgSurvival").textContent = `${Math.round(survivalSum / count)}%`;
+      document.getElementById("failureBankruptcyN").textContent = bankruptCount;
+
+      // Render Table
+      const tableBody = document.getElementById("failureTableBody");
+      tableBody.innerHTML = "";
+      records.forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${r.name}</strong></td>
+          <td>$${r.rent.toLocaleString()}</td>
+          <td>$${r.inventory.toLocaleString()}</td>
+          <td>$${r.reserves.toLocaleString()}</td>
+          <td>$${r.marketing.toLocaleString()}</td>
+          <td style="font-weight:700;">${r.survival}%</td>
+          <td><span class="${r.statusColor}" style="font-weight:800; font-size:0.8rem;">${r.status}</span><br><span style="font-size:0.75rem; color:var(--text-muted);">${r.reasons}</span></td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      // Render Charts
+      const theme = getChartThemeOptions();
+
+      // Chart 1: Average Allocations (Pie Chart)
+      const avgAllocValues = [
+        sums.rent / count,
+        sums.inventory / count,
+        sums.reserves / count,
+        sums.marketing / count
+      ];
+      
+      const ctxPie = document.getElementById("failureBudgetPieChart").getContext("2d");
+      if (charts.failurePie) {
+        charts.failurePie.data.datasets[0].data = avgAllocValues;
+        charts.failurePie.options.plugins.legend.labels.color = theme.labelColor;
+        charts.failurePie.update();
+      } else {
+        charts.failurePie = new Chart(ctxPie, {
+          type: 'pie',
+          data: {
+            labels: ['Location Rent', 'Inventory/Ops', 'Cash Reserves', 'Marketing'],
+            datasets: [{
+              data: avgAllocValues,
+              backgroundColor: ['#38bdf8', '#fbbf24', '#34d399', '#f472b6'],
+              borderWidth: 2,
+              borderColor: 'var(--bg)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 2: Survival map Scatter plot (Reserves vs Survival)
+      const scatterPoints = records.map(r => ({
+        x: r.reserves,
+        y: r.survival,
+        label: r.name,
+        status: r.status
+      }));
+
+      const ctxScatter = document.getElementById("failureScatterChart").getContext("2d");
+      if (charts.failureScatter) {
+        charts.failureScatter.data.datasets[0].data = scatterPoints;
+        charts.failureScatter.options.scales.x.grid.color = theme.gridColor;
+        charts.failureScatter.options.scales.x.ticks.color = theme.labelColor;
+        charts.failureScatter.options.scales.y.grid.color = theme.gridColor;
+        charts.failureScatter.options.scales.y.ticks.color = theme.labelColor;
+        charts.failureScatter.update();
+      } else {
+        charts.failureScatter = new Chart(ctxScatter, {
+          type: 'scatter',
+          data: {
+            datasets: [{
+              label: 'Student Setups',
+              data: scatterPoints,
+              backgroundColor: '#38bdf8',
+              borderColor: '#38bdf8',
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const pt = context.raw;
+                    return ` ${pt.label}: Reserves: $${pt.x.toLocaleString()}, Survival: ${pt.y}% (${pt.status})`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                title: { display: true, text: 'Cash Reserves ($)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              },
+              y: {
+                min: 0,
+                max: 100,
+                title: { display: true, text: 'Survival Probability (%)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // ================= ACTIVITY 5: TICKETS MATH & HANDLERS =================
+    
+    // Core calculation function to maintain consistency between student and teacher dashboards
+    function calculateTicketsModel(price, stage, strategy) {
+      let capacity = 50000;
+      let q_demanded = 0;
+      
+      // Determine base capacity
+      if (stage === "group") capacity = 50000;
+      else if (stage === "semifinal") capacity = 70000;
+      else if (stage === "final") capacity = 80000;
+
+      // Pricing strategy adjustments to demand curve
+      if (strategy === "skimming") {
+        if (stage === "group") q_demanded = 80000 * Math.exp(-0.0013 * price);
+        else if (stage === "semifinal") q_demanded = 250000 * Math.exp(-0.001 * price);
+        else if (stage === "final") q_demanded = 1000000 * Math.exp(-0.0007 * price);
+      } else {
+        // Standard curve
+        if (stage === "group") q_demanded = 120000 * Math.exp(-0.002 * price);
+        else if (stage === "semifinal") q_demanded = 400000 * Math.exp(-0.0015 * price);
+        else if (stage === "final") q_demanded = 1500000 * Math.exp(-0.001 * price);
+      }
+
+      // Apply modifiers
+      let multiplier = 1.0;
+      if (strategy === "penetration") multiplier = 1.25;
+      else if (strategy === "dynamic") multiplier = 1.10;
+      else if (strategy === "loss_leader") multiplier = 1.05;
+
+      q_demanded = Math.round(q_demanded * multiplier);
+
+      // Category Prices
+      const cat2 = price * 0.6;
+      const cat3 = price * 0.35;
+      const cat4 = (strategy === "loss_leader") ? 20.00 : (price * 0.15);
+
+      const sold = Math.min(capacity, q_demanded);
+      const fillRate = (sold / capacity) * 100;
+
+      // Avg Price = 20% Cat 1, 30% Cat 2, 40% Cat 3, 10% Cat 4
+      const avgPrice = (price * 0.2) + (cat2 * 0.3) + (cat3 * 0.4) + (cat4 * 0.1);
+      const revenue = sold * avgPrice;
+
+      // Atmosphere
+      let atmosphere = Math.round((sold / capacity) * 100);
+      if (strategy === "loss_leader") atmosphere += 20;
+      else if (strategy === "penetration") atmosphere += 10;
+      atmosphere = Math.max(0, Math.min(100, atmosphere));
+
+      // Accessibility
+      const accessibility = Math.max(0, Math.min(100, Math.round(100 - (cat4 - 15) * 1.25)));
+
+      return {
+        capacity,
+        demanded: q_demanded,
+        sold,
+        fillRate,
+        cat2,
+        cat3,
+        cat4,
+        avgPrice,
+        revenue,
+        atmosphere,
+        accessibility
+      };
+    }
+
+    function updateTicketsPriceDisplay(val) {
+      document.getElementById("ticketsPriceDisplay").textContent = `$${parseFloat(val).toFixed(2)}`;
+      updateTicketsMath();
+    }
+
+    function updateTicketsMath() {
+      const price = parseFloat(document.getElementById("ticketsPriceSlider").value);
+      const stage = document.getElementById("ticketsStage").value;
+      const strategy = document.getElementById("ticketsStrategy").value;
+
+      const m = calculateTicketsModel(price, stage, strategy);
+
+      document.getElementById("ticketsCat2Price").textContent = `$${m.cat2.toFixed(2)}`;
+      document.getElementById("ticketsCat3Price").textContent = `$${m.cat3.toFixed(2)}`;
+      document.getElementById("ticketsCat4Price").textContent = `$${m.cat4.toFixed(2)}`;
+
+      document.getElementById("ticketsProjDemanded").textContent = m.demanded.toLocaleString();
+      
+      const fillEl = document.getElementById("ticketsProjFill");
+      fillEl.textContent = `${m.fillRate.toFixed(1)}%`;
+      if (m.fillRate >= 95) {
+        fillEl.className = "text-success";
+      } else if (m.fillRate >= 65) {
+        fillEl.className = "text-success";
+      } else {
+        fillEl.className = "text-danger";
+      }
+
+      document.getElementById("ticketsProjRevenue").textContent = `$${m.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      updateTicketsScorePreview();
+    }
+
+    async function submitTickets() {
+      const name = document.getElementById("ticketsName").value.trim();
+      const classCode = document.getElementById("ticketsClass").value.trim().toUpperCase();
+      const price = parseFloat(document.getElementById("ticketsPriceSlider").value);
+      const stage = document.getElementById("ticketsStage").value;
+      const strategy = document.getElementById("ticketsStrategy").value;
+
+      if (!name || !classCode) {
+        alert("Please complete name and class code.");
+        return;
+      }
+
+      if (db) {
+        try {
+          // Fetch current class submissions for relative scoring
+          const snap = await db.collection('audit_submissions')
+            .where('classCode','==',classCode)
+            .where('activityType','==','tickets').get();
+          const allSubs = [];
+          snap.forEach(doc => allSubs.push(doc.data()));
+
+          const m = calculateTicketsModel(price, stage, strategy);
+          const score = computeTicketsScore(m, allSubs);
+          const badge = getBadge(score);
+          const rank = allSubs.filter(s => {
+            const sm = calculateTicketsModel(s.price || 600, s.stage || 'group', s.strategy || 'cost_plus');
+            return computeTicketsScore(sm, allSubs) > score;
+          }).length + 1;
+          const verdict = getTicketsVerdict(m, score, strategy);
+
+          await db.collection("audit_submissions").add({
+            activityType: "tickets",
+            studentName: name,
+            classCode: classCode,
+            price: price,
+            stage: stage,
+            strategy: strategy,
+            round: ticketsCurrentRound,
+            score: score,
+            badge: badge.label,
+            scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+            archetype: "SME Simulation",
+            topTrait: "none",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          showScoreCard(score, badge, rank, allSubs.length + 1, verdict);
+        } catch(e) {
+          console.error(e);
+          alert("Submission failed. Please check your class code and try again.");
+        }
+      } else {
+        alert("Running offline. Submission simulated successfully.");
+        showHub();
+      }
+    }
+
+    function renderTicketsDashboard(submissions) {
+      const count = submissions.length;
+      document.getElementById("ticketsN").textContent = count;
+
+      if (count === 0) {
+        document.getElementById("ticketsTableBody").innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align:center; color:var(--text-muted); padding:2rem 0;">No FIFA ticketing models submitted yet.</td>
+          </tr>
+        `;
+        document.getElementById("ticketsAvgPrice").textContent = "$0.00";
+        document.getElementById("ticketsAvgFill").textContent = "0%";
+        document.getElementById("ticketsTotalRev").textContent = "$0.00";
+        
+        document.getElementById("awardWC-revenue").textContent = "TBD";
+        document.getElementById("awardWC-atmosphere").textContent = "TBD";
+        document.getElementById("awardWC-accessibility").textContent = "TBD";
+        return;
+      }
+
+      let priceSum = 0;
+      let fillSum = 0;
+      let totalRevSum = 0;
+
+      const records = submissions.map(sub => {
+        const m = calculateTicketsModel(sub.price, sub.stage, sub.strategy);
+
+        priceSum += sub.price;
+        fillSum += m.fillRate;
+        totalRevSum += m.revenue;
+
+        return {
+          name: sub.studentName,
+          stage: sub.stage,
+          strategy: sub.strategy,
+          price: sub.price,
+          avgPrice: m.avgPrice,
+          demanded: m.demanded,
+          fillRate: m.fillRate,
+          revenue: m.revenue,
+          atmosphere: m.atmosphere,
+          accessibility: m.accessibility
+        };
+      });
+
+      document.getElementById("ticketsAvgPrice").textContent = `$${(priceSum / count).toFixed(2)}`;
+      document.getElementById("ticketsAvgFill").textContent = `${Math.round(fillSum / count)}%`;
+      document.getElementById("ticketsTotalRev").textContent = `$${totalRevSum.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      // Live Tournament Awards
+      let winnerRevenue = { name: "N/A", value: 0 };
+      let winnerAtmosphere = { name: "N/A", score: 0, price: 0 };
+      let winnerAccessibility = { name: "N/A", score: 0 };
+
+      records.forEach(r => {
+        // 1. Golden Boot (Revenue)
+        if (r.revenue > winnerRevenue.value) {
+          winnerRevenue = { name: r.name, value: r.revenue };
+        }
+        // 2. 12th Man (Atmosphere + tiebreaker price)
+        if (r.atmosphere > winnerAtmosphere.score || 
+           (r.atmosphere === winnerAtmosphere.score && r.price > winnerAtmosphere.price)) {
+          winnerAtmosphere = { name: r.name, score: r.atmosphere, price: r.price };
+        }
+        // 3. FIFA Fair Play Award (min 90% occupancy + highest accessibility)
+        if (r.fillRate >= 90) {
+          if (r.accessibility > winnerAccessibility.score) {
+            winnerAccessibility = { name: r.name, score: r.accessibility };
+          }
+        }
+      });
+
+      document.getElementById("awardWC-revenue").textContent = winnerRevenue.value > 0 ? `${winnerRevenue.name} ($${winnerRevenue.value.toLocaleString(undefined, {maximumFractionDigits:0})})` : "TBD";
+      document.getElementById("awardWC-atmosphere").textContent = winnerAtmosphere.score > 0 ? `${winnerAtmosphere.name} (${winnerAtmosphere.score}% @ $${winnerAtmosphere.price.toFixed(0)} Cat 1)` : "TBD";
+      document.getElementById("awardWC-accessibility").textContent = winnerAccessibility.score > 0 ? `${winnerAccessibility.name} (${winnerAccessibility.score}% Index)` : "TBD";
+
+      // Populate table
+      const tbody = document.getElementById("ticketsTableBody");
+      tbody.innerHTML = "";
+      records.forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${r.name}</strong></td>
+          <td style="text-transform:capitalize;">${r.stage}</td>
+          <td style="text-transform:capitalize;">${r.strategy.replace('_', ' ')}</td>
+          <td>$${r.price.toFixed(2)}</td>
+          <td>$${r.avgPrice.toFixed(2)}</td>
+          <td>${r.demanded.toLocaleString()}</td>
+          <td style="font-weight:700;" class="${r.fillRate >= 90 ? 'text-success' : 'text-danger'}">${r.fillRate.toFixed(1)}%</td>
+          <td style="font-weight:700;">$${r.revenue.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+          <td>${r.atmosphere}%</td>
+          <td>${r.accessibility}%</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // Chart 1: Demand Curve + Students coordinates
+      const theme = getChartThemeOptions();
+      const ctxDemand = document.getElementById("ticketsDemandChart").getContext("2d");
+
+      // Generate demand curve points
+      const pricesList = [100, 300, 500, 700, 900, 1100, 1300, 1500, 1700, 1900, 2000];
+      
+      const activeStages = [...new Set(records.map(r => r.stage))];
+      const stageName = activeStages.includes("final") ? "final" : (activeStages.includes("semifinal") ? "semifinal" : "group");
+      
+      // We project the curve using cost-plus default strategy for visual consistency
+      const demandPoints = pricesList.map(p => {
+        const temp = calculateTicketsModel(p, stageName, "cost_plus");
+        return { x: p, y: temp.demanded };
+      });
+
+      const studentCoordinates = records.map(r => ({
+        x: r.price,
+        y: r.demanded,
+        label: r.name,
+        revenue: r.revenue
+      }));
+
+      if (charts.ticketsDemand) {
+        charts.ticketsDemand.data.datasets[0].data = demandPoints;
+        charts.ticketsDemand.data.datasets[0].label = `${stageName.toUpperCase()} Match Demand Curve`;
+        charts.ticketsDemand.data.datasets[1].data = studentCoordinates;
+        charts.ticketsDemand.options.scales.x.grid.color = theme.gridColor;
+        charts.ticketsDemand.options.scales.x.ticks.color = theme.labelColor;
+        charts.ticketsDemand.options.scales.y.grid.color = theme.gridColor;
+        charts.ticketsDemand.options.scales.y.ticks.color = theme.labelColor;
+        charts.ticketsDemand.update();
+      } else {
+        charts.ticketsDemand = new Chart(ctxDemand, {
+          type: 'line',
+          data: {
+            datasets: [
+              {
+                label: `${stageName.toUpperCase()} Match Demand Curve`,
+                data: demandPoints,
+                borderColor: '#818cf8',
+                backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                pointRadius: 0
+              },
+              {
+                label: 'Student Selections',
+                data: studentCoordinates,
+                type: 'scatter',
+                backgroundColor: '#f472b6',
+                borderColor: '#f472b6',
+                pointRadius: 6,
+                pointHoverRadius: 8
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { labels: { color: theme.labelColor } },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    if (context.datasetIndex === 1) {
+                      const pt = context.raw;
+                      return ` ${pt.label}: Cat 1: $${pt.x}, Demand: ${pt.y.toLocaleString()}, Est. Revenue: $${pt.revenue.toLocaleString(undefined, {maximumFractionDigits:0})}`;
+                    }
+                    return ` Price: $${context.raw.x}, Demanded: ${Math.round(context.raw.y).toLocaleString()}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'linear',
+                title: { display: true, text: 'Category 1 Price ($)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              },
+              y: {
+                title: { display: true, text: 'Tickets Demanded', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 2: Revenue Projections Bar
+      const labels = records.map(r => r.name);
+      const revenues = records.map(r => r.revenue);
+      const ctxRev = document.getElementById("ticketsRevenueChart").getContext("2d");
+
+      if (charts.ticketsRevenue) {
+        charts.ticketsRevenue.data.labels = labels;
+        charts.ticketsRevenue.data.datasets[0].data = revenues;
+        charts.ticketsRevenue.options.scales.x.grid.color = theme.gridColor;
+        charts.ticketsRevenue.options.scales.x.ticks.color = theme.labelColor;
+        charts.ticketsRevenue.options.scales.y.grid.color = theme.gridColor;
+        charts.ticketsRevenue.options.scales.y.ticks.color = theme.labelColor;
+        charts.ticketsRevenue.update();
+      } else {
+        charts.ticketsRevenue = new Chart(ctxRev, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Projected Revenue ($)',
+              data: revenues,
+              backgroundColor: 'rgba(52, 211, 153, 0.4)',
+              borderColor: '#34d399',
+              borderWidth: 1.5,
+              borderRadius: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false }, ticks: { color: theme.labelColor } },
+              y: { grid: { color: theme.gridColor }, ticks: { color: theme.labelColor } }
+            }
+          }
+        });
+      }
+    }
+
+
+    // ================= ACTIVITY 6: AIRFARE YIELD MATH & HANDLERS =================
+    
+    // Core dynamic yield calculation engine
+    function calculateAirfareModel(econPrice, markup, strategy) {
+      // If budget strategy, business seats are locked to 0
+      const isBudget = (strategy === "budget");
+      const econCapacity = isBudget ? 300 : 250;
+      const busCapacity = isBudget ? 0 : 50;
+      const totalCapacity = econCapacity + busCapacity;
+      const fixedCost = isBudget ? 130000 : 150000;
+
+      // Markups
+      const actualMarkup = isBudget ? 1.0 : markup;
+      const busPrice = econPrice * actualMarkup;
+
+      // Demands
+      let q_leisure = 500 * Math.exp(-0.0012 * econPrice);
+      let q_business = isBudget ? 0 : (100 * Math.exp(-0.0003 * busPrice));
+
+      // Apply strategy modifiers
+      if (strategy === "dynamic") {
+        q_leisure *= 1.25;
+        q_business *= 1.20;
+      } else if (strategy === "clearance") {
+        q_leisure *= 1.15;
+        q_business *= 0.85;
+      } else if (strategy === "budget") {
+        q_leisure *= 1.50; // High budget interest
+        q_business = 0;
+      } else if (strategy === "prestige") {
+        // Prestige skimming cuts leisure demand but raises business class
+        q_leisure *= 0.70;
+        q_business = 140 * Math.exp(-0.00025 * busPrice);
+      }
+
+      const econSold = Math.min(econCapacity, Math.round(q_leisure));
+      const busSold = Math.min(busCapacity, Math.round(q_business));
+      
+      const loadFactor = ((econSold + busSold) / totalCapacity) * 100;
+      const revenue = (econSold * econPrice) + (busSold * busPrice);
+      const profit = revenue - fixedCost;
+
+      return {
+        econCapacity,
+        busCapacity,
+        totalCapacity,
+        fixedCost,
+        busPrice,
+        econSold,
+        busSold,
+        loadFactor,
+        revenue,
+        profit,
+        isBudget
+      };
+    }
+
+    function updateAirfareEconDisplay(val) {
+      document.getElementById("airfareEconPriceDisplay").textContent = `$${parseFloat(val).toFixed(2)}`;
+      updateAirfareMath();
+    }
+
+    function updateAirfareMarkupDisplay(val) {
+      const econPrice = parseFloat(document.getElementById("airfareEconPrice").value);
+      const busPrice = econPrice * parseFloat(val);
+      document.getElementById("airfareMarkupDisplay").textContent = `${parseFloat(val).toFixed(1)}x ($${busPrice.toFixed(2)})`;
+      updateAirfareMath();
+    }
+
+    function updateAirfareMath() {
+      const econPrice = parseFloat(document.getElementById("airfareEconPrice").value);
+      const markupInput = document.getElementById("airfareMarkup");
+      const strategy = document.getElementById("airfareStrategy").value;
+
+      // Handle LCC UI lock
+      if (strategy === "budget") {
+        markupInput.value = 1.0;
+        markupInput.disabled = true;
+        document.getElementById("airfareMarkupDisplay").textContent = "1.0x (No Business Class)";
+      } else {
+        markupInput.disabled = false;
+        // Restore display if standard
+        const val = parseFloat(markupInput.value);
+        const busPrice = econPrice * val;
+        document.getElementById("airfareMarkupDisplay").textContent = `${val.toFixed(1)}x ($${busPrice.toFixed(2)})`;
+      }
+
+      const markup = parseFloat(markupInput.value);
+      const m = calculateAirfareModel(econPrice, markup, strategy);
+
+      document.getElementById("airfareProjEconSold").textContent = `${m.econSold} / ${m.econCapacity}`;
+      document.getElementById("airfareProjBusSold").textContent = `${m.busSold} / ${m.busCapacity}`;
+      document.getElementById("airfareProjLoad").textContent = `${m.loadFactor.toFixed(1)}%`;
+      
+      const profitEl = document.getElementById("airfareProjProfit");
+      profitEl.textContent = (m.profit >= 0 ? "+" : "") + `$${m.profit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+      if (m.profit >= 0) {
+        profitEl.className = "text-success";
+      } else {
+        profitEl.className = "text-danger";
+      }
+      updateAirfareScorePreview();
+    }
+
+    async function submitAirfare() {
+      const name = document.getElementById("airfareName").value.trim();
+      const classCode = document.getElementById("airfareClass").value.trim().toUpperCase();
+      const econPrice = parseFloat(document.getElementById("airfareEconPrice").value);
+      const markup = parseFloat(document.getElementById("airfareMarkup").value);
+      const strategy = document.getElementById("airfareStrategy").value;
+
+      if (!name || !classCode) {
+        alert("Please complete name and class code.");
+        return;
+      }
+
+      if (db) {
+        try {
+          const snap = await db.collection('audit_submissions')
+            .where('classCode','==',classCode)
+            .where('activityType','==','airfare').get();
+          const allSubs = [];
+          snap.forEach(doc => allSubs.push(doc.data()));
+
+          const m = calculateAirfareModel(econPrice, markup, strategy);
+          const score = computeAirfareScore(m, allSubs);
+          const badge = getBadge(score);
+          const rank = allSubs.filter(s => {
+            const sm = calculateAirfareModel(s.econPrice || 1200, s.markup || 3, s.strategy || 'dynamic');
+            return computeAirfareScore(sm, allSubs) > score;
+          }).length + 1;
+          const verdict = getAirfareVerdict(m, score, strategy);
+
+          await db.collection("audit_submissions").add({
+            activityType: "airfare",
+            studentName: name,
+            classCode: classCode,
+            econPrice: econPrice,
+            markup: markup,
+            strategy: strategy,
+            round: airfareCurrentRound,
+            score: score,
+            badge: badge.label,
+            scores: { risk: 0, resilience: 0, leadership: 0, skills: 0, drive: 0, innovation: 0 },
+            archetype: "SME Simulation",
+            topTrait: "none",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          showScoreCard(score, badge, rank, allSubs.length + 1, verdict);
+        } catch(e) {
+          console.error(e);
+          alert("Submission failed. Please check your class code and try again.");
+        }
+      } else {
+        alert("Running offline. Flight launched simulated successfully.");
+        showHub();
+      }
+    }
+
+    function renderAirfareDashboard(submissions) {
+      const count = submissions.length;
+      document.getElementById("airfareN").textContent = count;
+
+      if (count === 0) {
+        document.getElementById("airfareTableBody").innerHTML = `
+          <tr>
+            <td colspan="10" style="text-align:center; color:var(--text-muted); padding:2rem 0;">No airline configurations logged yet.</td>
+          </tr>
+        `;
+        document.getElementById("airfareAvgLoad").textContent = "0%";
+        document.getElementById("airfareAvgProfit").textContent = "$0.00";
+        document.getElementById("airfareTopAirline").textContent = "-";
+        
+        document.getElementById("awardAF-profit").textContent = "TBD";
+        document.getElementById("awardAF-load").textContent = "TBD";
+        document.getElementById("awardAF-yield").textContent = "TBD";
+        return;
+      }
+
+      let loadSum = 0;
+      let profitSum = 0;
+
+      const records = submissions.map(sub => {
+        const m = calculateAirfareModel(sub.econPrice, sub.markup, sub.strategy);
+
+        loadSum += m.loadFactor;
+        profitSum += m.profit;
+
+        return {
+          name: sub.studentName,
+          strategy: sub.strategy,
+          econPrice: sub.econPrice,
+          busPrice: m.busPrice,
+          econSold: m.econSold,
+          busSold: m.busSold,
+          loadFactor: m.loadFactor,
+          revenue: m.revenue,
+          fixedCost: m.fixedCost,
+          profit: m.profit
+        };
+      });
+
+      // Best Airline
+      const sortedByProfit = [...records].sort((a,b) => b.profit - a.profit);
+      const topAirline = sortedByProfit[0];
+
+      document.getElementById("airfareAvgLoad").textContent = `${Math.round(loadSum / count)}%`;
+      document.getElementById("airfareAvgProfit").textContent = (profitSum >= 0 ? "+" : "") + `$${(profitSum / count).toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      document.getElementById("airfareTopAirline").textContent = `${topAirline.name} ($${topAirline.profit.toLocaleString(undefined, {maximumFractionDigits:0})})`;
+
+      // Live Airline Trophies
+      let winnerProfit = { name: "N/A", value: -Infinity };
+      let winnerLoad = { name: "N/A", load: 0 };
+      let winnerYield = { name: "N/A", margin: -Infinity };
+
+      records.forEach(r => {
+        const passengers = r.econSold + r.busSold;
+        const profitPerPax = passengers > 0 ? (r.profit / passengers) : -Infinity;
+
+        // 1. Golden Jet
+        if (r.profit > winnerProfit.value) {
+          winnerProfit = { name: r.name, value: r.profit };
+        }
+        // 2. Cabin Crew Award (highest load factor, must break even)
+        if (r.profit >= 0 && r.loadFactor > winnerLoad.load) {
+          winnerLoad = { name: r.name, load: r.loadFactor };
+        }
+        // 3. Yield Master Award (highest premium margin per passenger)
+        if (profitPerPax > winnerYield.margin) {
+          winnerYield = { name: r.name, margin: profitPerPax };
+        }
+      });
+
+      document.getElementById("awardAF-profit").textContent = winnerProfit.value > -Infinity ? `${winnerProfit.name} ($${winnerProfit.value.toLocaleString(undefined, {maximumFractionDigits:0})})` : "TBD";
+      document.getElementById("awardAF-load").textContent = winnerLoad.load > 0 ? `${winnerLoad.name} (${winnerLoad.load.toFixed(1)}% Load)` : "TBD";
+      document.getElementById("awardAF-yield").textContent = winnerYield.margin > -Infinity ? `${winnerYield.name} ($${winnerYield.margin.toFixed(2)}/pax)` : "TBD";
+
+      // Populate table
+      const tbody = document.getElementById("airfareTableBody");
+      tbody.innerHTML = "";
+      records.forEach(r => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><strong>${r.name}</strong></td>
+          <td style="text-transform:capitalize;">${r.strategy.replace('_', ' ')}</td>
+          <td>$${r.econPrice.toFixed(2)}</td>
+          <td>$${r.busPrice.toFixed(2)}</td>
+          <td>${r.econSold} / ${r.strategy === "budget" ? "300" : "250"}</td>
+          <td>${r.busSold} / ${r.strategy === "budget" ? "0" : "50"}</td>
+          <td style="font-weight:700;">${r.loadFactor.toFixed(1)}%</td>
+          <td>$${r.revenue.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+          <td>$${r.fixedCost.toLocaleString()}</td>
+          <td style="font-weight:700;" class="${r.profit >= 0 ? 'text-success' : 'text-danger'}">${r.profit >= 0 ? '+' : ''}$${r.profit.toLocaleString(undefined, {maximumFractionDigits:0})}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      // Chart 1: Load Factor vs Profit Scatter
+      const theme = getChartThemeOptions();
+      const ctxScatter = document.getElementById("airfareScatterChart").getContext("2d");
+      
+      const scatterPoints = records.map(r => ({
+        x: parseFloat(r.loadFactor.toFixed(1)),
+        y: parseFloat(r.profit.toFixed(0)),
+        label: r.name,
+        strategy: r.strategy
+      }));
+
+      if (charts.airfareScatter) {
+        charts.airfareScatter.data.datasets[0].data = scatterPoints;
+        charts.airfareScatter.options.scales.x.grid.color = theme.gridColor;
+        charts.airfareScatter.options.scales.x.ticks.color = theme.labelColor;
+        charts.airfareScatter.options.scales.y.grid.color = theme.gridColor;
+        charts.airfareScatter.options.scales.y.ticks.color = theme.labelColor;
+        charts.airfareScatter.update();
+      } else {
+        charts.airfareScatter = new Chart(ctxScatter, {
+          type: 'scatter',
+          data: {
+            datasets: [{
+              label: 'Airlines',
+              data: scatterPoints,
+              backgroundColor: '#38bdf8',
+              borderColor: '#38bdf8',
+              pointRadius: 6,
+              pointHoverRadius: 8
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const pt = context.raw;
+                    return ` ${pt.label}: Load: ${pt.x}%, Profit: $${pt.y.toLocaleString()} (${pt.strategy.replace('_', ' ')})`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                min: 0,
+                max: 100,
+                title: { display: true, text: 'Load Factor (%)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              },
+              y: {
+                title: { display: true, text: 'Net Profit ($)', color: theme.labelColor, font: { weight: '700' } },
+                grid: { color: theme.gridColor },
+                ticks: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+
+      // Chart 2: Yield Strategy Pie Chart
+      const strategiesCount = { penetration: 0, dynamic: 0, prestige: 0, budget: 0, clearance: 0 };
+      records.forEach(r => {
+        strategiesCount[r.strategy]++;
+      });
+
+      const ctxPie = document.getElementById("airfareStrategyPieChart").getContext("2d");
+      if (charts.airfarePie) {
+        charts.airfarePie.data.labels = ['Penetration', 'Dynamic Yield', 'Prestige Skimming', 'Budget LCC', 'Last-Minute Clearance'];
+        charts.airfarePie.data.datasets[0].data = Object.values(strategiesCount);
+        charts.airfarePie.options.plugins.legend.labels.color = theme.labelColor;
+        charts.airfarePie.update();
+      } else {
+        charts.airfarePie = new Chart(ctxPie, {
+          type: 'pie',
+          data: {
+            labels: ['Penetration', 'Dynamic Yield', 'Prestige Skimming', 'Budget LCC', 'Last-Minute Clearance'],
+            datasets: [{
+              data: Object.values(strategiesCount),
+              backgroundColor: ['#38bdf8', '#34d399', '#fbbf24', '#f472b6', 'rgba(248, 113, 113, 0.75)'],
+              borderWidth: 2,
+              borderColor: 'var(--bg)'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: theme.labelColor }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // ===== GAMIFICATION ENGINE =====
+
+    // Shock event definitions
+    const TICKET_SHOCKS = {
+      rain:      { title: '🌧️ Rain Alert',           desc: 'Wet weather warning — all ticket demand drops 15%.' },
+      star:      { title: '⭐ Star Player Announced', desc: 'A global superstar joins the squad! Premium demand surges +25%.' },
+      subsidy:   { title: '🏛️ Government Subsidy',   desc: 'Regulation caps local Category 4 tickets at $50 max.' },
+      streaming: { title: '📡 Live Streaming Deal',   desc: 'A major network signs a deal — in-person demand falls 10%.' },
+      corporate: { title: '🎫 Corporate Buyout',      desc: '30% of Cat 1 seats pre-purchased by sponsors at full price!' }
+    };
+
+    const AIRFARE_SHOCKS = {
+      fuel:       { title: '⛽ Fuel Spike',          desc: 'Global fuel prices spike — operating costs increase by $25,000.' },
+      health:     { title: '😷 Health Warning',      desc: 'A health advisory reduces leisure travel demand by 20%.' },
+      conference: { title: '💼 Corporate Conference', desc: 'A major Sydney conference drives business class demand up 35%!' },
+      weather:    { title: '🌩️ Weather Diversion',   desc: 'Storm rerouting blocks 10% of economy capacity.' },
+      competitor: { title: '🏷️ Competitor Sale',     desc: 'A rival airline drops prices 20% — leisure demand shifts away.' }
+    };
+
+    // State
+    let activeTicketsShock = null;
+    let activeAirfareShock = null;
+    let ticketsLiveFeedUnsubscribe = null;
+    let airfareLiveFeedUnsubscribe = null;
+    let ticketsShockUnsubscribe = null;
+    let airfareShockUnsubscribe = null;
+    let ticketsCurrentRound = 1;
+    let airfareCurrentRound = 1;
+
+    // ---- Class code input handlers ----
+    function onTicketsClassInput(val) {
+      const code = val.trim().toUpperCase();
+      if (code.length >= 2 && db) {
+        startTicketsLiveFeed(code);
+        listenForTicketsShock(code);
+      }
+    }
+    function onAirfareClassInput(val) {
+      const code = val.trim().toUpperCase();
+      if (code.length >= 2 && db) {
+        startAirfareLiveFeed(code);
+        listenForAirfareShock(code);
+      }
+    }
+
+    // ---- Score Calculations ----
+    function computeTicketsScore(m, allSubs) {
+      const allRevenues = allSubs.map(s => {
+        try { return calculateTicketsModel(s.price||600, s.stage||'group', s.strategy||'cost_plus').revenue; } catch(e) { return 0; }
+      });
+      const maxRev = Math.max(...allRevenues, m.revenue, 1);
+      const revScore  = Math.round((m.revenue / maxRev) * 40);
+      const fillScore = Math.round(Math.min(m.fillRate, 100) / 100 * 30);
+      const accScore  = Math.round((m.accessibility || 50) / 100 * 20);
+      return Math.min(100, revScore + fillScore + accScore + 10);
+    }
+
+    function computeAirfareScore(m, allSubs) {
+      const allProfits = allSubs.map(s => {
+        try { return calculateAirfareModel(s.econPrice||1200, s.markup||3, s.strategy||'dynamic').profit; } catch(e) { return 0; }
+      });
+      const maxProfit = Math.max(...allProfits, m.profit, 1);
+      const profitScore = m.profit >= 0 ? Math.round((m.profit / maxProfit) * 40) : 0;
+      const loadScore   = Math.round(Math.min(m.loadFactor, 100) / 100 * 30);
+      const totalSold   = (m.econSold||0) + (m.busSold||0);
+      const yieldPax    = totalSold > 0 ? m.revenue / totalSold : 0;
+      const allYields   = allSubs.map(s => {
+        try { const sm = calculateAirfareModel(s.econPrice||1200, s.markup||3, s.strategy||'dynamic'); const sold = (sm.econSold||0)+(sm.busSold||0); return sold>0 ? sm.revenue/sold : 0; } catch(e) { return 0; }
+      });
+      const maxYield  = Math.max(...allYields, yieldPax, 1);
+      const yieldScore = Math.round((yieldPax / maxYield) * 20);
+      const noLoss     = m.profit >= 0 ? 10 : 0;
+      return Math.min(100, profitScore + loadScore + yieldScore + noLoss);
+    }
+
+    function getBadge(score) {
+      if (score >= 85) return { emoji: '🥇', label: 'Gold',        color: '#fbbf24' };
+      if (score >= 65) return { emoji: '🥈', label: 'Silver',      color: '#94a3b8' };
+      if (score >= 45) return { emoji: '🥉', label: 'Bronze',      color: '#cd7c2f' };
+      return             { emoji: '🎟️', label: 'Participant',  color: '#64748b' };
+    }
+
+    function getTicketsVerdict(m, score, strategy) {
+      const strat = strategy.replace('_',' ');
+      if (m.fillRate >= 95 && m.revenue > 50000000)
+        return `Outstanding! Your ${strat} strategy sold out the stadium AND generated exceptional revenue. Elite price elasticity management!`;
+      if (m.fillRate >= 90)
+        return `Great crowd! Your ${strat} approach achieved near-full occupancy. Could premium pricing improve revenue without hurting fill rate?`;
+      if (m.revenue > 60000000)
+        return `Strong revenue with ${strat}, but fill rate (${m.fillRate.toFixed(0)}%) left seats empty. Could penetration pricing fill those gaps?`;
+      if ((m.accessibility||50) >= 80)
+        return `Your focus on local accessibility under ${strat} is commendable — FIFA Fair Play territory!`;
+      return `Your ${strat} strategy scored ${score}/100. Experiment with penetration pricing to fill more seats, or skimming for higher revenue from premium segments.`;
+    }
+
+    function getAirfareVerdict(m, score, strategy) {
+      if (m.profit > 100000)
+        return `Excellent yield management! Your ${strategy} strategy generated $${m.profit.toLocaleString()} profit with a ${m.loadFactor.toFixed(0)}% load factor. World-class airline economics!`;
+      if (m.profit >= 0 && m.loadFactor >= 75)
+        return `Profitable flight! Your ${strategy} approach balanced seat fill (${m.loadFactor.toFixed(0)}%) with revenue. Strong yield management fundamentals.`;
+      if (m.profit < 0)
+        return `Your ${strategy} strategy flew at a loss of $${Math.abs(m.profit).toLocaleString()}. Fixed costs weren't covered. Try raising economy prices or switching to dynamic yield management.`;
+      return `Your ${strategy} strategy scored ${score}/100. Higher business class markup or dynamic yield pricing could improve your profit margin per passenger.`;
+    }
+
+    // ---- Score Card Modal ----
+    function showScoreCard(score, badge, rank, total, verdict) {
+      document.getElementById('scorecardScore').textContent        = score;
+      document.getElementById('scorecardBadgeEmoji').textContent   = badge.emoji;
+      document.getElementById('scorecardBadgeLabel').textContent   = `${badge.emoji} ${badge.label}`;
+      document.getElementById('scorecardBadgeLabel').style.color   = badge.color;
+      document.getElementById('scorecardRank').textContent         = total > 1
+        ? `You ranked ${rank}${rank===1?'st':rank===2?'nd':rank===3?'rd':'th'} of ${total} students`
+        : 'You are the first to submit!';
+      document.getElementById('scorecardVerdict').textContent      = verdict;
+      document.getElementById('scorecardOverlay').classList.remove('hidden');
+    }
+
+    function closeScorecard() {
+      document.getElementById('scorecardOverlay').classList.add('hidden');
+      showHub();
+    }
+
+    // ---- Score Preview (live as sliders move) ----
+    function updateTicketsScorePreview() {
+      try {
+        const price    = parseFloat(document.getElementById('ticketsPriceSlider').value);
+        const stage    = document.getElementById('ticketsStage').value;
+        const strategy = document.getElementById('ticketsStrategy').value;
+        const m        = calculateTicketsModel(price, stage, strategy);
+        const score    = computeTicketsScore(m, []);
+        document.getElementById('ticketsScorePreview').textContent = `~${score} / 100`;
+      } catch(e) {}
+    }
+
+    function updateAirfareScorePreview() {
+      try {
+        const econPrice = parseFloat(document.getElementById('airfareEconPrice').value);
+        const markup    = parseFloat(document.getElementById('airfareMarkup').value);
+        const strategy  = document.getElementById('airfareStrategy').value;
+        const m         = calculateAirfareModel(econPrice, markup, strategy);
+        const score     = computeAirfareScore(m, []);
+        document.getElementById('airfareScorePreview').textContent = `~${score} / 100`;
+      } catch(e) {}
+    }
+
+    // ---- Live Rival Feeds ----
+    function startTicketsLiveFeed(classCode) {
+      if (ticketsLiveFeedUnsubscribe) ticketsLiveFeedUnsubscribe();
+      ticketsLiveFeedUnsubscribe = db.collection('audit_submissions')
+        .where('classCode', '==', classCode)
+        .where('activityType', '==', 'tickets')
+        .onSnapshot(snap => {
+          const subs = [];
+          snap.forEach(doc => subs.push(doc.data()));
+          renderTicketsRivalFeed(subs);
+        }, err => console.warn('Tickets feed:', err.message));
+    }
+
+    function renderTicketsRivalFeed(subs) {
+      const el = document.getElementById('ticketsRivalRows');
+      if (!subs || subs.length === 0) {
+        el.innerHTML = '<div class="rival-empty">No submissions yet — be the first!</div>'; return;
+      }
+      const byName = {};
+      subs.forEach(s => {
+        try {
+          const m     = calculateTicketsModel(s.price||600, s.stage||'group', s.strategy||'cost_plus');
+          const score = s.score !== undefined ? s.score : computeTicketsScore(m, subs);
+          if (!byName[s.studentName] || score > byName[s.studentName].score)
+            byName[s.studentName] = { name: s.studentName, score };
+        } catch(e) {}
+      });
+      const sorted = Object.values(byName).sort((a,b) => b.score - a.score).slice(0,5);
+      const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+      el.innerHTML = sorted.map((r,i) => `
+        <div class="rival-row">
+          <span class="rival-rank">${medals[i]||i+1}</span>
+          <span class="rival-name">${r.name}</span>
+          <span class="rival-score">${r.score}/100</span>
+        </div>`).join('');
+    }
+
+    function startAirfareLiveFeed(classCode) {
+      if (airfareLiveFeedUnsubscribe) airfareLiveFeedUnsubscribe();
+      airfareLiveFeedUnsubscribe = db.collection('audit_submissions')
+        .where('classCode', '==', classCode)
+        .where('activityType', '==', 'airfare')
+        .onSnapshot(snap => {
+          const subs = [];
+          snap.forEach(doc => subs.push(doc.data()));
+          renderAirfareRivalFeed(subs);
+        }, err => console.warn('Airfare feed:', err.message));
+    }
+
+    function renderAirfareRivalFeed(subs) {
+      const el = document.getElementById('airfareRivalRows');
+      if (!subs || subs.length === 0) {
+        el.innerHTML = '<div class="rival-empty">No submissions yet — be the first!</div>'; return;
+      }
+      const byName = {};
+      subs.forEach(s => {
+        try {
+          const m     = calculateAirfareModel(s.econPrice||1200, s.markup||3, s.strategy||'dynamic');
+          const score = s.score !== undefined ? s.score : computeAirfareScore(m, subs);
+          if (!byName[s.studentName] || score > byName[s.studentName].score)
+            byName[s.studentName] = { name: s.studentName, score };
+        } catch(e) {}
+      });
+      const sorted = Object.values(byName).sort((a,b) => b.score - a.score).slice(0,5);
+      const medals = ['🥇','🥈','🥉','4️⃣','5️⃣'];
+      el.innerHTML = sorted.map((r,i) => `
+        <div class="rival-row">
+          <span class="rival-rank">${medals[i]||i+1}</span>
+          <span class="rival-name">${r.name}</span>
+          <span class="rival-score">${r.score}/100</span>
+        </div>`).join('');
+    }
+
+    // ---- Economic Shock: Teacher triggers ----
+    async function triggerTicketsShock() {
+      const classCode = activeClassCode;
+      if (!classCode || !db) { alert('Load the teacher dashboard first to set the class code.'); return; }
+      const shockId = document.getElementById('ticketsShockSelect').value;
+      const shock   = TICKET_SHOCKS[shockId];
+      try {
+        await db.collection('audit_submissions').doc('shock_tickets_' + classCode).set({
+          active: true, shockId,
+          title: shock.title, desc: shock.desc,
+          studentName: '_system_', classCode: '_system_',
+          scores: {risk:0,resilience:0,leadership:0,skills:0,drive:0,innovation:0},
+          archetype: 'System', topTrait: 'none',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('ticketsShockStatus').textContent = `✅ Shock live: ${shock.title}`;
+      } catch(e) { alert('Failed: ' + e.message); }
+    }
+
+    async function clearTicketsShock() {
+      const classCode = activeClassCode;
+      if (!classCode || !db) return;
+      try {
+        await db.collection('audit_submissions').doc('shock_tickets_' + classCode).set({
+          active: false,
+          studentName: '_system_', classCode: '_system_',
+          scores: {risk:0,resilience:0,leadership:0,skills:0,drive:0,innovation:0},
+          archetype: 'System', topTrait: 'none',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('ticketsShockStatus').textContent = 'Shock cleared.';
+      } catch(e) { console.error(e); }
+    }
+
+    async function triggerAirfareShock() {
+      const classCode = activeClassCode;
+      if (!classCode || !db) { alert('Load the teacher dashboard first to set the class code.'); return; }
+      const shockId = document.getElementById('airfareShockSelect').value;
+      const shock   = AIRFARE_SHOCKS[shockId];
+      try {
+        await db.collection('audit_submissions').doc('shock_airfare_' + classCode).set({
+          active: true, shockId,
+          title: shock.title, desc: shock.desc,
+          studentName: '_system_', classCode: '_system_',
+          scores: {risk:0,resilience:0,leadership:0,skills:0,drive:0,innovation:0},
+          archetype: 'System', topTrait: 'none',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('airfareShockStatus').textContent = `✅ Shock live: ${shock.title}`;
+      } catch(e) { alert('Failed: ' + e.message); }
+    }
+
+    async function clearAirfareShock() {
+      const classCode = activeClassCode;
+      if (!classCode || !db) return;
+      try {
+        await db.collection('audit_submissions').doc('shock_airfare_' + classCode).set({
+          active: false,
+          studentName: '_system_', classCode: '_system_',
+          scores: {risk:0,resilience:0,leadership:0,skills:0,drive:0,innovation:0},
+          archetype: 'System', topTrait: 'none',
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById('airfareShockStatus').textContent = 'Shock cleared.';
+      } catch(e) { console.error(e); }
+    }
+
+    // ---- Student listens for teacher shocks ----
+    function listenForTicketsShock(classCode) {
+      if (ticketsShockUnsubscribe) ticketsShockUnsubscribe();
+      ticketsShockUnsubscribe = db.collection('audit_submissions')
+        .doc('shock_tickets_' + classCode)
+        .onSnapshot(doc => {
+          if (doc.exists && doc.data().active) {
+            const data = doc.data();
+            document.getElementById('ticketsShockBanner').classList.add('active');
+            document.getElementById('ticketsShockText').textContent = `${data.title}: ${data.desc}`;
+            document.getElementById('ticketsRoundBadge').textContent = '⚡ Round 2 — Respond to the Shock!';
+            ticketsCurrentRound = 2;
+          } else {
+            document.getElementById('ticketsShockBanner').classList.remove('active');
+            document.getElementById('ticketsRoundBadge').textContent = '⚽ Round 1 — Initial Strategy';
+            ticketsCurrentRound = 1;
+          }
+        }, err => console.warn('Shock listener:', err.message));
+    }
+
+    function listenForAirfareShock(classCode) {
+      if (airfareShockUnsubscribe) airfareShockUnsubscribe();
+      airfareShockUnsubscribe = db.collection('audit_submissions')
+        .doc('shock_airfare_' + classCode)
+        .onSnapshot(doc => {
+          if (doc.exists && doc.data().active) {
+            const data = doc.data();
+            document.getElementById('airfareShockBanner').classList.add('active');
+            document.getElementById('airfareShockText').textContent = `${data.title}: ${data.desc}`;
+            document.getElementById('airfareRoundBadge').textContent = '⚡ Round 2 — Respond to the Shock!';
+            airfareCurrentRound = 2;
+          } else {
+            document.getElementById('airfareShockBanner').classList.remove('active');
+            document.getElementById('airfareRoundBadge').textContent = '✈️ Round 1 — Initial Strategy';
+            airfareCurrentRound = 1;
+          }
+        }, err => console.warn('Airfare shock listener:', err.message));
+    }
+
+    // Initialise score previews on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateTicketsScorePreview();
+      updateAirfareScorePreview();
+    });
+
+  </script>
+
+</body>
+</html>

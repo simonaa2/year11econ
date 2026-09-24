@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup 2026 — Economics Data</title>
+<meta name="description" content="Real-world ticket and airfare economics for the 2026 FIFA World Cup. Venues, capacities, prices, revenue and flights.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#030a05;color:#f1f5f9;min-height:100vh;overflow-x:hidden;}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 100% 50% at 50% -5%,rgba(34,197,94,0.15),transparent 60%),radial-gradient(ellipse 60% 40% at 90% 80%,rgba(251,191,36,0.08),transparent 55%),#030a05;}
+.lines{position:fixed;inset:0;z-index:0;opacity:0.03;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,1) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,1) 60px);}
+.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:2rem 1.25rem 5rem;}
+
+/* NAV */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 0 2rem;flex-wrap:wrap;gap:0.75rem;}
+.nav-title{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:900;background:linear-gradient(135deg,#fbbf24,#4ade80);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.nav-links{display:flex;gap:0.5rem;}
+.nav-link{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:9999px;padding:0.35rem 0.9rem;font-size:0.78rem;color:#94a3b8;text-decoration:none;transition:all 0.2s;}
+.nav-link:hover{color:#f1f5f9;background:rgba(255,255,255,0.09);}
+.nav-link.primary{background:linear-gradient(135deg,#15803d,#22c55e);color:white;border-color:transparent;}
+
+/* HERO */
+.hero{text-align:center;padding:1rem 0 3rem;}
+.wc-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:9999px;padding:0.4rem 1rem;font-size:0.75rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:1.25rem;}
+.hero h1{font-family:'Outfit',sans-serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:900;line-height:1.1;margin-bottom:0.75rem;}
+.hero h1 .gold{background:linear-gradient(135deg,#fbbf24,#f59e0b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero h1 .green{background:linear-gradient(135deg,#4ade80,#22c55e);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero-sub{color:#64748b;font-size:0.9rem;max-width:560px;margin:0 auto;}
+
+/* BIG STATS */
+.big-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.75rem;margin-bottom:3rem;}
+.big-stat{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:1.25rem 1rem;text-align:center;}
+.big-stat-num{font-family:'Outfit',sans-serif;font-size:1.9rem;font-weight:900;line-height:1;margin-bottom:0.3rem;}
+.big-stat-lbl{font-size:0.72rem;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;}
+
+/* SECTION */
+.section{margin-bottom:3rem;}
+.section-head{display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;padding-bottom:0.75rem;border-bottom:1px solid rgba(255,255,255,0.07);}
+.section-icon{font-size:1.4rem;}
+.section-title{font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;}
+.section-badge{font-size:0.72rem;font-weight:700;padding:0.25rem 0.7rem;border-radius:9999px;margin-left:auto;}
+.badge-green{background:rgba(74,222,128,0.12);color:#4ade80;border:1px solid rgba(74,222,128,0.2);}
+.badge-yellow{background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);}
+.badge-blue{background:rgba(56,189,248,0.12);color:#38bdf8;border:1px solid rgba(56,189,248,0.2);}
+
+/* VENUE TABLE */
+.venue-grid{display:grid;gap:0.6rem;}
+.venue-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:0.5rem;align-items:center;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.85rem 1rem;font-size:0.83rem;}
+.venue-row.header{background:rgba(74,222,128,0.06);border-color:rgba(74,222,128,0.15);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;}
+.venue-name{font-weight:700;color:#f1f5f9;}
+.venue-city{font-size:0.75rem;color:#64748b;margin-top:0.1rem;}
+.cap-bar-wrap{display:flex;align-items:center;gap:0.5rem;}
+.cap-bar{height:6px;border-radius:3px;flex:1;background:rgba(255,255,255,0.07);}
+.cap-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#15803d,#4ade80);}
+.venue-flag{font-size:1rem;}
+@media(max-width:600px){
+  .venue-row{grid-template-columns:1fr 1fr;gap:0.4rem;}
+  .venue-row .cap-bar-wrap,.venue-row:last-child>:nth-child(n+3){display:none;}
+}
+
+/* TICKET TIERS */
+.ticket-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0.75rem;}
+.ticket-card{border-radius:16px;padding:1.25rem;position:relative;overflow:hidden;}
+.ticket-card.cat1{background:linear-gradient(135deg,rgba(251,191,36,0.08),rgba(251,191,36,0.03));border:1px solid rgba(251,191,36,0.25);}
+.ticket-card.cat2{background:linear-gradient(135deg,rgba(192,132,252,0.08),rgba(192,132,252,0.03));border:1px solid rgba(192,132,252,0.2);}
+.ticket-card.cat3{background:linear-gradient(135deg,rgba(56,189,248,0.08),rgba(56,189,248,0.03));border:1px solid rgba(56,189,248,0.2);}
+.ticket-card.cat4{background:linear-gradient(135deg,rgba(74,222,128,0.08),rgba(74,222,128,0.03));border:1px solid rgba(74,222,128,0.2);}
+.tc-label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem;}
+.cat1 .tc-label{color:#fbbf24;} .cat2 .tc-label{color:#c084fc;} .cat3 .tc-label{color:#38bdf8;} .cat4 .tc-label{color:#4ade80;}
+.tc-who{font-size:0.78rem;color:#94a3b8;margin-bottom:0.75rem;}
+.tc-price-row{display:flex;justify-content:space-between;font-size:0.8rem;margin-bottom:0.25rem;}
+.tc-price-row span{color:#64748b;}
+.tc-price-row strong{color:#f1f5f9;}
+.tc-final{margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid rgba(255,255,255,0.07);font-size:0.78rem;color:#64748b;}
+.tc-final strong{color:#fbbf24;}
+
+/* REVENUE BREAKDOWN */
+.rev-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;margin-bottom:1.25rem;}
+.rev-card{background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:14px;padding:1rem;}
+.rev-num{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:900;color:#4ade80;line-height:1;}
+.rev-lbl{font-size:0.75rem;color:#64748b;margin-top:0.25rem;}
+.rev-note{font-size:0.72rem;color:#475569;margin-top:0.4rem;font-style:italic;}
+
+/* AIRFARE */
+.route-grid{display:grid;gap:0.6rem;}
+.route-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;gap:0.5rem;align-items:center;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:0.85rem 1rem;font-size:0.83rem;}
+.route-row.header{background:rgba(56,189,248,0.05);border-color:rgba(56,189,248,0.15);font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;}
+.route-name{font-weight:700;}
+.route-sub{font-size:0.72rem;color:#64748b;}
+.price-econ{color:#4ade80;font-weight:700;}
+.price-biz{color:#38bdf8;font-weight:700;}
+.price-surge{color:#fbbf24;font-weight:700;}
+@media(max-width:600px){.route-row{grid-template-columns:1fr 1fr 1fr;}.route-row>:nth-child(n+4){display:none;}}
+
+/* SURGE BOX */
+.surge-box{background:linear-gradient(135deg,rgba(251,191,36,0.06),rgba(248,113,113,0.06));border:1px solid rgba(251,191,36,0.2);border-radius:14px;padding:1.25rem;margin-top:1rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.75rem;}
+.surge-item{text-align:center;}
+.surge-num{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;color:#fbbf24;}
+.surge-lbl{font-size:0.72rem;color:#64748b;margin-top:0.2rem;}
+
+/* SIM CTA */
+.sim-cta-box{background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(251,191,36,0.06));border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:2rem;text-align:center;margin-top:3rem;}
+.sim-cta-title{font-family:'Outfit',sans-serif;font-size:1.4rem;font-weight:900;margin-bottom:0.5rem;}
+.sim-cta-sub{font-size:0.85rem;color:#94a3b8;margin-bottom:1.5rem;}
+.cta-btns{display:flex;gap:0.75rem;justify-content:center;flex-wrap:wrap;}
+.cta-btn{display:inline-flex;align-items:center;gap:0.5rem;padding:0.85rem 1.5rem;border-radius:12px;font-family:'Outfit',sans-serif;font-size:0.9rem;font-weight:800;text-decoration:none;transition:all 0.3s;}
+.cta-btn.green{background:linear-gradient(135deg,#15803d,#22c55e);color:white;}
+.cta-btn.blue{background:linear-gradient(135deg,#0369a1,#38bdf8);color:white;}
+.cta-btn:hover{opacity:0.88;transform:translateY(-2px);}
+
+.source-note{text-align:center;font-size:0.72rem;color:#334155;margin-top:3rem;line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="lines"></div>
+<div class="wrap">
+
+  <nav class="nav">
+    <div class="nav-title">⚽ WC2026 Economics</div>
+    <div class="nav-links">
+      <a href="worldcup.html" class="nav-link primary">▶ Join Simulation</a>
+      <a href="index.html" class="nav-link">← Hub</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="wc-badge">📊 Real World Data · 2026 FIFA World Cup</div>
+    <h1>The <span class="gold">Economics</span> of the<br><span class="green">World Cup</span></h1>
+    <p class="hero-sub">Real venues. Real prices. Real airfares. Study the numbers — then run your own market.</p>
+  </div>
+
+  <!-- BIG STATS -->
+  <div class="big-stats">
+    <div class="big-stat">
+      <div class="big-stat-num" style="color:#fbbf24;">$11B</div>
+      <div class="big-stat-lbl">FIFA Projected Revenue</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-num" style="color:#4ade80;">5M+</div>
+      <div class="big-stat-lbl">Expected Fans</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-num" style="color:#38bdf8;">104</div>
+      <div class="big-stat-lbl">Total Matches</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-num" style="color:#c084fc;">16</div>
+      <div class="big-stat-lbl">Host Venues</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-num" style="color:#fb923c;">48</div>
+      <div class="big-stat-lbl">Nations Competing</div>
+    </div>
+    <div class="big-stat">
+      <div class="big-stat-num" style="color:#f87171;">3</div>
+      <div class="big-stat-lbl">Host Countries</div>
+    </div>
+  </div>
+
+  <!-- VENUES -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">🏟️</div>
+      <div class="section-title">Host Venues & Capacities</div>
+      <div class="section-badge badge-green">Key Venues</div>
+    </div>
+    <div class="venue-grid">
+      <div class="venue-row header">
+        <div>Venue / City</div>
+        <div>Capacity</div>
+        <div>Fill Target</div>
+        <div>Country</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">MetLife Stadium</div><div class="venue-city">New York/New Jersey — 🏆 FINAL</div></div>
+        <div><strong style="color:#fbbf24;">82,500</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:100%;"></div></div><span style="font-size:0.75rem;color:#4ade80;">100%</span></div></div>
+        <div>🇺🇸 USA</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">Estadio Azteca</div><div class="venue-city">Mexico City — Opening Match</div></div>
+        <div><strong style="color:#fbbf24;">87,523</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:98%;"></div></div><span style="font-size:0.75rem;color:#4ade80;">98%</span></div></div>
+        <div>🇲🇽 MEX</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">AT&T Stadium</div><div class="venue-city">Dallas, Texas</div></div>
+        <div><strong>80,000</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:95%;"></div></div><span style="font-size:0.75rem;color:#4ade80;">95%</span></div></div>
+        <div>🇺🇸 USA</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">SoFi Stadium</div><div class="venue-city">Los Angeles, California</div></div>
+        <div><strong>70,240</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:92%;"></div></div><span style="font-size:0.75rem;color:#4ade80;">92%</span></div></div>
+        <div>🇺🇸 USA</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">Lumen Field</div><div class="venue-city">Seattle, Washington</div></div>
+        <div><strong>69,000</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:90%;"></div></div><span style="font-size:0.75rem;color:#94a3b8;">90%</span></div></div>
+        <div>🇺🇸 USA</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">BC Place</div><div class="venue-city">Vancouver, Canada</div></div>
+        <div><strong>54,500</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:82%;"></div></div><span style="font-size:0.75rem;color:#94a3b8;">82%</span></div></div>
+        <div>🇨🇦 CAN</div>
+      </div>
+      <div class="venue-row">
+        <div><div class="venue-name">BMO Field</div><div class="venue-city">Toronto, Canada</div></div>
+        <div><strong>45,736</strong></div>
+        <div><div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill" style="width:78%;"></div></div><span style="font-size:0.75rem;color:#94a3b8;">78%</span></div></div>
+        <div>🇨🇦 CAN</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKET TIERS -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">🎟️</div>
+      <div class="section-title">Official Ticket Pricing (USD)</div>
+      <div class="section-badge badge-yellow">Price Discrimination</div>
+    </div>
+    <div class="ticket-grid">
+      <div class="ticket-card cat1">
+        <div class="tc-label">Category 1 — Premium</div>
+        <div class="tc-who">International tourists & corporate buyers. Best seats, centre stadium.</div>
+        <div class="tc-price-row"><span>Group Stage</span><strong>$450 – $800</strong></div>
+        <div class="tc-price-row"><span>Quarter-Final</span><strong>$950 – $1,400</strong></div>
+        <div class="tc-price-row"><span>Semi-Final</span><strong>$1,500 – $2,200</strong></div>
+        <div class="tc-price-row"><span>🏆 Final</span><strong>$2,500 – $5,000+</strong></div>
+        <div class="tc-final">~20% of seats · Highest revenue per seat</div>
+      </div>
+      <div class="ticket-card cat2">
+        <div class="tc-label">Category 2 — Mid-tier</div>
+        <div class="tc-who">General international fans. Good seats, side stands.</div>
+        <div class="tc-price-row"><span>Group Stage</span><strong>$250 – $450</strong></div>
+        <div class="tc-price-row"><span>Quarter-Final</span><strong>$550 – $900</strong></div>
+        <div class="tc-price-row"><span>Semi-Final</span><strong>$900 – $1,400</strong></div>
+        <div class="tc-price-row"><span>🏆 Final</span><strong>$1,500 – $2,500</strong></div>
+        <div class="tc-final">~35% of seats · Mid-range revenue</div>
+      </div>
+      <div class="ticket-card cat3">
+        <div class="tc-label">Category 3 — Standard</div>
+        <div class="tc-who">Budget international fans. Upper tiers and end zones.</div>
+        <div class="tc-price-row"><span>Group Stage</span><strong>$150 – $250</strong></div>
+        <div class="tc-price-row"><span>Quarter-Final</span><strong>$300 – $550</strong></div>
+        <div class="tc-price-row"><span>Semi-Final</span><strong>$500 – $900</strong></div>
+        <div class="tc-price-row"><span>🏆 Final</span><strong>$800 – $1,500</strong></div>
+        <div class="tc-final">~30% of seats · Volume-based revenue</div>
+      </div>
+      <div class="ticket-card cat4">
+        <div class="tc-label">Category 4 — Local Access</div>
+        <div class="tc-who">Host country residents only. Subsidised for accessibility.</div>
+        <div class="tc-price-row"><span>Group Stage</span><strong>$29 – $75</strong></div>
+        <div class="tc-price-row"><span>Quarter-Final</span><strong>$75 – $150</strong></div>
+        <div class="tc-price-row"><span>Semi-Final</span><strong>$120 – $250</strong></div>
+        <div class="tc-price-row"><span>🏆 Final</span><strong>$200 – $400</strong></div>
+        <div class="tc-final">~15% of seats · Equity pricing — <strong>loss leader</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TICKET REVENUE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">💰</div>
+      <div class="section-title">Projected Ticket Revenue</div>
+      <div class="section-badge badge-yellow">Record Breaking</div>
+    </div>
+    <div class="rev-grid">
+      <div class="rev-card">
+        <div class="rev-num">$2.5B</div>
+        <div class="rev-lbl">Total Ticket Revenue</div>
+        <div class="rev-note">FIFA projection (up from $643M in 2018)</div>
+      </div>
+      <div class="rev-card">
+        <div class="rev-num">3.4M</div>
+        <div class="rev-lbl">Tickets Available</div>
+        <div class="rev-note">Across 104 matches</div>
+      </div>
+      <div class="rev-card">
+        <div class="rev-num">$735</div>
+        <div class="rev-lbl">Average Ticket Price</div>
+        <div class="rev-note">Weighted across all categories</div>
+      </div>
+      <div class="rev-card">
+        <div class="rev-num">94%</div>
+        <div class="rev-lbl">Projected Sell-Through</div>
+        <div class="rev-note">Based on 2022 Qatar demand</div>
+      </div>
+      <div class="rev-card">
+        <div class="rev-num">$50K</div>
+        <div class="rev-lbl">Top Hospitality Package</div>
+        <div class="rev-note">All-match corporate packages</div>
+      </div>
+      <div class="rev-card">
+        <div class="rev-num" style="color:#fbbf24;">4.7M+</div>
+        <div class="rev-lbl">Total Applications Received</div>
+        <div class="rev-note">Excess demand — balloted system</div>
+      </div>
+    </div>
+    <div style="background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.15);border-radius:14px;padding:1rem 1.25rem;font-size:0.83rem;line-height:1.6;">
+      <strong style="color:#f87171;">⚠️ Deadweight Loss in action:</strong> <span style="color:#94a3b8;">4.7 million applications for 3.4 million tickets = over 1.3 million willing buyers priced out or unsuccessful. That's real deadweight loss — consumers with willingness to pay who couldn't transact.</span>
+    </div>
+  </div>
+
+  <!-- AIRFARE -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">✈️</div>
+      <div class="section-title">Airfares to the World Cup (AUD Return from Sydney)</div>
+      <div class="section-badge badge-blue">Yield Management</div>
+    </div>
+    <div class="route-grid">
+      <div class="route-row header">
+        <div>Route (SYD →)</div>
+        <div>Economy</div>
+        <div>Business</div>
+        <div>During WC</div>
+        <div>Surge %</div>
+      </div>
+      <div class="route-row">
+        <div><div class="route-name">New York (JFK)</div><div class="route-sub">~22hr flight · MetLife Final</div></div>
+        <div class="price-econ">$2,400</div>
+        <div class="price-biz">$11,500</div>
+        <div style="color:#fbbf24;font-weight:700;">$4,100</div>
+        <div class="price-surge">+71%</div>
+      </div>
+      <div class="route-row">
+        <div><div class="route-name">Los Angeles (LAX)</div><div class="route-sub">~15hr flight · SoFi Stadium</div></div>
+        <div class="price-econ">$1,850</div>
+        <div class="price-biz">$9,200</div>
+        <div style="color:#fbbf24;font-weight:700;">$3,200</div>
+        <div class="price-surge">+73%</div>
+      </div>
+      <div class="route-row">
+        <div><div class="route-name">Dallas (DFW)</div><div class="route-sub">~19hr flight · AT&T Stadium</div></div>
+        <div class="price-econ">$2,200</div>
+        <div class="price-biz">$10,800</div>
+        <div style="color:#fbbf24;font-weight:700;">$3,800</div>
+        <div class="price-surge">+73%</div>
+      </div>
+      <div class="route-row">
+        <div><div class="route-name">Vancouver (YVR)</div><div class="route-sub">~17hr flight · BC Place</div></div>
+        <div class="price-econ">$1,950</div>
+        <div class="price-biz">$9,500</div>
+        <div style="color:#fbbf24;font-weight:700;">$3,100</div>
+        <div class="price-surge">+59%</div>
+      </div>
+      <div class="route-row">
+        <div><div class="route-name">Mexico City (MEX)</div><div class="route-sub">~19hr flight · Azteca Opening</div></div>
+        <div class="price-econ">$2,600</div>
+        <div class="price-biz">$12,000</div>
+        <div style="color:#fbbf24;font-weight:700;">$4,500</div>
+        <div class="price-surge">+73%</div>
+      </div>
+    </div>
+
+    <div class="surge-box">
+      <div class="surge-item">
+        <div class="surge-num">+68%</div>
+        <div class="surge-lbl">Avg economy surge during tournament</div>
+      </div>
+      <div class="surge-item">
+        <div class="surge-num">4.8x</div>
+        <div class="surge-lbl">Business vs economy premium (avg)</div>
+      </div>
+      <div class="surge-item">
+        <div class="surge-num">$150K</div>
+        <div class="surge-lbl">Estimated fixed cost per Sydney–LA flight</div>
+      </div>
+      <div class="surge-item">
+        <div class="surge-num">1.5M</div>
+        <div class="surge-lbl">International visitors expected</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.12);border-radius:14px;padding:1rem 1.25rem;font-size:0.83rem;line-height:1.6;margin-top:0.75rem;">
+      <strong style="color:#38bdf8;">📊 Price Discrimination:</strong> <span style="color:#94a3b8;">The same Sydney → Los Angeles seat sells for $1,850 (economy) or $9,200 (business) — a 4.97× difference for the same departure and arrival. Airlines charge what each segment will pay — 3rd degree price discrimination based on consumer WTP.</span>
+    </div>
+  </div>
+
+  <!-- KEY ECONOMICS TERMS -->
+  <div class="section">
+    <div class="section-head">
+      <div class="section-icon">📚</div>
+      <div class="section-title">Economics Concepts — Spot Them in the Data</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0.6rem;">
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem;">
+        <div style="font-size:0.75rem;font-weight:700;color:#fbbf24;margin-bottom:0.4rem;">PRICE ELASTICITY</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">Final tickets are <strong style="color:#f1f5f9;">inelastic</strong> — demand barely drops even at $5,000. Group stage is more elastic — fans choose based on price.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem;">
+        <div style="font-size:0.75rem;font-weight:700;color:#4ade80;margin-bottom:0.4rem;">CONSUMER SURPLUS</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">A fan willing to pay $2,000 who gets a ticket for $800 earns <strong style="color:#f1f5f9;">$1,200 in consumer surplus</strong>. The ballot system creates enormous surplus for winners.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem;">
+        <div style="font-size:0.75rem;font-weight:700;color:#38bdf8;margin-bottom:0.4rem;">PRICE DISCRIMINATION</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">Cat 1–4 tickets for the <strong style="color:#f1f5f9;">same match</strong>, 4 different prices. Airlines: economy vs business for the <strong style="color:#f1f5f9;">same flight</strong>. Classic 3rd degree.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem;">
+        <div style="font-size:0.75rem;font-weight:700;color:#f87171;margin-bottom:0.4rem;">DEADWEIGHT LOSS</div>
+        <div style="font-size:0.8rem;color:#94a3b8;"><strong style="color:#f1f5f9;">1.3M+ applicants</strong> couldn't get tickets. Willing buyers, no transaction = lost economic welfare.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem;">
+        <div style="font-size:0.75rem;font-weight:700;color:#c084fc;margin-bottom:0.4rem;">YIELD MANAGEMENT</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">Airlines adjusting fares in real-time — <strong style="color:#f1f5f9;">+68% surge</strong> during the tournament as seats fill. Book early or pay more.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:0.9rem;">
+        <div style="font-size:0.75rem;font-weight:700;color:#fb923c;margin-bottom:0.4rem;">MARKET FAILURE</div>
+        <div style="font-size:0.8rem;color:#94a3b8;">Cat 4 local tickets at $29 = govt intervention to ensure <strong style="color:#f1f5f9;">equity and access</strong>. Without it, all seats would clear at much higher prices.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIM CTA -->
+  <div class="sim-cta-box">
+    <div class="sim-cta-title">⚽ Now run your own market</div>
+    <div class="sim-cta-sub">You've seen the real numbers. Can your class beat FIFA's revenue? Set your prices and find out.</div>
+    <div class="cta-btns">
+      <a href="worldcup.html" class="cta-btn green">▶ Join the Simulation</a>
+      <a href="stadium.html" class="cta-btn green">🏟️ Stadium Sim</a>
+      <a href="airfare.html" class="cta-btn blue">✈️ Airfare Sim</a>
+    </div>
+  </div>
+
+  <div class="source-note">
+    Sources: FIFA Official Ticketing 2026 · Qantas / Emirates published fares (Jun 2025) · FIFA Financial Report 2023 · Statista 2025<br>
+    Prices shown in USD (tickets) and AUD (airfares). Surges are estimates based on 2022 Qatar World Cup travel data.<br>
+    Built for HSC Economics — EconTools by Sando
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Springboks vs All Blacks — Complete Match Analytics & Tour Predictor | DATATRENDS</title>
+<meta name="description" content="Comprehensive quantitative match analysis for South Africa vs New Zealand tour: set-piece efficiency, Bomb Squad bench impact, altitude dynamics, and player metrics.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',sans-serif;background:#060e14;color:#f1f5f9;min-height:100vh;overflow-x:hidden;}
+.bg-layer{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 100% 55% at 50% -5%, rgba(14,165,233,0.18) 0%, transparent 65%),radial-gradient(ellipse 70% 40% at 90% 100%, rgba(251,191,36,0.10) 0%, transparent 55%),#060e14;}
+.wrapper{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:1.5rem;}
+.nav{display:flex;align-items:center;justify-space-between;padding:1rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(16px);background:rgba(6,14,20,0.85);position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:900;color:#f1f5f9;text-decoration:none;}
+.nav-logo span{color:#fbbf24;}
+.card{background:rgba(12,28,40,0.65);border:1px solid rgba(14,165,233,0.2);backdrop-filter:blur(16px);border-radius:1.25rem;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 10px 30px -10px rgba(0,0,0,0.5);}
+.hero{text-align:center;padding:2.5rem 1rem;}
+.hero-badge{display:inline-flex;align-items:center;gap:0.5rem;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);border-radius:999px;padding:0.4rem 1.1rem;font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#fbbf24;margin-bottom:1rem;}
+.hero-title{font-family:'Outfit',sans-serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.08;margin-bottom:0.75rem;color:#f8fafc;}
+.accent-gold{color:#fbbf24;}
+.accent-blue{color:#38bdf8;}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;}
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:1rem;padding:1.25rem;text-align:center;}
+.stat-num{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:900;}
+.stat-lbl{font-size:0.7rem;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:0.2rem;}
+.comparison-table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+.comparison-table th{padding:0.75rem;color:#94a3b8;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid rgba(255,255,255,0.1);}
+.comparison-table td{padding:0.75rem;border-bottom:1px solid rgba(255,255,255,0.04);}
+.tag{display:inline-block;padding:0.2rem 0.6rem;border-radius:999px;font-size:0.7rem;font-weight:800;text-transform:uppercase;}
+.tag-sa{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3);}
+.tag-nz{background:rgba(56,189,248,0.15);color:#38bdf8;border:1px solid rgba(56,189,248,0.3);}
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+
+<nav class="nav">
+  <a href="index.html" class="nav-logo">DATA<span>TRENDS</span></a>
+  <span style="font-size:0.75rem;color:#94a3b8;font-weight:600;">Springboks vs All Blacks Quantitative Tour Analytics</span>
+</nav>
+
+<div class="wrapper">
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-badge">🏉 The Greatest Rivalry in Rugby Union</div>
+    <h1 class="hero-title">Springboks vs All Blacks <span class="accent-gold">Analytics Dashboard</span></h1>
+    <p style="color:#94a3b8;font-size:0.9rem;max-width:700px;margin:0 auto 1.5rem;line-height:1.6;">
+      Comprehensive match statistics, set-piece efficiency, Bomb Squad bench differentials, altitude impacts, and predictive simulation parameters.
+    </p>
+  </div>
+
+  <!-- Key Team Comparison Banner -->
+  <div class="grid-2" style="margin-bottom:1.5rem;">
+    <!-- Springboks Card -->
+    <div class="card" style="border-color:rgba(16,185,129,0.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h2 style="font-family:'Outfit',sans-serif;font-weight:900;color:#34d399;">🇿🇦 SOUTH AFRICA (SPRINGBOKS)</h2>
+        <span class="tag tag-sa">👑 World Rugby #1</span>
+      </div>
+      <div class="grid-3" style="margin-bottom:1rem;">
+        <div><div style="font-size:1.5rem;font-weight:900;color:#fbbf24;">93.96</div><div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;">WR Points</div></div>
+        <div><div style="font-size:1.5rem;font-weight:900;color:#34d399;">82.1</div><div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;">Synergy Score</div></div>
+        <div><div style="font-size:1.5rem;font-weight:900;color:#f8fafc;">74 caps</div><div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;">Avg Starter Caps</div></div>
+      </div>
+      <ul style="font-size:0.8rem;color:#cbd5e1;line-height:1.6;list-style:none;">
+        <li>🛡️ <strong>Tactical Profile</strong>: Set Piece Dominance &amp; Bomb Squad (7-1 / 6-2 Bench Split)</li>
+        <li>⚖️ <strong>Tight Five Mass</strong>: 915 kg (Heavy Scrimmage Load)</li>
+        <li>⏱️ <strong>Second Half Differential (50-80m)</strong>: +8.4 pts average</li>
+        <li>⛰️ <strong>Altitude Advantage</strong>: +12.5% win rate at Loftus &amp; Ellis Park (>1,350m)</li>
+      </ul>
+    </div>
+
+    <!-- All Blacks Card -->
+    <div class="card" style="border-color:rgba(56,189,248,0.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <h2 style="font-family:'Outfit',sans-serif;font-weight:900;color:#38bdf8;">🇳🇿 NEW ZEALAND (ALL BLACKS)</h2>
+        <span class="tag tag-nz">👑 World Rugby #1</span>
+      </div>
+      <div class="grid-3" style="margin-bottom:1rem;">
+        <div><div style="font-size:1.5rem;font-weight:900;color:#fbbf24;">92.28</div><div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;">WR Points</div></div>
+        <div><div style="font-size:1.5rem;font-weight:900;color:#38bdf8;">66.9</div><div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;">Synergy Score</div></div>
+        <div><div style="font-size:1.5rem;font-weight:900;color:#f8fafc;">62 caps</div><div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;">Avg Starter Caps</div></div>
+      </div>
+      <ul style="font-size:0.8rem;color:#cbd5e1;line-height:1.6;list-style:none;">
+        <li>⚡ <strong>Tactical Profile</strong>: High-Tempo Phase Play &amp; Offloads in Width</li>
+        <li>⚡ <strong>Ruck Speed</strong>: 2.8s avg (Lightning Quick Recycled Ball)</li>
+        <li>🏃 <strong>Metres Carried per 80m</strong>: 485m (High Continuity)</li>
+        <li>🏰 <strong>Fortress Record</strong>: 88% win rate at Eden Park, Auckland</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Radar Metrics Comparison -->
+  <div class="card">
+    <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:1rem;color:#f8fafc;">
+      📊 Quantitative Parameter Radar: Springboks vs All Blacks
+    </h3>
+    <div style="position:relative;height:360px;">
+      <canvas id="matchRadarChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Detailed Metric Matrix Table -->
+  <div class="card">
+    <h3 style="font-family:'Outfit',sans-serif;font-size:1.25rem;font-weight:800;margin-bottom:1rem;color:#f8fafc;">
+      📋 30-Dimension Match &amp; Squad Parameter Matrix
+    </h3>
+
+    <div style="overflow-x:auto;">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Statistical Metric</th>
+            <th style="color:#34d399;">Springboks (SA)</th>
+            <th style="color:#38bdf8;">All Blacks (NZ)</th>
+            <th>Analytical Impact / Advantage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Scrum Success %</strong></td>
+            <td style="color:#34d399;font-weight:800;">94.2%</td>
+            <td style="color:#38bdf8;">89.5%</td>
+            <td>SA (+4.7%) — Scrum penalties forced</td>
+          </tr>
+          <tr>
+            <td><strong>Lineout Win % &amp; Steals</strong></td>
+            <td style="color:#34d399;font-weight:800;">88.5% (1.8 steals/gm)</td>
+            <td style="color:#38bdf8;font-weight:800;">91.2% (1.2 steals/gm)</td>
+            <td>NZ (+2.7% win) / SA (+0.6 steals)</td>
+          </tr>
+          <tr>
+            <td><strong>Fast Ruck Ball (<3.0s) %</strong></td>
+            <td style="color:#34d399;">48%</td>
+            <td style="color:#38bdf8;font-weight:800;">64%</td>
+            <td>NZ (+16%) — High-tempo wide attack</td>
+          </tr>
+          <tr>
+            <td><strong>Maul Meters Gained / Drive</strong></td>
+            <td style="color:#34d399;font-weight:800;">8.4 meters</td>
+            <td style="color:#38bdf8;">4.2 meters</td>
+            <td>SA (+100%) — Key 22m penalty generator</td>
+          </tr>
+          <tr>
+            <td><strong>Bench Caps (Bomb Squad)</strong></td>
+            <td style="color:#34d399;font-weight:800;">385 total caps</td>
+            <td style="color:#38bdf8;">195 total caps</td>
+            <td>SA (+190 caps) — 50–80m finishing power</td>
+          </tr>
+          <tr>
+            <td><strong>Contestable High Kicks / 80m</strong></td>
+            <td style="color:#34d399;font-weight:800;">18.5 kicks</td>
+            <td style="color:#38bdf8;">11.2 kicks</td>
+            <td>SA (+7.3 kicks) — Up-and-under pressure</td>
+          </tr>
+          <tr>
+            <td><strong>Goal Kicking Accuracy %</strong></td>
+            <td style="color:#34d399;">79.5%</td>
+            <td style="color:#38bdf8;font-weight:800;">85.0%</td>
+            <td>NZ (+5.5%) — Crucial in tight test matches</td>
+          </tr>
+          <tr>
+            <td><strong>Offloads Completed / 80m</strong></td>
+            <td style="color:#34d399;">6.2 offloads</td>
+            <td style="color:#38bdf8;font-weight:800;">14.8 offloads</td>
+            <td>NZ (+138%) — Unstructured broken field play</td>
+          </tr>
+          <tr>
+            <td><strong>Tackles Made &amp; Dominant Tackles</strong></td>
+            <td style="color:#34d399;font-weight:800;">152 (18.5% dominant)</td>
+            <td style="color:#38bdf8;">138 (11.2% dominant)</td>
+            <td>SA (+7.3% dominant) — Physical stopping power</td>
+          </tr>
+          <tr>
+            <td><strong>Turnovers Forced / 80m</strong></td>
+            <td style="color:#34d399;font-weight:800;">7.8 turnovers</td>
+            <td style="color:#38bdf8;">6.5 turnovers</td>
+            <td>SA (+1.3 turnovers) — Breakdown jackal dominance</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+window.onload = function() {
+  const ctx = document.getElementById('matchRadarChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: [
+        'Set-Piece Dominance',
+        'Ruck Speed & Tempo',
+        'Bench Depth (Bomb Squad)',
+        'Offloading & Width',
+        'Physicality & Tackles',
+        'Goal Kicking Accuracy',
+        'Territory & High Kicks'
+      ],
+      datasets: [
+        {
+          label: 'South Africa (Springboks)',
+          data: [95, 65, 98, 60, 96, 79, 92],
+          borderColor: '#34d399',
+          backgroundColor: 'rgba(52, 211, 153, 0.2)',
+          borderWidth: 2.5
+        },
+        {
+          label: 'New Zealand (All Blacks)',
+          data: [82, 95, 75, 94, 82, 85, 76],
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56, 189, 248, 0.2)',
+          borderWidth: 2.5
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#f1f5f9', font: { family: 'Inter', weight: 'bold' } } }
+      },
+      scales: {
+        r: {
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          angleLines: { color: 'rgba(255,255,255,0.1)' },
+          pointLabels: { color: '#f8fafc', font: { family: 'Inter', size: 11, weight: 'bold' } },
+          ticks: { color: '#94a3b8', backdropColor: 'transparent' }
+        }
+      }
+    }
+  });
+};
+</script>
+</body>
+</html>
